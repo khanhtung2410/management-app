@@ -9,7 +9,7 @@
 
           <form className="mt-8 flex w-full max-w-md flex-col gap-4">
             <input
-              type="email"
+              type="emailnpmn"
               placeholder="Email"
                           className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
               required
