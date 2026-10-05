@@ -82,7 +82,7 @@ export default function Home() {
                 <div className="overflow-hidden rounded-xl bg-white shadow-md">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-gray-50 text-gray-800">
                                 <tr className="border-b">
                                     <th className="px-6 py-4">Tên</th>
                                     <th className="px-6 py-4">Mô tả</th>
@@ -98,7 +98,7 @@ export default function Home() {
                                         key={task.id}
                                         className="transition hover:bg-gray-50"
                                     >
-                                        <td className="px-6 py-4 font-medium">
+                                        <td className="px-6 py-4 font-medium text-gray-800">
                                             {task.ten}
                                         </td>
 
