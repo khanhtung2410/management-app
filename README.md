@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# Website quản lý công việc cá nhân
 
-## Getting Started
+## 1. Giới thiệu
 
-First, run the development server:
+**Website quản lý công việc cá nhân** là hệ thống hỗ trợ người dùng quản lý các công việc cá nhân một cách đơn giản và hiệu quả.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Hệ thống cho phép người dùng đăng ký, đăng nhập, quản lý thông tin cá nhân, thêm và chỉnh sửa công việc, tìm kiếm/lọc công việc và theo dõi thống kê tình trạng công việc.
+
+## 2. Tác nhân
+
+### Người dùng
+
+Người dùng có quyền:
+
+* Đăng ký tài khoản.
+* Đăng nhập/đăng xuất.
+* Chỉnh sửa thông tin cá nhân.
+* Thêm công việc.
+* Chỉnh sửa công việc.
+* Tìm kiếm và lọc công việc.
+* Xem thống kê công việc.
+
+## 3. Chức năng
+
+### 3.1. Quản lý tài khoản
+
+* **Đăng ký:** Tạo tài khoản mới.
+* **Đăng nhập:** Đăng nhập vào hệ thống.
+* **Sửa hồ sơ:** Cập nhật họ tên, email, số điện thoại và thông tin cá nhân.
+
+### 3.2. Quản lý công việc
+
+* **Thêm công việc:** Tạo công việc mới.
+* **Sửa công việc:** Chỉnh sửa tên, mô tả, trạng thái và thời hạn.
+* **Tìm kiếm:** Tìm công việc theo tên.
+* **Lọc:** Lọc công việc theo trạng thái hoặc thời hạn.
+
+### 3.3. Thống kê
+
+Hệ thống cung cấp thống kê giúp người dùng theo dõi:
+
+* Tổng số công việc.
+* Số công việc chưa hoàn thành.
+* Số công việc đang thực hiện.
+* Số công việc đã hoàn thành.
+* Số công việc quá hạn.
+* Tỷ lệ hoàn thành công việc.
+
+## 4. Cơ sở dữ liệu
+
+### Bảng `User`
+
+| Trường  | Mô tả         |
+| ------- | ------------- |
+| `ID`    | Mã người dùng |
+| `HoTen` | Họ và tên     |
+| `Email` | Email         |
+| `SDT`   | Số điện thoại |
+| `MK`    | Mật khẩu      |
+
+### Bảng `CongViec`
+
+| Trường      | Mô tả                          |
+| ----------- | ------------------------------ |
+| `ID`        | Mã công việc                   |
+| `UserID`    | Mã người dùng sở hữu công việc |
+| `Ten`       | Tên công việc                  |
+| `Mota`      | Mô tả công việc                |
+| `TrangThai` | Trạng thái công việc           |
+| `HetHan`    | Thời hạn hoàn thành            |
+
+### Quan hệ
+
+```text
+User
+  │
+  │ 1 - N
+  ▼
+CongViec
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`CongViec.UserID` là khóa ngoại tham chiếu đến `User.ID`.
