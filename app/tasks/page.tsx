@@ -1,82 +1,55 @@
-﻿
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-type Task = {
-    id: number;
-    ten: string;
-    moTa: string;
-    hetHan: string;
-    trangThai: "Chưa hoàn thành" | "Đang thực hiện" | "Hoàn thành";
-};
+interface CongViec {
+    ID: number;
+    Ten: string;
+    Mota: string;
+    TrangThai: string;
+    HetHan: string;
+}
 
 export default function Home() {
-    const [tasks, setTasks] = useState<Task[]>([
-        {
-            id: 1,
-            ten: "Học HTML",
-            moTa: "Làm quen với HTML cơ bản",
-            hetHan: "10/10/2026",
-            trangThai: "Đang thực hiện"
-        },
-        {
-            id: 2,
-            ten: "Học CSS",
-            moTa: "Học cách thiết kế giao diện",
-            hetHan: "15/10/2026",
-            trangThai: "Chưa hoàn thành"
-        },
-        {
-            id: 3,
-            ten: "Làm project",
-            moTa: "Xây dựng ứng dụng quản lý công việc",
-            hetHan: "20/10/2026",
-            trangThai: "Hoàn thành"
-        }
-    ]);
+    const [data, setData] = useState<CongViec[]>([]);
 
-    const doiTrangThai = (id: number) => {
-        setTasks(current =>
-            current.map(task => {
-                if (task.id !== id) return task;
+    useEffect(() => {
+        fetch("/api/tasks", {
+            credentials: "include",
+        })
+            .then(async response => {
+                const result = await response.json();
 
-                const trangThaiMoi =
-                    task.trangThai === "Chưa hoàn thành"
-                        ? "Đang thực hiện"
-                        : task.trangThai === "Đang thực hiện"
-                            ? "Hoàn thành"
-                            : "Chưa hoàn thành";
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = "/login";
+                        return null;
+                    }
 
-                return {
-                    ...task,
-                    trangThai: trangThaiMoi
-                };
+                    throw new Error(
+                        result.message || "Không thể lấy dữ liệu"
+                    );
+                }
+
+                return result;
             })
-        );
-    };
-
-    const getTrangThaiClass = (trangThai: Task["trangThai"]) => {
-        switch (trangThai) {
-            case "Hoàn thành":
-                return "bg-green-100 text-green-700";
-            case "Đang thực hiện":
-                return "bg-blue-100 text-blue-700";
-            default:
-                return "bg-yellow-100 text-yellow-700";
-        }
-    };
+            .then(result => {
+                if (result) {
+                    setData(result);
+                }
+            })
+            .catch(error => {
+                console.error("Lỗi:", error);
+            });
+    }, []);
 
     return (
         <main className="min-h-screen bg-gray-100 p-8">
             <div className="mx-auto max-w-6xl">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-800">
-                        Quản lý công việc
-                    </h1>
-                    <p className="mt-1 text-gray-500">
                         Danh sách công việc
-                    </p>
+                    </h1>
                 </div>
 
                 <div className="overflow-hidden rounded-xl bg-white shadow-md">
@@ -84,47 +57,34 @@ export default function Home() {
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 text-gray-800">
                                 <tr className="border-b">
-                                    <th className="px-6 py-4">Tên</th>
+                                    <th className="px-6 py-4">ID</th>
+                                    <th className="px-6 py-4">Tên công việc</th>
                                     <th className="px-6 py-4">Mô tả</th>
-                                    <th className="px-6 py-4">Thời hạn</th>
                                     <th className="px-6 py-4">Trạng thái</th>
-                                    <th className="px-6 py-4">Thao tác</th>
+                                    <th className="px-6 py-4">Hết hạn</th>
                                 </tr>
                             </thead>
 
                             <tbody className="divide-y">
-                                {tasks.map(task => (
+                                {data.map(item => (
                                     <tr
-                                        key={task.id}
+                                        key={item.ID}
                                         className="transition hover:bg-gray-50"
                                     >
+                                        <td className="px-6 py-4">
+                                            {item.ID}
+                                        </td>
                                         <td className="px-6 py-4 font-medium text-gray-800">
-                                            {task.ten}
+                                            {item.Ten}
                                         </td>
-
                                         <td className="px-6 py-4 text-gray-600">
-                                            {task.moTa}
+                                            {item.Mota}
                                         </td>
-
                                         <td className="px-6 py-4 text-gray-600">
-                                            {task.hetHan}
+                                            {item.TrangThai}
                                         </td>
-
-                                        <td className="px-6 py-4">
-                                            <span
-                                                className={`rounded - full px - 3 py - 1 text - sm font - medium ${ getTrangThaiClass(task.trangThai) } `}
-                                            >
-                                                {task.trangThai}
-                                            </span>
-                                        </td>
-
-                                        <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => doiTrangThai(task.id)}
-                                                className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700"
-                                            >
-                                                Đổi trạng thái
-                                            </button>
+                                        <td className="px-6 py-4 text-gray-600">
+                                            {item.HetHan}
                                         </td>
                                     </tr>
                                 ))}
@@ -136,4 +96,3 @@ export default function Home() {
         </main>
     );
 }
-
