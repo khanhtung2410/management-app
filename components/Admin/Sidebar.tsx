@@ -7,7 +7,7 @@ const menus = [
     { name: "Dashboard", href: "/admin", icon: "📊" },
     { name: "Người dùng", href: "/admin/users", icon: "📝" },
     { name: "Danh mục", href: "/admin/danh-muc", icon: "📁" },
-    { name: "Thống kê", href: "/admin/thong-ke", icon: "📈" },
+    { name: "Thống kê", href: "/admin/stat", icon: "📈" },
 ];
 
 export default function Sidebar() {
