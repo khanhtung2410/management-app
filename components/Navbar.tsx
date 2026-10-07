@@ -48,53 +48,36 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="bg-gray-800 px-6 py-4 text-white">
+        <nav className="px-6 py-4" style={{ background: "var(--surface)", color: "var(--foreground)" }}>
             <div className="flex justify-between">
                 <div className="flex gap-6">
-                    <Link
-                        href="/"
-                        className="text-gray-300 hover:text-white"
-                    >
+                    <Link href="/" className="hover:underline">
                         Trang chủ
                     </Link>
 
                     {isLoggedIn && (
-                        <Link
-                            href="/tasks"
-                            className="text-gray-300 hover:text-white"
-                        >
-                            Công việc
-                        </Link>
+                            <Link href="/tasks" className="hover:underline">
+                                Công việc
+                            </Link>
                     )}
                 </div>
 
                 <div className="flex gap-6">
                     {!isLoggedIn ? (
                         <>
-                            <Link
-                                href="/login"
-                                className="text-gray-300 hover:text-white"
-                            >
+                            <Link href="/login" className="hover:underline">
                                 Đăng nhập
                             </Link>
 
-                            <Link
-                                href="/register"
-                                className="text-gray-300 hover:text-white"
-                            >
+                            <Link href="/register" className="hover:underline">
                                 Đăng ký
                             </Link>
                         </>
                     ) : (
                         <>
-                            <span className="text-gray-300">
-                                Xin chào, {userName}
-                            </span>
+                            <span>Xin chào, {userName}</span>
 
-                            <button
-                                onClick={handleLogout}
-                                className="text-gray-300 hover:text-white"
-                            >
+                            <button onClick={handleLogout} className="hover:underline">
                                 Đăng xuất
                             </button>
                         </>

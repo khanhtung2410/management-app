@@ -71,7 +71,7 @@ export default function Home() {
                                         key={item.ID}
                                         className="transition hover:bg-gray-50"
                                     >
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 text-gray-600">
                                             {item.ID}
                                         </td>
                                         <td className="px-6 py-4 font-medium text-gray-800">
