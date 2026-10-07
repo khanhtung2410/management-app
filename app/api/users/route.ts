@@ -7,19 +7,30 @@ export async function GET(request: Request) {
         const db = await getDb();
         const { searchParams } = new URL(request.url);
 
+        const order = searchParams.get("sortById") === "desc" ? "desc" : "asc";
+        const search = searchParams.get("search") || "";
         const page = Math.max(Number(searchParams.get("page")) || 1, 1);
         const pageSize = Math.max(Number(searchParams.get("pageSize")) || 10, 1);
+
+
         const offset = (page - 1) * pageSize;
 
         const result = await db
             .request()
             .input("offset", sql.Int, offset)
+            .input("search", sql.NVarChar(255), search)
             .input("pageSize", sql.Int, pageSize)
+            .input("order", sql.NVarChar(4), order)
             .query(`
                 SELECT ID, HoTen, Email, SDT, TrangThai
                 FROM [User]
-                WHERE RoleId = 1
-                ORDER BY ID
+                WHERE RoleId = 1 
+                And (
+                    HoTen LIKE N'%' + @search + N'%' 
+                    OR Email LIKE N'%' + @search + N'%')
+                ORDER BY 
+                    case when @order = 'asc' then ID end ASC,
+                    case when @order = 'desc' then ID end DESC
                 OFFSET @offset ROWS
                 FETCH NEXT @pageSize ROWS ONLY
             `);

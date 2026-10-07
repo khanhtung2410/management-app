@@ -13,12 +13,17 @@ interface User {
 export default function UserList() {
     const [data, setData] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+
     const [processingIds, setProcessingIds] = useState<number[]>([]);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [editName, setEditName] = useState("");
     const [editEmail, setEditEmail] = useState("");
     const [editSDT, setEditSDT] = useState("");
     const [saving, setSaving] = useState(false);
+
+    const [sort, setSort] = useState<"asc" | "desc">("asc");
+    const [searchTerm, setSearchTerm] = useState("");
+
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
@@ -34,7 +39,7 @@ export default function UserList() {
                 setLoading(true);
 
                 const response = await fetch(
-                    `/api/users?page=${currentPage}&pageSize=${pageSize}`,
+                    `/api/users?page=${currentPage}&pageSize=${pageSize}&sortById=${sort}&search=${searchTerm}`,
                     {
                         credentials: "include"
                     }
@@ -64,7 +69,7 @@ export default function UserList() {
         };
 
         loadUsers();
-    }, [currentPage]);
+    }, [currentPage, sort, searchTerm]);
 
     // =========================
     // Đổi trạng thái
@@ -232,6 +237,11 @@ export default function UserList() {
         return pages;
     };
 
+    const sortById = () => {
+        setSort(prev => prev === "asc" ? "desc" : "asc");
+        setCurrentPage(1); 
+    }
+
     return (
         <main className="min-h-screen bg-[#F3F6FA] p-8">
             <div className="mx-auto max-w-6xl">
@@ -243,7 +253,11 @@ export default function UserList() {
                     <h1 className="text-3xl font-bold text-[#0f172a]">
                         Danh sách người dùng
                     </h1>
-
+                    <div className='flex gap-4 items-center'>
+                        <label htmlFor="search" className="mr-2 text-sm font-medium text-[#334155]">Tìm kiếm</label>
+                        <input type='text' name='search' className='bg-white border  border-gray-300 text-[#334155]' value={searchTerm} onChange={e => setSearchTerm(e.target.value)}>
+                        </input>
+                    </div>
                     <span className="rounded-full bg-[#DBEAFE] px-3 py-1 text-sm font-medium text-[#1E40AF]">
                         {totalUsers} người dùng
                     </span>
@@ -259,8 +273,12 @@ export default function UserList() {
                         <table className="w-full min-w-[900px] text-left">
                             <thead className="bg-[#F1F5F9] text-[#0f172a]">
                                 <tr className="border-b border-[#E2E8F0]">
-                                    <th className="w-20 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                        ID
+                                    <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                        <button
+                                            onClick={() => { sortById() }}
+                                        >
+                                            ID {sort === "asc" ?"🔺":"🔻"} 
+                                        </button>
                                     </th>
 
                                     <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
@@ -341,7 +359,7 @@ export default function UserList() {
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-3">
                                                     <button
                                                         type="button"
                                                         onClick={() =>
