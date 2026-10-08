@@ -243,22 +243,24 @@ export default function UserList() {
     }
 
     return (
-        <main className="min-h-screen bg-[#F3F6FA] p-8">
+        <main className="min-h-screen bg-[#F3F6FA] p-4 sm:p-8">
             <div className="mx-auto max-w-6xl">
 
                 {/* =========================
                     Header
                 ========================= */}
-                <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-3xl font-bold text-[#0f172a]">
+                <div className="mb-6 flex gap-4 flex-col sm:items-center sm:justify-between sm:flex-row">
+                    <h1 className="text-2xl font-bold text-[#0f172a] sm:text-3xl">
                         Danh sách người dùng
                     </h1>
                     <div className='flex gap-4 items-center'>
                         <label htmlFor="search" className="mr-2 text-sm font-medium text-[#334155]">Tìm kiếm</label>
-                        <input type='text' name='search' className='bg-white border  border-gray-300 text-[#334155]' value={searchTerm} onChange={e => setSearchTerm(e.target.value)}>
+                        <input id='search' type='text' name='search'
+                            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-[#334155] outline-none focus:border-[#1E40AF] focus:ring-1 focus:ring-[#1E40AF]"
+                            value={searchTerm} onChange={e => setSearchTerm(e.target.value)}>
                         </input>
                     </div>
-                    <span className="rounded-full bg-[#DBEAFE] px-3 py-1 text-sm font-medium text-[#1E40AF]">
+                    <span className="inline-flex w-fit items-center rounded-full bg-[#DBEAFE] px-3 py-1 text-sm font-medium text-[#1E40AF]">
                         {totalUsers} người dùng
                     </span>
                 </div>
@@ -346,7 +348,7 @@ export default function UserList() {
 
                                             <td className="px-6 py-4 text-sm">
                                                 <span
-                                                    className="nline-flex rounded-full px-3 py-1 text-xs font-medium"
+                                                    className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
                                                   style={{
                                                            backgroundColor: item.TrangThai === 1 ? "#DCFCE7" : "#FEE2E2",
                                                            color: item.TrangThai === 1 ? "#15803D" : "#B91C1C"
