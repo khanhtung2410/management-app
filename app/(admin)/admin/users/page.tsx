@@ -242,6 +242,56 @@ export default function UserList() {
         setCurrentPage(1); 
     }
 
+    const renderStatusBadge = (trangThai: number) => (
+        <span
+            className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium"
+            style={{
+                backgroundColor: trangThai === 1 ? "#DCFCE7" : "#FEE2E2",
+                color: trangThai === 1 ? "#15803D" : "#B91C1C"
+            }}
+        >
+            {trangThai === 1 ? "Đang hoạt động" : "Ngừng hoạt động"}
+        </span>
+    )
+    const renderAction = (item: User, layout: "row" | "col" = "row") => {
+        const isActive = item.TrangThai === 1;
+        const isProcessing = processingIds.includes(item.ID);
+
+        const baseBtn = "rounded-md px-4 py-2 text-sm font-medium text-white transition";
+        const widthClass = layout === "col" ? "flex-1" : "";
+
+        return (
+            <div className={layout === "row" ? "flex gap-3" : "flex gap-2"}>
+                {/* Nút Sửa */}
+                <button
+                    type="button"
+                    onClick={() => openEdit(item)}
+                    className={`${baseBtn} bg-[#6B7280] hover:bg-[#4B5563] ${widthClass}`}
+                >
+                    Sửa
+                </button>
+
+                {/* Nút Toggle trạng thái */}
+                <button
+                    type="button"
+                    disabled={isProcessing}
+                    onClick={() => toggleStatus(item.ID, item.TrangThai)}
+                    className={`${baseBtn} ${widthClass} ${isProcessing
+                            ? "bg-[#9CA3AF] cursor-not-allowed"
+                            : isActive
+                            ? "bg-red-600 hover:bg-red-700"
+                            : "bg-green-700 hover:bg-green-800"
+                        }`}
+                >
+                    {isProcessing
+                        ? "Đang..."
+                        : isActive
+                            ? "Ngừng"
+                            : "Kích hoạt"}
+                </button>
+            </div>
+        );
+    };
     return (
         <main className="min-h-screen bg-[#F3F6FA] p-4 sm:p-8">
             <div className="mx-auto max-w-6xl">
@@ -249,7 +299,7 @@ export default function UserList() {
                 {/* =========================
                     Header
                 ========================= */}
-                <div className="mb-6 flex gap-4 flex-col sm:items-center sm:justify-between sm:flex-row">
+                <div className="mb-6 flex gap-4 flex-col md:items-center md:justify-between md:flex-row">
                     <h1 className="text-2xl font-bold text-[#0f172a] sm:text-3xl">
                         Danh sách người dùng
                     </h1>
@@ -268,143 +318,147 @@ export default function UserList() {
                 {/* =========================
                     Table Card
                 ========================= */}
-                <div className="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-[#E2E8F0]">
+                <div className="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-[#E2E8F0] ">
 
                     {/* Chỉ table scroll ngang */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[900px] text-left">
-                            <thead className="bg-[#F1F5F9] text-[#0f172a]">
-                                <tr className="border-b border-[#E2E8F0]">
-                                    <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                        <button
-                                            onClick={() => { sortById() }}
-                                        >
-                                            ID {sort === "asc" ?"🔺":"🔻"} 
-                                        </button>
-                                    </th>
+                    <div className="hidden md:block">
+                        <div className="overflow-x-auto ">
+                            <table className="w-full min-w-[900px] text-left">
+                                <thead className="bg-[#F1F5F9] text-[#0f172a]">
+                                    <tr className="border-b border-[#E2E8F0]">
+                                        <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                            <button
+                                                onClick={() => { sortById() }}
+                                            >
+                                                ID {sort === "asc" ? "🔺" : "🔻"}
+                                            </button>
+                                        </th>
 
-                                    <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                        Họ tên
-                                    </th>
+                                        <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                            Họ tên
+                                        </th>
 
-                                    <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                        Email
-                                    </th>
+                                        <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                            Email
+                                        </th>
 
-                                    <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                        SĐT
-                                    </th>
+                                        <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                            SĐT
+                                        </th>
 
-                                    <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                        Trạng thái
-                                    </th>
+                                        <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                            Trạng thái
+                                        </th>
 
-                                    <th className="w-64 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                        Hành động
-                                    </th>
-                                </tr>
-                            </thead>
-
-                            <tbody className="divide-y divide-[#E2E8F0]">
-                                {loading ? (
-                                    <tr>
-                                        <td
-                                            colSpan={6}
-                                            className="px-6 py-12 text-center text-[#64748B]"
-                                        >
-                                            Đang tải dữ liệu...
-                                        </td>
+                                        <th className="w-64 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                            Hành động
+                                        </th>
                                     </tr>
-                                ) : data.length === 0 ? (
-                                    <tr>
-                                        <td
-                                            colSpan={6}
-                                            className="px-6 py-12 text-center text-[#64748B]"
-                                        >
-                                            Chưa có người dùng nào.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    data.map(item => (
-                                        <tr
-                                            key={item.ID}
-                                            className="transition hover:bg-[#F8FAFC]"
-                                        >
-                                            <td className="px-6 py-4 text-sm text-[#334155]">
-                                                #{item.ID}
-                                            </td>
+                                </thead>
 
-                                            <td className="px-6 py-4 font-medium text-[#0f172a]">
-                                                {item.HoTen}
-                                            </td>
-
-                                            <td className="px-6 py-4 text-sm text-[#334155]">
-                                                {item.Email}
-                                            </td>
-
-                                            <td className="px-6 py-4 text-sm text-[#334155]">
-                                                {item.SDT}
-                                            </td>
-
-                                            <td className="px-6 py-4 text-sm">
-                                                <span
-                                                    className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
-                                                  style={{
-                                                           backgroundColor: item.TrangThai === 1 ? "#DCFCE7" : "#FEE2E2",
-                                                           color: item.TrangThai === 1 ? "#15803D" : "#B91C1C"
-                                                        }}
-                                                >
-                                                    {item.TrangThai === 1
-                                                        ? "Đang hoạt động"
-                                                        : "Ngừng hoạt động"}
-                                                </span>
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <div className="flex gap-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            openEdit(item)
-                                                        }
-                                                        className="rounded-md bg-[#6B7280] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4B5563]"
-                                                    >
-                                                        Sửa
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            toggleStatus(
-                                                                item.ID,
-                                                                item.TrangThai
-                                                            )
-                                                        }
-                                                        disabled={processingIds.includes(
-                                                            item.ID
-                                                        )}
-                                                        className={`rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${item.TrangThai === 1
-                                                                ? "bg-[#DC2626] hover:bg-[#B91C1C]"
-                                                                : "bg-[#1E40AF] hover:bg-[#1D4ED8]"
-                                                            }`}
-                                                    >
-                                                        {processingIds.includes(
-                                                            item.ID
-                                                        )
-                                                            ? "Đang..."
-                                                            : item.TrangThai === 1
-                                                                ? "Ngừng"
-                                                                : "Kích hoạt"}
-                                                    </button>
-                                                </div>
+                                <tbody className="divide-y divide-[#E2E8F0]">
+                                    {loading ? (
+                                        <tr>
+                                            <td
+                                                colSpan={6}
+                                                className="px-6 py-12 text-center text-[#64748B]"
+                                            >
+                                                Đang tải dữ liệu...
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    ) : data.length === 0 ? (
+                                        <tr>
+                                            <td
+                                                colSpan={6}
+                                                className="px-6 py-12 text-center text-[#64748B]"
+                                            >
+                                                Chưa có người dùng nào.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        data.map(item => (
+                                            <tr
+                                                key={item.ID}
+                                                className="transition hover:bg-[#F8FAFC]"
+                                            >
+                                                <td className="px-6 py-4 text-sm text-[#334155]">
+                                                    #{item.ID}
+                                                </td>
 
+                                                <td className="px-6 py-4 font-medium text-[#0f172a]">
+                                                    {item.HoTen}
+                                                </td>
+
+                                                <td className="px-6 py-4 text-sm text-[#334155]">
+                                                    {item.Email}
+                                                </td>
+
+                                                <td className="px-6 py-4 text-sm text-[#334155]">
+                                                    {item.SDT}
+                                                </td>
+
+                                                <td className="px-6 py-4 text-sm">
+                                                    {renderStatusBadge(item.TrangThai)}
+                                                </td>
+
+                                                <td className="px-6 py-4">
+                                                    {renderAction(item,"row") }
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                            </div>
+                    </div>
+               
+                    <div className="md:hidden">
+                        {loading ? (
+                            <div className="px-6 py-12 text-center text-[#64748B]">
+                                Đang tải dữ liệu...
+                            </div>
+                        ) : data.length === 0 ? (
+                                    <div className="px-6 py-12 text-center text-[#64748B]">
+                                    Chưa có người dùng nào.
+                                </div>
+                        ) : (
+                                    <div className="divide-y divide-[#E2E8F0]">
+                                        {data.map(item => (
+                                            <div key={item.ID} className="space-y-3 p-4">
+                                                {/* ID + Trạng thái */}
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-medium text-[#64748B]">
+                                                        #{item.ID}
+                                                    </span>
+                                                    {renderStatusBadge(item.TrangThai)}
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs text-[#64748B]">Họ tên</div>
+                                                    <span className="text-xs text-[#64748B]">
+                                                        {item.HoTen}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs text-[#64748B]">Email</div>
+                                                    <span className="text-xs text-[#64748B]">
+                                                        {item.Email}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs text-[#64748B]">Điện thoại</div>
+                                                    <span className="text-xs text-[#64748B]">
+                                                        {item.SDT}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    {renderAction(item,"col") }
+                                                </div>
+                                            </div>
+                                        ))}
+                            </div>
+                        )}
+                    </div>
+                           
                     {/* =========================
                         Pagination
                     ========================= */}
@@ -470,6 +524,7 @@ export default function UserList() {
                         </div>
                     </div>
                 </div>
+
             </div>
 
             {/* =========================
