@@ -234,9 +234,7 @@ export default function DashboardPage() {
                                         label={({
                                             percent
                                         }) =>
-                                            `${Math.round(
-                                                (percent || 0) * 100
-                                            )}%`
+                                            `${(percent || 0).toFixed(2)}%`
                                         }
                                     >
                                         {data.taskStats.map(

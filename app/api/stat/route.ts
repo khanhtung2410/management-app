@@ -1,5 +1,4 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
-import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 
