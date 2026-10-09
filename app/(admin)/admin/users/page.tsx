@@ -462,66 +462,64 @@ export default function UserList() {
                     {/* =========================
                         Pagination
                     ========================= */}
-                    <div className="flex items-center justify-between border-t border-[#E2E8F0] px-6 py-4">
+                    <div className="flex items-center justify-between border-t border-[#E2E8F0] px-4 py-3 sm:px-6 sm:py-4">
+                        {/* Trước */}
+                        <button
+                            type="button"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            className="rounded-md border px-3 py-2 text-sm text-[#334155] transition hover:bg-[#F1F5F9] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Trước
+                        </button>
 
-                        <span className="whitespace-nowrap text-sm text-[#64748B]">
-                            Trang {currentPage} / {totalPages}
-                        </span>
-
+                        {/* Giữa: số trang hiện tại trên mobile, dãy số trên desktop */}
                         <div className="flex items-center gap-1">
+                            {/* Mobile: chỉ X / Y */}
+                            <span className="px-3 py-2 text-sm font-medium text-[#334155] sm:hidden">
+                                {currentPage} / {totalPages}
+                            </span>
 
-                            {/* Trước */}
-                            <button
-                                type="button"
-                                disabled={currentPage === 1}
-                                onClick={() =>
-                                    setCurrentPage(prev => prev - 1)
-                                }
-                                className="rounded-md border px-3 py-2 text-sm text-[#334155] transition hover:bg-[#F1F5F9] disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                Trước
-                            </button>
-
-                            {/* Số trang */}
-                            {getPageNumbers().map((page, index) =>
-                                page === "..." ? (
-                                    <span
-                                        key={`dots-${index}`}
-                                        className="px-2 py-2 text-sm text-[#64748B]"
-                                    >
-                                        ...
-                                    </span>
-                                ) : (
-                                    <button
-                                        key={page}
-                                        type="button"
-                                        onClick={() => {
-                                            if (typeof page === "number") {
-                                                setCurrentPage(page);
-                                            }
-                                        }}
-                                        className={`min-w-9 rounded-md px-3 py-2 text-sm transition ${currentPage === page
-                                                ? "bg-[#1E40AF] text-white"
-                                                : "border text-[#334155] hover:bg-[#F1F5F9]"
-                                            }`}
-                                    >
-                                        {page}
-                                    </button>
-                                )
-                            )}
-
-                            {/* Sau */}
-                            <button
-                                type="button"
-                                disabled={currentPage === totalPages}
-                                onClick={() =>
-                                    setCurrentPage(prev => prev + 1)
-                                }
-                                className="rounded-md border px-3 py-2 text-sm text-[#334155] transition hover:bg-[#F1F5F9] disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                Sau
-                            </button>
+                            {/* Desktop: dãy số đầy đủ */}
+                            <div className="hidden items-center gap-1 sm:flex">
+                                {getPageNumbers().map((page, index) =>
+                                    page === "..." ? (
+                                        <span
+                                            key={`dots-${index}`}
+                                            className="px-2 py-2 text-sm text-[#64748B]"
+                                        >
+                                            ...
+                                        </span>
+                                    ) : (
+                                        <button
+                                            key={page}
+                                            type="button"
+                                            onClick={() => {
+                                                if (typeof page === "number") {
+                                                    setCurrentPage(page);
+                                                }
+                                            }}
+                                            className={`min-w-9 rounded-md px-3 py-2 text-sm transition ${currentPage === page
+                                                    ? "bg-[#1E40AF] text-white"
+                                                    : "border text-[#334155] hover:bg-[#F1F5F9]"
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    )
+                                )}
+                            </div>
                         </div>
+
+                        {/* Sau */}
+                        <button
+                            type="button"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            className="rounded-md border px-3 py-2 text-sm text-[#334155] transition hover:bg-[#F1F5F9] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Sau
+                        </button>
                     </div>
                 </div>
 
