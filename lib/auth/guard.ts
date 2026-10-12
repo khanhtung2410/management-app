@@ -1,7 +1,7 @@
 import { getAuthFromRequest, type RequestLike } from "./session";
 import { ForbiddenError } from "./errors";
 import type { AuthPayload } from "./payload";
-import { UserRoleType } from "../../constants/roles";
+import { UserRoleType } from "@/constants/roles";
 
 export async function requireAuth(req: RequestLike): Promise<AuthPayload> {
     return getAuthFromRequest(req);
