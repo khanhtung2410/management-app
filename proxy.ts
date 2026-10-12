@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'; 
 import type { NextRequest } from 'next/server';
-import { requireAuth, requireRole, AuthError } from '@/lib/auth';
+import { requireAuth, ForbiddenError, AuthError } from '@/lib/auth';
 import { userRole } from './constants/roles';
 
 export async function proxy(request: NextRequest) {
@@ -24,11 +24,14 @@ export async function proxy(request: NextRequest) {
     }
 
     try {
-        await requireAuth(request);
+        const payload = await requireAuth(request);
 
-        if (isAdminRoute) {
-            await requireRole(request, userRole.ADMIN);
+        if (isAdminRoute && payload.roleId !== userRole.ADMIN) {
+            throw new ForbiddenError();
         }
+
+        return NextResponse.next();
+
 
         return NextResponse.next();
     } catch (err) {
