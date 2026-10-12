@@ -2,11 +2,21 @@
 import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { createToken } from "@/lib/auth";
+import bcrypt from "bcryptjs";
+import { userStatus } from "@/constants/statuses";
 
 
 export async function POST(req: Request) {
     try {
-        const { email, password } = await req.json();
+        const body = await req.json().catch(() => null);
+        if (!body) {
+            return NextResponse.json(
+                { message: "Dữ liệu không hợp lệ" },
+                { status: 400 }
+            );
+        }
+
+        const { email, password } = body
 
         if (!email || !password) {
             return NextResponse.json(
@@ -20,12 +30,10 @@ export async function POST(req: Request) {
         const result = await pool
             .request()
             .input("Email", sql.VarChar(255), email)
-            .input("MK", sql.VarChar(255), password)
             .query(`
-                SELECT ID, HoTen, Email, SDT, RoleId
+                SELECT ID, HoTen, Email, SDT, RoleId, PasswordHash, TrangThai
                 FROM [User]
                 WHERE Email = @Email
-                  AND MK = @MK
             `);
 
         if (result.recordset.length === 0) {
@@ -36,6 +44,21 @@ export async function POST(req: Request) {
         }
 
         const user = result.recordset[0];
+
+        const ok = await bcrypt.compare(password, user.PasswordHash)
+        if (!ok) {
+            return NextResponse.json(
+                { message: "Email hoặc mật khẩu không đúng" },
+                { status: 401 }
+            )
+        }
+
+        if (user.TrangThai === userStatus.Inactive) {
+            return NextResponse.json(
+                { message: "Tài khoản của bạn đã bị khóa" },
+                { status: 401 }
+            )
+        }
 
         const token = await createToken({
             userId: user.ID,

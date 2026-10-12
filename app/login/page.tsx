@@ -30,7 +30,6 @@ export default function Login() {
                 return;
             }
 
-            console.log(data);
 
             const meResponse = await fetch("/api/auth/me");
 
