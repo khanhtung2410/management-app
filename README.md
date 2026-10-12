@@ -1,82 +1,71 @@
 ﻿# Website quản lý công việc cá nhân
-
-## 1. Giới thiệu
-
 **Website quản lý công việc cá nhân** là hệ thống hỗ trợ người dùng quản lý các công việc cá nhân một cách đơn giản và hiệu quả.
 
-Hệ thống cho phép người dùng đăng ký, đăng nhập, quản lý thông tin cá nhân, thêm và chỉnh sửa công việc, tìm kiếm/lọc công việc và theo dõi thống kê tình trạng công việc.
 
-## 2. Tác nhân
+## Problem
 
-### Người dùng
+Người dùng hiện nay ghi chú công việc rải rác ở nhiều nơi (giấy, app ghi chú, tin nhắn tự gửi),
+dẫn đến:
 
-Người dùng có quyền:
+- **Quên việc** — không có nơi tập trung để xem toàn bộ công việc cần làm.
+- **Khó theo dõi tiến độ** — không biết việc nào đã xong, việc nào còn tồn.
+- **Không có thống kê** — không biết mình đang dành thời gian cho việc gì.
+- **Các app hiện có quá phức tạp** — Notion, Jira... nhiều tính năng thừa cho nhu cầu cá nhân.
 
-* Đăng ký tài khoản.
-* Đăng nhập/đăng xuất.
-* Chỉnh sửa thông tin cá nhân.
-* Thêm công việc.
-* Chỉnh sửa công việc.
-* Tìm kiếm và lọc công việc.
-* Xem thống kê công việc.
+Giải pháp: một web app tối giản, tập trung vào **tạo – xem – hoàn thành** công việc.
 
-## 3. Chức năng
+## Users
 
-### 3.1. Quản lý tài khoản
+| Nhóm người dùng | Nhu cầu chính | Bối cảnh sử dụng |
+|---|---|---|
+| **Users** | Quản lý công việc cá nhân | Dùng hàng ngày trên điện thoại (buổi sáng lên kế hoạch) và trên laptop (khi làm việc) |
+| **Admin** | Quản lý người dùng, thống kê dữ liệu | Truy cập trang quản trị trên desktop, vài lần mỗi tuần để kiểm tra hoạt động hệ thống |
 
-* **Đăng ký:** Tạo tài khoản mới.
-* **Đăng nhập:** Đăng nhập vào hệ thống.
-* **Sửa hồ sơ:** Cập nhật họ tên, email, số điện thoại và thông tin cá nhân.
+## MVP Scope
 
-### 3.2. Quản lý công việc
+Mục tiêu: Người dùng tạo công việc trên ứng dụng
 
-* **Thêm công việc:** Tạo công việc mới.
-* **Sửa công việc:** Chỉnh sửa tên, mô tả, trạng thái và thời hạn.
-* **Tìm kiếm:** Tìm công việc theo tên.
-* **Lọc:** Lọc công việc theo trạng thái hoặc thời hạn.
+**Trong phạm vi:**
 
-### 3.3. Thống kê
+- [ ] **Đăng ký** — Tạo tài khoản mới bằng email + mật khẩu
+- [ ] **Đăng nhập** — Đăng nhập vào tài khoản đã có, nhận JWT
+- [ ] **Xem danh sách công việc** — Hiển thị các công việc của chính người dùng đang đăng nhập
+- [ ] **Tạo công việc** — Thêm mới công việc với tiêu đề và mô tả
 
-Hệ thống cung cấp thống kê giúp người dùng theo dõi:
+**Tiêu chí hoàn thành (Definition of Done):**
 
-* Tổng số công việc.
-* Số công việc chưa hoàn thành.
-* Số công việc đang thực hiện.
-* Số công việc đã hoàn thành.
-* Số công việc quá hạn.
-* Tỷ lệ hoàn thành công việc.
+- Có thể tạo tài khoản mới và đăng nhập thành công
+- Sau khi đăng nhập, thấy được danh sách công việc của mình (ban đầu rỗng)
+- Có thể tạo công việc mới và thấy nó xuất hiện trong danh sách
+- Mỗi người dùng chỉ thấy công việc của chính mình (không rò rỉ dữ liệu giữa các user)
+- Deploy được lên môi trường staging và có URL truy cập
 
-## 4. Cơ sở dữ liệu
 
-### Bảng `User`
+## Out of Scope
 
-| Trường  | Mô tả         |
-| ------- | ------------- |
-| `ID`    | Mã người dùng |
-| `HoTen` | Họ và tên     |
-| `Email` | Email         |
-| `SDT`   | Số điện thoại |
-| `MK`    | Mật khẩu      |
+Những thứ **không** làm trong bản MVP (xem xét ở phiên bản sau):
 
-### Bảng `CongViec`
+**Tính năng công việc:**
+- Sửa / xóa công việc — MVP chỉ cần tạo và xem để kiểm chứng nhu cầu
+- Đánh dấu hoàn thành, deadline, độ ưu tiên — thêm sau khi user thực sự dùng
+- Nhắc nhở / thông báo (email, push) — cần hạ tầng scheduler, tốn công
+- Gắn thẻ, phân loại, tìm kiếm, lọc — chỉ có ý nghĩa khi số lượng việc đủ lớn
 
-| Trường      | Mô tả                          |
-| ----------- | ------------------------------ |
-| `ID`        | Mã công việc                   |
-| `UserID`    | Mã người dùng sở hữu công việc |
-| `Ten`       | Tên công việc                  |
-| `Mota`      | Mô tả công việc                |
-| `TrangThai` | Trạng thái công việc           |
-| `HetHan`    | Thời hạn hoàn thành            |
+**Tài khoản:**
+- Đăng nhập bằng Google / Facebook — chỉ cần email + mật khẩu
+- Quên mật khẩu, đổi mật khẩu — MVP chưa cần
+- Xác thực email — thêm sau để tránh phức tạp khi test
 
-### Quan hệ
+**Admin:**
+- Dashboard thống kê biểu đồ — MVP chỉ cần trang danh sách user cơ bản
+- Phân quyền chi tiết (role, permission) — chỉ có 2 role: user và admin
 
-```text
-User
-  │
-  │ 1 - N
-  ▼
-CongViec
-```
+## Tech Stack
 
-`CongViec.UserID` là khóa ngoại tham chiếu đến `User.ID`.
+| Layer | Công nghệ | Ghi chú |
+|---|---|---|
+| Frontend | <React / Next.js / ...> | |
+| Backend | <Node.js / NestJS / ...> | |
+| Database | MSSQLSERVER | |
+| Auth | JWT | |
+| CI/CD | GitHub Actions | |
