@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { userRole } from "@/constants/roles"
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -40,7 +41,7 @@ export default function Login() {
 
             const user = await meResponse.json();
 
-            if (user.roleId === 2) {
+            if (user.roleId === userRole.ADMIN) {
                 location.href = "/admin";
             } else {
                 location.href = "/";

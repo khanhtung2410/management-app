@@ -39,7 +39,7 @@ export default function UserList() {
                 setLoading(true);
 
                 const response = await fetch(
-                    `/api/users?page=${currentPage}&pageSize=${pageSize}&sortById=${sort}&search=${searchTerm}`,
+                    `/api/admin/users?page=${currentPage}&pageSize=${pageSize}&sortById=${sort}&search=${searchTerm}`,
                     {
                         credentials: "include"
                     }
@@ -80,7 +80,7 @@ export default function UserList() {
         try {
             setProcessingIds(prev => [...prev, id]);
 
-            const res = await fetch("/api/users", {
+            const res = await fetch("/api/admin/users", {
                 method: "PUT",
                 credentials: "include",
                 headers: {
@@ -154,7 +154,7 @@ export default function UserList() {
         setSaving(true);
 
         try {
-            const res = await fetch("/api/users", {
+            const res = await fetch("/api/admin/users", {
                 method: "PUT",
                 credentials: "include",
                 headers: {

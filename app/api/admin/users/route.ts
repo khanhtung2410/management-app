@@ -1,9 +1,28 @@
-﻿import { NextResponse } from "next/server";
+﻿import { NextRequest,NextResponse } from "next/server";
 import * as sql from "mssql";
 import { getDb } from "@/lib/db";
+import { verifyToken } from "@/lib/auth";
+ 
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
     try {
+        const token = request.cookies.get("token")?.value
+        if(!token){
+            return NextResponse.json(
+                {message: "Chưa đăng nhập"},
+                {status: 401}
+            )
+        }
+
+        const payload = await verifyToken(token);
+        const userId = payload.userId;
+        if (!userId) {
+            return NextResponse.json(
+                { message: "Người dùng không hợp lệ" },
+                { status: 401 }
+            );
+        }
+
         const db = await getDb();
         const { searchParams } = new URL(request.url);
 

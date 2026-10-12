@@ -37,22 +37,24 @@ export async function POST(req: Request) {
 
         const user = result.recordset[0];
 
-        const token = await createToken(
-            user.ID,
-            user.HoTen,
-            user.RoleId
-        );
+        const token = await createToken({
+            userId: user.ID,
+            userName: user.HoTen,
+            roleId: user.RoleId,
+        });
 
         const response = NextResponse.json({
             message: "Đăng nhập thành công",
         });
+
         response.cookies.set("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 60 * 60 * 24, // 1 day
+            sameSite: "lax",
             path: "/",
+            maxAge: 60 * 60 * 24, 
         });
+
         return response;
     } catch (error) {
         console.error("LOGIN ERROR:", error);

@@ -39,6 +39,15 @@ export default function DashboardPage() {
     const [error, setError] =
         useState("");
 
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768);
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
+    }, []);
+
     useEffect(() => {
         const loadDashboard = async () => {
             try {
@@ -116,20 +125,18 @@ export default function DashboardPage() {
     }
 
     return (
-        <main className="min-h-screen bg-[#F3F6FA] p-8">
+        <main className="min-h-screen bg-[#F3F6FA] p-4 sm:p-6 lg:p-8">
             <div className="mx-auto max-w-7xl">
 
                 {/* ================= HEADER ================= */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-[#0F172A]">
-                        Dashboard
-                    </h1>
+                <h1 className="text-2xl font-bold text-[#0F172A] sm:text-3xl">
+                    Dashboard
+                </h1>
 
-                    <p className="mt-1 text-sm text-[#64748B]">
-                        Tổng quan hệ thống quản lý công việc
-                    </p>
-                </div>
-
+                <p className="mt-1 text-xs text-[#64748B] sm:text-sm">
+                    Tổng quan hệ thống quản lý công việc
+                </p>
+                    
                 {/* ================= CARDS ================= */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 
@@ -199,26 +206,26 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ================= PIE CHART ================= */}
-                <div className="mt-6 rounded-xl bg-white p-6 shadow-md ring-1 ring-[#E2E8F0]">
+                <div className="mt-6 rounded-xl bg-white p-4 shadow-md ring-1 ring-[#E2E8F0] sm:p-6">
 
                     <div className="mb-2">
-                        <h2 className="text-xl font-semibold text-[#0F172A]">
+                        <h2 className="text-lg font-semibold text-[#0F172A] sm:text-xl">
                             Thống kê công việc
                         </h2>
-
-                        <p className="mt-1 text-sm text-[#64748B]">
+                        <p className="mt-1 text-xs text-[#64748B] sm:text-sm">
                             Tỷ lệ công việc theo trạng thái
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
+                    {/* Grid responsive: mobile 1 cột, desktop 2 cột */}
+                    <div className="flex flex-col items-center gap-4 lg:grid lg:grid-cols-2 lg:gap-8">
 
-                        {/* ================= PIE ================= */}
-                        <div className="h-[380px] w-full">
-                            <ResponsiveContainer
-                                width="100%"
-                                height="100%"
-                            >
+                        {/* ===== PIE ===== */}
+                        <div
+                            className="w-full min-w-0"
+                            style={{ height: isMobile ? 260 : 380 }}
+                        >
+                            <ResponsiveContainer width="100%" height="100%" debounce={50}>
                                 <PieChart>
 
                                     <Pie
@@ -227,164 +234,145 @@ export default function DashboardPage() {
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={125}
-                                        innerRadius={65}
+                                        outerRadius={isMobile ? 80 : 125}
+                                        innerRadius={isMobile ? 45 : 65}
                                         paddingAngle={3}
-                                        labelLine={true}
-                                        label={({
-                                            percent
-                                        }) =>
-                                            `${(percent || 0).toFixed(2)}%`
+                                        labelLine={!isMobile}
+                                        label={({ percent }) =>
+                                            isMobile ? "" : `${(percent || 0).toFixed(2)}%`
                                         }
                                     >
-                                        {data.taskStats.map(
-                                            (_, index) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={
-                                                        COLORS[
-                                                        index %
-                                                        COLORS.length
-                                                        ]
-                                                    }
-                                                />
-                                            )
-                                        )}
+                                        {data.taskStats.map((_, index) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={COLORS[index % COLORS.length]}
+                                            />
+                                        ))}
                                     </Pie>
 
                                     <Tooltip
-                                        formatter={(
-                                            value,
-                                            name
-                                        ) => [
-                                                `${value} công việc`,
-                                                name
-                                            ]}
+                                        formatter={(value, name, props) => {
+                                            const percent = props?.payload?.percent ?? 0;
+                                            return [`${value} công việc (${percent}%)`, name];
+                                        }}
                                     />
 
-                                    <Legend />
+                                    <Legend
+                                        verticalAlign={isMobile ? "bottom" : "middle"}
+                                        align={isMobile ? "center" : "right"}
+                                        layout={isMobile ? "horizontal" : "vertical"}
+                                        iconType="circle"
+                                        wrapperStyle={{
+                                            fontSize: isMobile ? 12 : 14,
+                                            paddingTop: isMobile ? 8 : 0,
+                                        }}
+                                    />
 
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
 
-                        {/* ================= DETAIL ================= */}
-                        <div className="space-y-4">
+                        {/* ===== DETAIL ===== */}
+                        <div className="w-full min-w-0 space-y-3 sm:space-y-4">
+                            {data.taskStats.map((item, index) => (
+                                <div
+                                    key={item.status}
+                                    className="rounded-xl border border-[#E2E8F0] p-3 sm:p-5"
+                                >
+                                    <div className="flex items-center justify-between">
 
-                            {data.taskStats.map(
-                                (item, index) => (
-                                    <div
-                                        key={item.status}
-                                        className="rounded-xl border border-[#E2E8F0] p-5"
-                                    >
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 sm:gap-3">
 
-                                            <div className="flex items-center gap-3">
-
-                                                <span
-                                                    className="h-4 w-4 rounded-full"
-                                                    style={{
-                                                        backgroundColor:
-                                                            COLORS[
-                                                            index %
-                                                            COLORS.length
-                                                            ]
-                                                    }}
-                                                />
-
-                                                <span className="font-medium text-[#334155]">
-                                                    {item.name}
-                                                </span>
-
-                                            </div>
-
-                                            <span className="text-lg font-bold text-[#0F172A]">
-                                                {item.total}
-                                            </span>
-                                        </div>
-
-                                        {/* Percentage */}
-                                        <div className="mt-3 flex items-center justify-between">
-
-                                            <span className="text-sm text-[#64748B]">
-                                                Tỷ lệ
-                                            </span>
-
-                                            <span className="text-sm font-semibold text-[#334155]">
-                                                {item.percent}%
-                                            </span>
-
-                                        </div>
-
-                                        {/* Progress */}
-                                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#E2E8F0]">
-
-                                            <div
-                                                className="h-full rounded-full"
+                                            <span
+                                                className="h-3 w-3 rounded-full sm:h-4 sm:w-4"
                                                 style={{
-                                                    width: `${item.percent}%`,
                                                     backgroundColor:
-                                                        COLORS[
-                                                        index %
-                                                        COLORS.length
-                                                        ]
+                                                        COLORS[index % COLORS.length],
                                                 }}
                                             />
 
-                                        </div>
-                                    </div>
-                                )
-                            )}
+                                            <span className="text-sm font-medium text-[#334155] sm:text-base">
+                                                {item.name}
+                                            </span>
 
+                                        </div>
+
+                                        <span className="text-base font-bold text-[#0F172A] sm:text-lg">
+                                            {item.total}
+                                        </span>
+                                    </div>
+
+                                    {/* Percentage */}
+                                    <div className="mt-2 flex items-center justify-between sm:mt-3">
+
+                                        <span className="text-xs text-[#64748B] sm:text-sm">
+                                            Tỷ lệ
+                                        </span>
+
+                                        <span className="text-xs font-semibold text-[#334155] sm:text-sm">
+                                            {item.percent}%
+                                        </span>
+
+                                    </div>
+
+                                    {/* Progress */}
+                                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#E2E8F0] sm:h-2">
+
+                                        <div
+                                            className="h-full rounded-full transition-all"
+                                            style={{
+                                                width: `${item.percent}%`,
+                                                backgroundColor:
+                                                    COLORS[index % COLORS.length],
+                                            }}
+                                        />
+
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
-
                 {/* ================= SUMMARY ================= */}
-                <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="mt-6 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
 
-                    {data.taskStats.map(
-                        (item, index) => (
-                            <div
-                                key={item.status}
-                                className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-[#E2E8F0]"
-                            >
-                                <div className="flex items-center gap-3">
+                    {data.taskStats.map((item, index) => (
+                        <div
+                            key={item.status}
+                            className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-[#E2E8F0] sm:p-5"
+                        >
+                            <div className="flex items-center gap-2 sm:gap-3">
 
-                                    <span
-                                        className="h-3 w-3 rounded-full"
-                                        style={{
-                                            backgroundColor:
-                                                COLORS[
-                                                index %
-                                                COLORS.length
-                                                ]
-                                        }}
-                                    />
+                                <span
+                                    className="h-3 w-3 rounded-full"
+                                    style={{
+                                        backgroundColor:
+                                            COLORS[index % COLORS.length],
+                                    }}
+                                />
 
-                                    <span className="text-sm text-[#64748B]">
-                                        {item.name}
-                                    </span>
-                                </div>
-
-                                <div className="mt-3 flex items-end gap-2">
-
-                                    <span className="text-3xl font-bold text-[#0F172A]">
-                                        {item.total}
-                                    </span>
-
-                                    <span className="mb-1 text-sm text-[#64748B]">
-                                        công việc
-                                    </span>
-
-                                </div>
-
-                                <p className="mt-1 text-sm text-[#64748B]">
-                                    Chiếm {item.percent}% tổng số
-                                </p>
+                                <span className="text-xs text-[#64748B] sm:text-sm">
+                                    {item.name}
+                                </span>
                             </div>
-                        )
-                    )}
+
+                            <div className="mt-2 flex items-end gap-2 sm:mt-3">
+
+                                <span className="text-2xl font-bold text-[#0F172A] sm:text-3xl">
+                                    {item.total}
+                                </span>
+
+                                <span className="mb-1 text-xs text-[#64748B] sm:text-sm">
+                                    công việc
+                                </span>
+
+                            </div>
+
+                            <p className="mt-1 text-xs text-[#64748B] sm:text-sm">
+                                Chiếm {item.percent}% tổng số
+                            </p>
+                        </div>
+                    ))}
 
                 </div>
             </div>

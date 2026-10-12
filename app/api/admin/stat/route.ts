@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
+import { userRole } from "@/constants/roles";
 
 export async function GET(req: NextRequest) {
     try {
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
                 { status: 401 }
             );
         }
-        if (roleId !== 2) {
+        if (roleId !== userRole.ADMIN) {
             return NextResponse.json(
                 { message: "Bạn không có quyền truy cập" }, 
                 { status: 403 } 
@@ -34,10 +35,11 @@ export async function GET(req: NextRequest) {
         // Tổng người dùng
         const userResult = await pool
             .request()
+            .input("userRole", userRole.USER)
             .query(`
                 SELECT COUNT(*) AS totalUsers
                 FROM [dbo].[User]
-                WHERE RoleId = 1
+                WHERE RoleId = @userRole
             `);
 
         // Thống kê toàn bộ công việc
