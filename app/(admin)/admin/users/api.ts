@@ -62,7 +62,7 @@ export async function updateUserStatus(
     status: number,
     fetchImpl: Fetcher = fetch,
 ): Promise<void> {
-    const res = await fetchImpl("/api/admin/users", {
+    const res = await fetchImpl("/api/admin/users/status", {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -82,7 +82,7 @@ export async function updateUser(
     payload: UserUpdatePayload,
     fetchImpl: Fetcher = fetch,
 ): Promise<void> {
-    const res = await fetchImpl("/api/admin/users", {
+    const res = await fetchImpl("/api/admin/users/profile", {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

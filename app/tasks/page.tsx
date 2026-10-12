@@ -1,27 +1,69 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { taskStatus, type TaskStatusType } from "@/constants/statuses";
 
 interface CongViec {
     ID: number;
     Ten: string;
     Mota: string;
-    TrangThai: string;
+    TrangThai: number;
     HetHan: string;
+}
+
+const STATUS_CONFIG: Record<
+    TaskStatusType,
+    { label: string; bg: string; color: string }
+> = {
+    [taskStatus.Active]: {
+        label: "Đang thực hiện",
+        bg: "#DBEAFE",
+        color: "#1D4ED8",
+    },
+    [taskStatus.Complete]: {
+        label: "Hoàn thành",
+        bg: "#DCFCE7",
+        color: "#15803D",
+    },
+    [taskStatus.Overdue]: {
+        label: "Quá hạn",
+        bg: "#FEE2E2",
+        color: "#B91C1C",
+    },
+};
+
+function getDisplayStatus(item: CongViec): TaskStatusType {
+    if (item.TrangThai === taskStatus.Complete) return taskStatus.Complete;
+    if (new Date(item.HetHan) < new Date()) return taskStatus.Overdue;
+    return taskStatus.Active;
+}
+
+function formatDate(value: string): string {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return value;
+    return d.toLocaleString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 }
 
 export default function Home() {
     const [data, setData] = useState<CongViec[]>([]);
+    const [loading, setLoading] = useState(true);
 
     const [addTask, setAddTask] = useState(false);
     const [addTen, setAddTen] = useState("");
     const [addMota, setAddMota] = useState("");
     const [addNgayHetHan, setAddNgayHetHan] = useState("");
 
+    // ==============================
+    // Fetch danh sách khi mount
+    // ==============================
     useEffect(() => {
-        fetch("/api/tasks", {
-            credentials: "include",
-        })
+        fetch("/api/tasks", { credentials: "include" })
             .then(async response => {
                 const result = await response.json();
 
@@ -30,24 +72,27 @@ export default function Home() {
                         window.location.href = "/login";
                         return null;
                     }
-
-                    throw new Error(
-                        result.message || "Không thể lấy dữ liệu"
-                    );
+                    if (response.status === 403) {
+                        window.location.href = "/";
+                        return null;
+                    }
+                    throw new Error(result.message || "Không thể lấy dữ liệu");
                 }
 
                 return result;
             })
             .then(result => {
-                if (result) {
-                    setData(result);
-                }
+                if (result) setData(result);
             })
             .catch(error => {
                 console.error("Lỗi:", error);
-            });
+            })
+            .finally(() => setLoading(false));
     }, []);
 
+    // ==============================
+    // Modal thêm công việc
+    // ==============================
     const openadd = () => {
         setAddTen("");
         setAddMota("");
@@ -74,9 +119,7 @@ export default function Home() {
             const res = await fetch("/api/tasks", {
                 method: "POST",
                 credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     Ten: addTen,
                     Mota: addMota,
@@ -91,21 +134,16 @@ export default function Home() {
                     window.location.href = "/login";
                     return;
                 }
-
-                throw new Error(
-                    result.message || "Không thể thêm công việc"
-                );
+                throw new Error(result.message || "Không thể thêm công việc");
             }
 
             setData(prev => [result, ...prev]);
-
             setAddTen("");
             setAddMota("");
             setAddNgayHetHan("");
             setAddTask(false);
         } catch (error) {
             console.error("Lỗi thêm công việc:", error);
-
             alert(
                 error instanceof Error
                     ? error.message
@@ -113,6 +151,51 @@ export default function Home() {
             );
         }
     };
+
+    // ==============================
+    // Đổi trạng thái (0 ↔ 1)
+    // ==============================
+    const handleToggleStatus = async (item: CongViec) => {
+        const newStatus =
+            item.TrangThai === taskStatus.Complete
+                ? taskStatus.Active
+                : taskStatus.Complete;
+
+        try {
+            const res = await fetch(`/api/tasks/${item.ID}`, {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ TrangThai: newStatus }),
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                if (res.status === 401) {
+                    window.location.href = "/login";
+                    return;
+                }
+                throw new Error(
+                    result.message || "Không thể cập nhật trạng thái"
+                );
+            }
+
+            setData(prev =>
+                prev.map(t =>
+                    t.ID === item.ID ? { ...t, TrangThai: newStatus } : t
+                )
+            );
+        } catch (error) {
+            console.error("Lỗi cập nhật trạng thái:", error);
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : "Không thể cập nhật trạng thái"
+            );
+        }
+    };
+
     return (
         <main className="min-h-screen bg-gray-100 p-8">
             <div className="mx-auto max-w-6xl">
@@ -145,54 +228,81 @@ export default function Home() {
                                     <th className="px-6 py-4">Mô tả</th>
                                     <th className="px-6 py-4">Trạng thái</th>
                                     <th className="px-6 py-4">Hết hạn</th>
+                                    <th className="px-6 py-4">Hành động</th>
                                 </tr>
                             </thead>
 
                             <tbody className="divide-y">
-                                {data.map(item => (
-                                    <tr
-                                        key={item.ID}
-                                        className="transition hover:bg-gray-50"
-                                    >
-                                        <td className="px-6 py-4 text-gray-600">
-                                            {item.ID}
-                                        </td>
-
-                                        <td className="px-6 py-4 font-medium text-gray-800">
-                                            {item.Ten}
-                                        </td>
-
-                                        <td className="px-6 py-4 text-gray-600">
-                                            {item.Mota}
-                                        </td>
-
-                                        <td className="px-6 py-4">
-                                            <span
-                                                className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
-                                                style={{
-                                                    backgroundColor:
-                                                        item.TrangThai === "Hoàn thành"
-                                                            ? "#DCFCE7"
-                                                            : item.TrangThai === "Đang thực hiện"
-                                                                ? "#DBEAFE"
-                                                                : "#FEF3C7",
-                                                    color:
-                                                        item.TrangThai === "Hoàn thành"
-                                                            ? "#15803D"
-                                                            : item.TrangThai === "Đang thực hiện"
-                                                                ? "#1D4ED8"
-                                                                : "#B45309"
-                                                }}
-                                            >
-                                                {item.TrangThai}
-                                            </span>
-                                        </td>
-
-                                        <td className="px-6 py-4 text-gray-600">
-                                            {item.HetHan}
+                                {loading && (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                                            Đang tải...
                                         </td>
                                     </tr>
-                                ))}
+                                )}
+
+                                {!loading && data.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                                            Chưa có công việc nào
+                                        </td>
+                                    </tr>
+                                )}
+
+                                {!loading && data.map(item => {
+                                    const displayStatus = getDisplayStatus(item);
+                                    const config = STATUS_CONFIG[displayStatus];
+                                    const isComplete = item.TrangThai === taskStatus.Complete;
+
+                                    return (
+                                        <tr
+                                            key={item.ID}
+                                            className="transition hover:bg-gray-50"
+                                        >
+                                            <td className="px-6 py-4 text-gray-600">
+                                                {item.ID}
+                                            </td>
+
+                                            <td className="px-6 py-4 font-medium text-gray-800">
+                                                {item.Ten}
+                                            </td>
+
+                                            <td className="px-6 py-4 text-gray-600">
+                                                {item.Mota}
+                                            </td>
+
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
+                                                    style={{
+                                                        backgroundColor: config.bg,
+                                                        color: config.color,
+                                                    }}
+                                                >
+                                                    {config.label}
+                                                </span>
+                                            </td>
+
+                                            <td className="px-6 py-4 text-gray-600">
+                                                {formatDate(item.HetHan)}
+                                            </td>
+
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleStatus(item)}
+                                                    className={
+                                                        isComplete
+                                                            ? "rounded-md bg-gray-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-gray-600"
+                                                            : "rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-green-700"
+                                                    }
+                                                >
+                                                    {isComplete ? "Mở lại" : "Hoàn thành"}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -231,24 +341,20 @@ export default function Home() {
                                 <input
                                     type="text"
                                     value={addTen}
-                                    onChange={e =>
-                                        setAddTen(e.target.value)
-                                    }
+                                    onChange={e => setAddTen(e.target.value)}
                                     placeholder="Nhập tên công việc"
                                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm font-medium ">
+                                <label className="mb-1 block text-sm font-medium">
                                     Mô tả công việc
                                 </label>
 
                                 <textarea
                                     value={addMota}
-                                    onChange={e =>
-                                        setAddMota(e.target.value)
-                                    }
+                                    onChange={e => setAddMota(e.target.value)}
                                     placeholder="Nhập mô tả công việc"
                                     rows={4}
                                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -256,16 +362,14 @@ export default function Home() {
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm font-medium ">
+                                <label className="mb-1 block text-sm font-medium">
                                     Ngày hết hạn
                                 </label>
 
                                 <input
                                     type="datetime-local"
                                     value={addNgayHetHan}
-                                    onChange={e =>
-                                        setAddNgayHetHan(e.target.value)
-                                    }
+                                    onChange={e => setAddNgayHetHan(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 />
                             </div>

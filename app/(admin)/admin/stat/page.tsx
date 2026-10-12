@@ -55,7 +55,7 @@ export default function DashboardPage() {
                 setError("");
 
                 const response = await fetch(
-                    "/api/stat",
+                    "/api/admin/stat",
                     {
                         method: "GET",
                         credentials: "include",

@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import type { User } from "./api";
-
+import {userStatus } from "@/constants/statuses"
 interface RowProps {
     user: User;
     processing: boolean;
@@ -10,7 +10,7 @@ interface RowProps {
 }
 
 export function StatusBadge({ trangThai }: { trangThai: number }) {
-    const active = trangThai === 1;
+    const active = trangThai === userStatus.Active;
     return (
         <span
             className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium"
@@ -31,7 +31,7 @@ function Actions({
     onEdit,
     onToggle,
 }: RowProps & { layout: "row" | "card" }) {
-    const isActive = user.TrangThai === 1;
+    const isActive = user.TrangThai === userStatus.Active;
     const base = "rounded-md px-4 py-2 text-sm font-medium text-white transition";
     const grow = layout === "card" ? "flex-1" : "";
     const toggleCls = processing

@@ -1,38 +1,16 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
+import { taskStatus } from "@/constants/statuses";
 
 export async function GET(req: NextRequest) {
     try {
-        const token = req.cookies.get("token")?.value;
-
-        if (!token) {
-            return NextResponse.json(
-                { message: "Chưa đăng nhập" },
-                { status: 401 }
-            );
-        }
-
-        const payload = await verifyToken(token);
-        const userId = payload.userId;
-        const roleId = payload.roleId;
-        if (!userId) {
-            return NextResponse.json(
-                { message: "Người dùng không hợp lệ" },
-                { status: 401 }
-            );
-        }
-        if (roleId !== userRole.ADMIN) {
-            return NextResponse.json(
-                { message: "Bạn không có quyền truy cập" }, 
-                { status: 403 } 
-            );
-        }
+        await requireRole(req, userRole.ADMIN);
 
         const pool = await getDb();
 
-        // Tổng người dùng
+        // Tổng người dùng thường
         const userResult = await pool
             .request()
             .input("userRole", userRole.USER)
@@ -42,107 +20,76 @@ export async function GET(req: NextRequest) {
                 WHERE RoleId = @userRole
             `);
 
-        // Thống kê toàn bộ công việc
+        // Thống kê công việc — tính động 3 trạng thái
+        // Active   = TrangThai 0 + còn hạn
+        // Complete = TrangThai 1
+        // Overdue  = TrangThai 0 + đã quá hạn
         const taskResult = await pool
             .request()
             .query(`
                 SELECT
                     COUNT(*) AS totalTasks,
 
-                    SUM(
-                        CASE
-                            WHEN TrangThai = N'Chưa hoàn thành'
-                            THEN 1
-                            ELSE 0
-                        END
-                    ) AS ChuaHoanThanh,
+                    SUM(CASE 
+                        WHEN TrangThai = 0 AND HetHan >= GETDATE() 
+                        THEN 1 ELSE 0 
+                    END) AS DangThucHien,
 
-                    SUM(
-                        CASE
-                            WHEN TrangThai = N'Đang thực hiện'
-                            THEN 1
-                            ELSE 0
-                        END
-                    ) AS DangThucHien,
+                    SUM(CASE 
+                        WHEN TrangThai = 1 
+                        THEN 1 ELSE 0 
+                    END) AS HoanThanh,
 
-                    SUM(
-                        CASE
-                            WHEN TrangThai = N'Hoàn thành'
-                            THEN 1
-                            ELSE 0
-                        END
-                    ) AS HoanThanh
+                    SUM(CASE 
+                        WHEN TrangThai = 0 AND HetHan < GETDATE() 
+                        THEN 1 ELSE 0 
+                    END) AS QuaHan
 
                 FROM [dbo].[CongViec]
             `);
 
-        const totalUsers = Number(
-            userResult.recordset[0]?.totalUsers || 0
-        );
+        const totalUsers = Number(userResult.recordset[0]?.totalUsers || 0);
 
         const row = taskResult.recordset[0];
-
-        const totalTasks = Number(
-            row?.totalTasks || 0
-        );
-
-        const chuaHoanThanh = Number(
-            row?.ChuaHoanThanh || 0
-        );
-
-        const dangThucHien = Number(
-            row?.DangThucHien || 0
-        );
-
-        const hoanThanh = Number(
-            row?.HoanThanh || 0
-        );
+        const totalTasks = Number(row?.totalTasks || 0);
+        const dangThucHien = Number(row?.DangThucHien || 0);
+        const hoanThanh = Number(row?.HoanThanh || 0);
+        const quaHan = Number(row?.QuaHan || 0);
 
         const getPercent = (value: number) => {
-            if (totalTasks === 0) {
-                return 0;
-            }
-
-            return Math.round(
-                (value / totalTasks) * 10000
-            ) / 100;
+            if (totalTasks === 0) return 0;
+            return Math.round((value / totalTasks) * 10000) / 100;
         };
 
         return NextResponse.json({
             totalUsers,
             totalTasks,
-
             taskStats: [
                 {
-                    status: "Chưa hoàn thành",
-                    name: "Chưa hoàn thành",
-                    total: chuaHoanThanh,
-                    percent: getPercent(chuaHoanThanh)
-                },
-                {
-                    status: "Đang thực hiện",
+                    status: taskStatus.Active,
                     name: "Đang thực hiện",
                     total: dangThucHien,
-                    percent: getPercent(dangThucHien)
+                    percent: getPercent(dangThucHien),
                 },
                 {
-                    status: "Hoàn thành",
+                    status: taskStatus.Complete,
                     name: "Hoàn thành",
                     total: hoanThanh,
-                    percent: getPercent(hoanThanh)
-                }
-            ]
+                    percent: getPercent(hoanThanh),
+                },
+                {
+                    status: taskStatus.Overdue,
+                    name: "Quá hạn",
+                    total: quaHan,
+                    percent: getPercent(quaHan),
+                },
+            ],
         });
     } catch (error) {
         console.error("GET DASHBOARD ERROR:", error);
-
         return NextResponse.json(
-            {
-                message: "Lỗi khi lấy dữ liệu Dashboard"
-            },
-            {
-                status: 500
-            }
+            { message: "Lỗi khi lấy dữ liệu Dashboard" },
+            { status: 500 }
         );
     }
 }

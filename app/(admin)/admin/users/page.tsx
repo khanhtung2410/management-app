@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { User } from "./api";
-import { useUsers } from "./useUsers";
+import { useUsers } from "./useUser";
 import { UserTableRow, UserCard } from "./UserRow";
 import { Pagination } from "./Pagination";
 import { EditUserModal } from "./EditUserModal";
