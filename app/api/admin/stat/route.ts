@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import sql from "mssql"
 import { requireRole } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
 import { taskStatus } from "@/constants/statuses";
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
         // Tổng người dùng thường
         const userResult = await pool
             .request()
-            .input("userRole", userRole.USER)
+            .input("userRole", sql.Int,userRole.USER)
             .query(`
                 SELECT COUNT(*) AS totalUsers
                 FROM [dbo].[User]
