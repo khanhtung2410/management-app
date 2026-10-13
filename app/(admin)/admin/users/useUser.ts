@@ -17,28 +17,32 @@ const SEARCH_DEBOUNCE_MS = 500;
 export interface UseUsersOptions {
     pageSize?: number;
     fetcher?: Fetcher;
+    searchTerm?: string;
 }
+
+export type UsersState =
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "success"; data: User[], totalPages: number, total: number }
+    | { status: "error"; message: string };
 
 export function useUsers({
     pageSize = DEFAULT_PAGE_SIZE,
     fetcher,
+    searchTerm = "",
 }: UseUsersOptions = {}) {
-    const [data, setData] = useState<User[]>([]);
+
+    const [state, setState] = useState<UsersState>({ status: "idle" })
+
     const [processingIds, setProcessingIds] = useState<number[]>([]);
     const [actionError, setActionError] = useState<string | null>(null);
 
+
     const [sort, setSort] = useState<"asc" | "desc">("asc");
-    const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalUsers, setTotalUsers] = useState(0);
 
-    // 🔑 Key dẫn xuất loading — không cần setLoading(true) trong effect
-    const requestKey = `${currentPage}-${sort}-${debouncedSearch}-${pageSize}`;
-    const [loadedKey, setLoadedKey] = useState<string | null>(null);
-    const loading = loadedKey !== requestKey;
 
     // Debounce search
     useEffect(() => {
@@ -49,6 +53,7 @@ export function useUsers({
         return () => clearTimeout(t);
     }, [searchTerm]);
 
+
     // Fetch data
     useEffect(() => {
         let cancelled = false;
@@ -56,29 +61,38 @@ export function useUsers({
         (async () => {
             try {
                 const page = await fetchUsers(
-                    { page: currentPage, pageSize,  sortBy: "id", order: sort , search: debouncedSearch },
+                    { page: currentPage, pageSize, sortBy: "id", order: sort, search: debouncedSearch },
                     fetcher,
                 );
                 if (cancelled) return;
-                setData(page.data);
-                setTotalPages(page.totalPages);
-                setTotalUsers(page.total);
-                setLoadedKey(requestKey);   // ✅ callback — không bị flag
+                setState({
+                    status: "success",
+                    data: page.data,
+                    totalPages: page.totalPages,
+                    total: page.total
+                })
             } catch (err) {
                 console.error("Lỗi:", err);
-                if (!cancelled) setLoadedKey(requestKey);   // thoát loading
+                if (!cancelled)
+                    console.error("Lỗi:", err);
+                setState({
+                    status: "error",
+                    message: err instanceof Error ? err.message : "Lỗi không xác định",
+                });
             }
         })();
 
         return () => {
             cancelled = true;
         };
-    }, [currentPage, pageSize, sort, debouncedSearch, fetcher, requestKey]);
+    }, [currentPage, pageSize, sort, debouncedSearch, fetcher]);
 
     const toggleSort = useCallback(() => {
         setSort((p) => (p === "asc" ? "desc" : "asc"));
         setCurrentPage(1);
     }, []);
+
+    const clearActionError = useCallback(() => setActionError(null), []);
 
     const toggleStatus = useCallback(
         async (id: number, current: number) => {
@@ -87,8 +101,11 @@ export function useUsers({
             setActionError(null);
             try {
                 await updateUserStatus(id, newStatus, fetcher);
-                setData((prev) =>
-                    prev.map((u) => (u.ID === id ? { ...u, TrangThai: newStatus } : u))
+                setState((prev) =>
+                    prev.status === "success"
+                        ? {
+                            ...prev, data: prev.data.map((u) => (u.ID === id ? { ...u, TrangThai: newStatus } : u))
+                        } : prev,
                 );
             } catch (err) {
                 console.error(err);
@@ -103,29 +120,26 @@ export function useUsers({
     const saveUser = useCallback(
         async (payload: UserUpdatePayload) => {
             await updateUser(payload, fetcher);
-            setData((prev) =>
-                prev.map((u) =>
-                    u.ID === payload.userId
-                        ? { ...u, HoTen: payload.HoTen, Email: payload.Email, SDT: payload.SDT }
-                        : u,
-                ),
+            setState((prev) =>
+                prev.status === "success" ? {
+                    ...prev, data: prev.data.map((u) =>
+                        u.ID === payload.userId
+                            ? { ...u, HoTen: payload.HoTen, Email: payload.Email, SDT: payload.SDT }
+                            : u,
+                    ),
+                } : prev
             );
         },
         [fetcher],
     );
 
     return {
-        data,
-        loading,
+        state,
         processingIds,
         actionError,
-        clearActionError: () => setActionError(null),
+        clearActionError,
         sort,
-        searchTerm,
-        setSearchTerm,
         currentPage,
-        totalPages,
-        totalUsers,
         setCurrentPage,
         toggleSort,
         toggleStatus,

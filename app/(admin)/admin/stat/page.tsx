@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { TaskStatusType } from "@/constants/statuses";
 import { useEffect, useState } from "react";
 import {
     PieChart,
@@ -11,7 +12,7 @@ import {
 } from "recharts";
 
 interface TaskStat {
-    status: number;
+    status: TaskStatusType;
     name: string;
     total: number;
     percent: number;

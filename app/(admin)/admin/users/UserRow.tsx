@@ -1,7 +1,9 @@
 ﻿"use client";
 
 import type { User } from "./api";
-import {userStatus } from "@/constants/statuses"
+import { memo } from "react";
+import { userStatus } from "@/constants/statuses"
+
 interface RowProps {
     user: User;
     processing: boolean;
@@ -9,7 +11,7 @@ interface RowProps {
     onToggle: (id: number, current: number) => void;
 }
 
-export function StatusBadge({ trangThai }: { trangThai: number }) {
+export const StatusBadge = memo(function StatusBadge({ trangThai }: { trangThai: number }) {
     const active = trangThai === userStatus.Active;
     return (
         <span
@@ -22,7 +24,8 @@ export function StatusBadge({ trangThai }: { trangThai: number }) {
             {active ? "Đang hoạt động" : "Ngừng hoạt động"}
         </span>
     );
-}
+})
+
 
 function Actions({
     user,
@@ -61,7 +64,7 @@ function Actions({
     );
 }
 
-export function UserTableRow(props: RowProps) {
+export const UserTableRow = memo(function UserTableRow(props: RowProps) {
     const { user } = props;
     return (
         <tr className="transition hover:bg-[#F8FAFC]">
@@ -77,9 +80,9 @@ export function UserTableRow(props: RowProps) {
             </td>
         </tr>
     );
-}
+})
 
-export function UserCard(props: RowProps) {
+export const UserCard = memo(function UserCard(props: RowProps) {
     const { user } = props;
     return (
         <div className="space-y-3 p-4">
@@ -93,7 +96,7 @@ export function UserCard(props: RowProps) {
             <Actions {...props} layout="card" />
         </div>
     );
-}
+})
 
 function Field({ label, value }: { label: string; value: string }) {
     return (

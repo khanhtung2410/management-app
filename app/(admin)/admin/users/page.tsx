@@ -6,15 +6,20 @@ import { useUsers } from "./useUser";
 import { UserTableRow, UserCard } from "./UserRow";
 import { Pagination } from "./Pagination";
 import { EditUserModal } from "./EditUserModal";
+import { useDeferredValue } from "react";
 
 export default function UserList() {
+    
+  const [inputValue, setInputValue] = useState("");
+  const deferredSearch = useDeferredValue(inputValue);
+
+  const isStale = inputValue !== deferredSearch;
+    
     const {
         data,
         loading,
         processingIds,
         sort,
-        searchTerm,
-        setSearchTerm,
         currentPage,
         totalPages,
         totalUsers,
@@ -22,7 +27,7 @@ export default function UserList() {
         toggleSort,
         toggleStatus,
         saveUser,
-    } = useUsers();
+    } = useUsers({searchTerm:deferredSearch});
 
     const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -40,8 +45,8 @@ export default function UserList() {
                         <input
                             id="search"
                             type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
                             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-[#334155] outline-none focus:border-[#1E40AF] focus:ring-1 focus:ring-[#1E40AF]"
                         />
                     </div>
@@ -51,7 +56,13 @@ export default function UserList() {
                 </div>
 
                 <div className="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-[#E2E8F0]">
-                    {/* Desktop */}
+                    <div className={
+                        isStale
+                        ? "opacity-60 transition-opacity duration-150"
+                        : "opacity-100 transition-opacity duration-150"
+        
+                    }>
+                                            {/* Desktop */}
                     <div className="hidden md:block">
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[900px] text-left">
@@ -111,6 +122,7 @@ export default function UserList() {
                                 ))}
                             </div>
                         )}
+                    </div>
                     </div>
 
                     <Pagination
