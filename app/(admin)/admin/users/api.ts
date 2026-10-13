@@ -15,7 +15,8 @@ export interface UsersPage {
 export interface FetchUsersParams {
     page: number;
     pageSize: number;
-    sortById: "asc" | "desc";
+    sortBy?: "id" | "hoTen" | "email" | "sdt";
+    order?: "asc" | "desc";
     search: string;
 }
 
@@ -38,17 +39,27 @@ export async function fetchUsers(
     params: FetchUsersParams,
     fetchImpl: Fetcher = fetch,
 ): Promise<UsersPage> {
-    const { page, pageSize, sortById, search } = params;
+    const {
+        page,
+        pageSize,
+        sortBy = "id",
+        order = "asc",
+        search,
+    } = params;
+
     const qs = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
-        sortById,
+        sortBy,        
+        order,      
         search,
     });
+
     const res = await fetchImpl(`/api/admin/users?${qs}`, {
         credentials: "include",
     });
     if (!res.ok) throw await toError(res, "Không thể lấy dữ liệu");
+
     const body = await res.json();
     return {
         data: body.data ?? [],

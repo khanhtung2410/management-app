@@ -9,5 +9,5 @@ export type TaskStatusType = typeof taskStatus[keyof typeof taskStatus];
 export const userStatus = {
     Active:1,
     Inactive:0
-}
+} as const;
 export type UserStatusType = typeof userStatus[keyof typeof userStatus];

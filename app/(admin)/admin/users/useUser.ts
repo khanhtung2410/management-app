@@ -55,7 +55,7 @@ export function useUsers({
         (async () => {
             try {
                 const page = await fetchUsers(
-                    { page: currentPage, pageSize, sortById: sort, search: debouncedSearch },
+                    { page: currentPage, pageSize,  sortBy: "id", order: sort , search: debouncedSearch },
                     fetcher,
                 );
                 if (cancelled) return;

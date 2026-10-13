@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
             .input("UserID", sql.Int, Number(userId))
             .input("Ten", sql.NVarChar(255), Ten)
             .input("Mota", sql.NVarChar(sql.MAX), Mota)
-            .input("TrangThai", sql.Int, taskStatus.Active)
+            .input("TrangThai", sql.TinyInt, taskStatus.Active)
             .input("HetHan", sql.DateTime, new Date(HetHan))
             .query(`
                 INSERT INTO [dbo].[CongViec]

@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
         const result = await pool
             .request()
-            .input("Email", sql.VarChar(255), email)
+            .input("Email", sql.NVarChar(255), email)
             .query(`
                 SELECT ID, HoTen, Email, SDT, RoleId, PasswordHash, TrangThai
                 FROM [User]
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
             )
         }
 
-        if (user.TrangThai === userStatus.Inactive) {
+        if (Number(user.TrangThai) !== userStatus.Active) {
             return NextResponse.json(
                 { message: "Tài khoản của bạn đã bị khóa" },
                 { status: 401 }
