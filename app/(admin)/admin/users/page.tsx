@@ -9,25 +9,22 @@ import { EditUserModal } from "./EditUserModal";
 import { useDeferredValue } from "react";
 
 export default function UserList() {
-    
-  const [inputValue, setInputValue] = useState("");
-  const deferredSearch = useDeferredValue(inputValue);
 
-  const isStale = inputValue !== deferredSearch;
-    
+    const [inputValue, setInputValue] = useState("");
+    const deferredSearch = useDeferredValue(inputValue);
+
+    const isStale = inputValue !== deferredSearch;
+
     const {
-        data,
-        loading,
+        state,
         processingIds,
         sort,
         currentPage,
-        totalPages,
-        totalUsers,
         setCurrentPage,
         toggleSort,
         toggleStatus,
         saveUser,
-    } = useUsers({searchTerm:deferredSearch});
+    } = useUsers({ searchTerm: deferredSearch });
 
     const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -51,83 +48,96 @@ export default function UserList() {
                         />
                     </div>
                     <span className="inline-flex w-fit items-center rounded-full bg-[#DBEAFE] px-3 py-1 text-sm font-medium text-[#1E40AF]">
-                        {totalUsers} người dùng
+                        {state.status === "success" ? `${state.total} người dùng` : "-"}
                     </span>
                 </div>
 
                 <div className="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-[#E2E8F0]">
                     <div className={
                         isStale
-                        ? "opacity-60 transition-opacity duration-150"
-                        : "opacity-100 transition-opacity duration-150"
-        
-                    }>
-                                            {/* Desktop */}
-                    <div className="hidden md:block">
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[900px] text-left">
-                                <thead className="bg-[#F1F5F9] text-[#0f172a]">
-                                    <tr className="border-b border-[#E2E8F0]">
-                                        <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                            <button onClick={toggleSort}>
-                                                ID {sort === "asc" ? "🔺" : "🔻"}
-                                            </button>
-                                        </th>
-                                        <Th>Họ tên</Th>
-                                        <Th>Email</Th>
-                                        <Th>SĐT</Th>
-                                        <Th>Trạng thái</Th>
-                                        <th className="w-64 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                            Hành động
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-[#E2E8F0]">
-                                    {loading ? (
-                                        <PlaceholderRow colSpan={6}>Đang tải dữ liệu...</PlaceholderRow>
-                                    ) : data.length === 0 ? (
-                                        <PlaceholderRow colSpan={6}>Chưa có người dùng nào.</PlaceholderRow>
-                                    ) : (
-                                        data.map((item) => (
-                                            <UserTableRow
-                                                key={item.ID}
-                                                user={item}
-                                                processing={processingIds.includes(item.ID)}
-                                                onEdit={setEditingUser}
-                                                onToggle={toggleStatus}
-                                            />
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                            ? "opacity-60 transition-opacity duration-150"
+                            : "opacity-100 transition-opacity duration-150"
 
-                    {/* Mobile */}
-                    <div className="md:hidden">
-                        {loading ? (
-                            <Placeholder>Đang tải dữ liệu...</Placeholder>
-                        ) : data.length === 0 ? (
-                            <Placeholder>Chưa có người dùng nào.</Placeholder>
-                        ) : (
-                            <div className="divide-y divide-[#E2E8F0]">
-                                {data.map((item) => (
-                                    <UserCard
+                    }>
+                        {/* Desktop */}
+                        <div className="hidden md:block">
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[900px] text-left">
+                                    <thead className="bg-[#F1F5F9] text-[#0f172a]">
+                                        <tr className="border-b border-[#E2E8F0]">
+                                            <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                                <button onClick={toggleSort}>
+                                                    ID {sort === "asc" ? "🔺" : "🔻"}
+                                                </button>
+                                            </th>
+                                            <Th>Họ tên</Th>
+                                            <Th>Email</Th>
+                                            <Th>SĐT</Th>
+                                            <Th>Trạng thái</Th>
+                                            <th className="w-64 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                                Hành động
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#E2E8F0]">
+                                        {(state.status === "idle" ||
+                                            state.status === "loading"
+                                        ) && (
+                                                <PlaceholderRow colSpan={6}>Đang tải dữ liệu...</PlaceholderRow>
+                                            )}
+                                        {state.status === "error" && (
+                                            <PlaceholderRow colSpan={6}>
+                                                {state.message}
+                                            </PlaceholderRow>
+                                        )}
+                                        {state.status === "success" && state.data.length === 0 && (
+                                            <PlaceholderRow colSpan={6}>Chưa có người dùng nào.</PlaceholderRow>
+                                        )}
+                                        {state.status === "success" &&
+                                            state.data.map((item) => (
+                                                <UserTableRow
+                                                    key={item.ID}
+                                                    user={item}
+                                                    processing={processingIds.includes(item.ID)}
+                                                    onEdit={setEditingUser}
+                                                    onToggle={toggleStatus}
+                                                />
+                                            ))
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Mobile */}
+                        <div className="md:hidden">
+                            {(state.status === "idle" || state.status === "loading") && (
+                                <Placeholder>Đang tải dữ liệu...</Placeholder>
+                            )}
+                            {state.status === "error" && (
+                                <Placeholder>{state.message}</Placeholder>
+                            )}
+                            {state.status === "success" && state.data.length === 0 && (
+                                <Placeholder>Chưa có người dùng nào.</Placeholder>
+                            )}
+                            {state.status === "success" && (
+                                <div className="divide-y divide-[#E2E8F0]">
+                                    {state.data.map((item) => (
+                                        <UserCard 
                                         key={item.ID}
                                         user={item}
                                         processing={processingIds.includes(item.ID)}
                                         onEdit={setEditingUser}
-                                        onToggle={toggleStatus}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                        onToggle={toggleStatus} />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <Pagination
                         currentPage={currentPage}
-                        totalPages={totalPages}
+                        totalPages={state.status === "success" ? state.totalPages : 1}
                         onPageChange={setCurrentPage}
                     />
                 </div>
