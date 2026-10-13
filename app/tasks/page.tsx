@@ -53,11 +53,25 @@ function formatDate(value: string): string {
 export default function Home() {
     const [data, setData] = useState<CongViec[]>([]);
     const [loading, setLoading] = useState(true);
+    const [listError, setListError] = useState<string | null>(null);
 
     const [addTask, setAddTask] = useState(false);
     const [addTen, setAddTen] = useState("");
     const [addMota, setAddMota] = useState("");
     const [addNgayHetHan, setAddNgayHetHan] = useState("");
+
+    // Lỗi inline cho form
+    const [formErrors, setFormErrors] = useState<{
+        Ten?: string;
+        HetHan?: string;
+        general?: string;
+    }>({});
+
+    // Lỗi khi toggle status (theo ID)
+    const [toggleError, setToggleError] = useState<{
+        id: number;
+        message: string;
+    } | null>(null);
 
     // ==============================
     // Fetch danh sách khi mount
@@ -66,11 +80,9 @@ export default function Home() {
         fetch("/api/tasks", { credentials: "include" })
             .then(async response => {
                 const result = await response.json();
-
                 if (!response.ok) {
                     throw new Error(result.message || "Không thể lấy dữ liệu");
                 }
-
                 return result;
             })
             .then(result => {
@@ -78,6 +90,11 @@ export default function Home() {
             })
             .catch(error => {
                 console.error("Lỗi:", error);
+                setListError(
+                    error instanceof Error
+                        ? error.message
+                        : "Không thể lấy dữ liệu"
+                );
             })
             .finally(() => setLoading(false));
     }, []);
@@ -85,27 +102,31 @@ export default function Home() {
     // ==============================
     // Modal thêm công việc
     // ==============================
-    const openadd = () => {
+    const openAdd = () => {
         setAddTen("");
         setAddMota("");
         setAddNgayHetHan("");
+        setFormErrors({});
         setAddTask(true);
     };
 
     const closeAdd = () => {
         setAddTask(false);
+        setFormErrors({});
     };
 
     const handleAddTask = async () => {
-        if (!addTen.trim()) {
-            alert("Vui lòng nhập tên công việc");
+        // Validate → gom lỗi, không alert
+        const errors: typeof formErrors = {};
+        if (!addTen.trim()) errors.Ten = "Vui lòng nhập tên công việc";
+        if (!addNgayHetHan) errors.HetHan = "Vui lòng chọn ngày hết hạn";
+
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
             return;
         }
 
-        if (!addNgayHetHan) {
-            alert("Vui lòng chọn ngày hết hạn");
-            return;
-        }
+        setFormErrors({});
 
         try {
             const res = await fetch("/api/tasks", {
@@ -132,11 +153,12 @@ export default function Home() {
             setAddTask(false);
         } catch (error) {
             console.error("Lỗi thêm công việc:", error);
-            alert(
-                error instanceof Error
-                    ? error.message
-                    : "Không thể thêm công việc"
-            );
+            setFormErrors({
+                general:
+                    error instanceof Error
+                        ? error.message
+                        : "Không thể thêm công việc",
+            });
         }
     };
 
@@ -148,6 +170,8 @@ export default function Home() {
             item.TrangThai === taskStatus.Complete
                 ? taskStatus.Active
                 : taskStatus.Complete;
+
+        setToggleError(null);
 
         try {
             const res = await fetch(`/api/tasks/${item.ID}`, {
@@ -172,11 +196,13 @@ export default function Home() {
             );
         } catch (error) {
             console.error("Lỗi cập nhật trạng thái:", error);
-            alert(
-                error instanceof Error
-                    ? error.message
-                    : "Không thể cập nhật trạng thái"
-            );
+            setToggleError({
+                id: item.ID,
+                message:
+                    error instanceof Error
+                        ? error.message
+                        : "Không thể cập nhật trạng thái",
+            });
         }
     };
 
@@ -195,12 +221,19 @@ export default function Home() {
 
                     <button
                         type="button"
-                        onClick={openadd}
+                        onClick={openAdd}
                         className="rounded-md bg-[#6B7280] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4B5563]"
                     >
                         + Thêm công việc
                     </button>
                 </div>
+
+                {/* Banner lỗi khi fetch list thất bại */}
+                {listError && (
+                    <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        {listError}
+                    </div>
+                )}
 
                 <div className="overflow-hidden rounded-xl bg-white shadow-md">
                     <div className="overflow-x-auto">
@@ -237,6 +270,10 @@ export default function Home() {
                                     const displayStatus = getDisplayStatus(item);
                                     const config = STATUS_CONFIG[displayStatus];
                                     const isComplete = item.TrangThai === taskStatus.Complete;
+                                    const rowError =
+                                        toggleError?.id === item.ID
+                                            ? toggleError.message
+                                            : null;
 
                                     return (
                                         <tr
@@ -283,6 +320,12 @@ export default function Home() {
                                                 >
                                                     {isComplete ? "Mở lại" : "Hoàn thành"}
                                                 </button>
+
+                                                {rowError && (
+                                                    <p className="mt-1 text-xs text-red-600">
+                                                        {rowError}
+                                                    </p>
+                                                )}
                                             </td>
                                         </tr>
                                     );
@@ -316,6 +359,13 @@ export default function Home() {
                             </button>
                         </div>
 
+                        {/* Lỗi chung từ API */}
+                        {formErrors.general && (
+                            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+                                {formErrors.general}
+                            </div>
+                        )}
+
                         <div className="space-y-4 text-gray-800">
                             <div>
                                 <label className="mb-1 block text-sm font-medium">
@@ -325,10 +375,28 @@ export default function Home() {
                                 <input
                                     type="text"
                                     value={addTen}
-                                    onChange={e => setAddTen(e.target.value)}
+                                    onChange={e => {
+                                        setAddTen(e.target.value);
+                                        if (formErrors.Ten) {
+                                            setFormErrors(prev => ({
+                                                ...prev,
+                                                Ten: undefined,
+                                            }));
+                                        }
+                                    }}
                                     placeholder="Nhập tên công việc"
-                                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    className={
+                                        formErrors.Ten
+                                            ? "w-full rounded-lg border border-red-400 px-4 py-2.5 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                                            : "w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    }
                                 />
+
+                                {formErrors.Ten && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                        {formErrors.Ten}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
@@ -353,9 +421,27 @@ export default function Home() {
                                 <input
                                     type="datetime-local"
                                     value={addNgayHetHan}
-                                    onChange={e => setAddNgayHetHan(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    onChange={e => {
+                                        setAddNgayHetHan(e.target.value);
+                                        if (formErrors.HetHan) {
+                                            setFormErrors(prev => ({
+                                                ...prev,
+                                                HetHan: undefined,
+                                            }));
+                                        }
+                                    }}
+                                    className={
+                                        formErrors.HetHan
+                                            ? "w-full rounded-lg border border-red-400 px-4 py-2.5 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                                            : "w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    }
                                 />
+
+                                {formErrors.HetHan && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                        {formErrors.HetHan}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
