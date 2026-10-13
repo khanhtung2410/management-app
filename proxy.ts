@@ -32,8 +32,6 @@ export async function proxy(request: NextRequest) {
 
         return NextResponse.next();
 
-
-        return NextResponse.next();
     } catch (err) {
         if (err instanceof AuthError) {
             const isForbidden = err.status === 403;

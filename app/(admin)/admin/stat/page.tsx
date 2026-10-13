@@ -11,7 +11,7 @@ import {
 } from "recharts";
 
 interface TaskStat {
-    status: string;
+    status: number;
     name: string;
     total: number;
     percent: number;

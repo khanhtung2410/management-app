@@ -8,7 +8,7 @@ export default function AdminHeader() {
             <button
                 onClick={openMobile}
                 aria-label="Mở menu"
-                className='rounded-md p-2 hover:bg-[color:vả(--surface-hover)]'
+                className='rounded-md p-2 hover:bg-[color:var(--surface-hover)]'
             >☰</button>
             <span className='font-semibold'>Admin</span>
         </header>

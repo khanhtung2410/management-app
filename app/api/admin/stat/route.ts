@@ -12,42 +12,45 @@ export async function GET(req: NextRequest) {
         const pool = await getDb();
 
         // Tổng người dùng thường
-        const userResult = await pool
+        const [userResult,taskResult] = await Promise.all([
+            pool
             .request()
             .input("userRole", sql.Int,userRole.USER)
             .query(`
                 SELECT COUNT(*) AS totalUsers
                 FROM [dbo].[User]
                 WHERE RoleId = @userRole
-            `);
-
-        // Thống kê công việc — tính động 3 trạng thái
-        // Active   = TrangThai 0 + còn hạn
-        // Complete = TrangThai 1
-        // Overdue  = TrangThai 0 + đã quá hạn
-        const taskResult = await pool
+            `),
+            // Thống kê công việc — tính động 3 trạng thái
+            // Active   = TrangThai 0 + còn hạn
+            // Complete = TrangThai 1
+            // Overdue  = TrangThai 0 + đã quá hạn
+            pool
             .request()
+            .input("statusActive",sql.TinyInt,taskStatus.Active)
+            .input("statusComplete",sql.TinyInt,taskStatus.Complete)
             .query(`
                 SELECT
                     COUNT(*) AS totalTasks,
 
                     SUM(CASE 
-                        WHEN TrangThai = 0 AND HetHan >= GETDATE() 
+                        WHEN TrangThai = @statusActive AND HetHan >= GETDATE() 
                         THEN 1 ELSE 0 
                     END) AS DangThucHien,
 
                     SUM(CASE 
-                        WHEN TrangThai = 1 
+                        WHEN TrangThai = @statusComplete
                         THEN 1 ELSE 0 
                     END) AS HoanThanh,
 
                     SUM(CASE 
-                        WHEN TrangThai = 0 AND HetHan < GETDATE() 
+                        WHEN TrangThai = @statusActive AND HetHan < GETDATE() 
                         THEN 1 ELSE 0 
                     END) AS QuaHan
 
                 FROM [dbo].[CongViec]
-            `);
+            `),
+        ])
 
         const totalUsers = Number(userResult.recordset[0]?.totalUsers || 0);
 

@@ -35,6 +35,7 @@ export async function PUT(request: NextRequest) {
             .input("HoTen", sql.NVarChar(255), HoTen)
             .input("Email", sql.NVarChar(255), Email)
             .input("SDT", sql.NVarChar(50), SDT)
+            .input("userRole",sql.TinyInt,userRole.USER)
             .query(`
                 UPDATE [User]
                 SET
@@ -42,7 +43,7 @@ export async function PUT(request: NextRequest) {
                     Email = @Email,
                     SDT   = @SDT
                 WHERE ID = @userId
-                  AND RoleId = ${userRole.USER}
+                  AND RoleId = @userRole
             `);
 
         if (result.rowsAffected[0] === 0) {

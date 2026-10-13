@@ -9,6 +9,7 @@ import {
     type User,
     type UserUpdatePayload,
 } from "./api";
+import { userStatus } from "@/constants/statuses";
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 500;
@@ -81,7 +82,7 @@ export function useUsers({
 
     const toggleStatus = useCallback(
         async (id: number, current: number) => {
-            const newStatus = current === 1 ? 0 : 1;
+            const newStatus = current === userStatus.Active ? userStatus.Inactive : userStatus.Active;
             setProcessingIds((prev) => [...prev, id]);
             setActionError(null);
             try {

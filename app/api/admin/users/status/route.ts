@@ -31,12 +31,13 @@ export async function PUT(request: NextRequest) {
             .request()
             .input("userId", sql.Int, userId)
             .input("status", sql.TinyInt, status)
+            .input("userRole",sql.TinyInt,userRole.USER)
             .query(`
                 UPDATE [User]
                 SET TrangThai = @status
                 WHERE ID = @userId
-                  AND RoleId = ${userRole.USER}
-            `);
+                  AND RoleId = @userRole
+                `)
 
         if (result.rowsAffected[0] === 0) {
             return NextResponse.json(
