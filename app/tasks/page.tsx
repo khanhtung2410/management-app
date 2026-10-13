@@ -68,14 +68,6 @@ export default function Home() {
                 const result = await response.json();
 
                 if (!response.ok) {
-                    if (response.status === 401) {
-                        window.location.href = "/login";
-                        return null;
-                    }
-                    if (response.status === 403) {
-                        window.location.href = "/";
-                        return null;
-                    }
                     throw new Error(result.message || "Không thể lấy dữ liệu");
                 }
 
@@ -130,10 +122,6 @@ export default function Home() {
             const result = await res.json();
 
             if (!res.ok) {
-                if (res.status === 401) {
-                    window.location.href = "/login";
-                    return;
-                }
                 throw new Error(result.message || "Không thể thêm công việc");
             }
 
@@ -172,10 +160,6 @@ export default function Home() {
             const result = await res.json();
 
             if (!res.ok) {
-                if (res.status === 401) {
-                    window.location.href = "/login";
-                    return;
-                }
                 throw new Error(
                     result.message || "Không thể cập nhật trạng thái"
                 );

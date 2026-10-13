@@ -58,10 +58,6 @@ export function useUsers({
                 setTotalPages(page.totalPages);
                 setTotalUsers(page.total);
             } catch (err) {
-                if (err instanceof UnauthorizedError) {
-                    window.location.href = "/login";
-                    return;
-                }
                 console.error("Lỗi:", err);
             } finally {
                 if (!cancelled) setLoading(false);
