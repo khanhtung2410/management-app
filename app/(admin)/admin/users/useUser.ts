@@ -5,7 +5,6 @@ import {
     fetchUsers,
     updateUser,
     updateUserStatus,
-    UnauthorizedError,
     type Fetcher,
     type User,
     type UserUpdatePayload,
@@ -24,8 +23,8 @@ export function useUsers({
     fetcher,
 }: UseUsersOptions = {}) {
     const [data, setData] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
     const [processingIds, setProcessingIds] = useState<number[]>([]);
+    const [actionError, setActionError] = useState<string | null>(null);
 
     const [sort, setSort] = useState<"asc" | "desc">("asc");
     const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +34,12 @@ export function useUsers({
     const [totalPages, setTotalPages] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
 
+    // 🔑 Key dẫn xuất loading — không cần setLoading(true) trong effect
+    const requestKey = `${currentPage}-${sort}-${debouncedSearch}-${pageSize}`;
+    const [loadedKey, setLoadedKey] = useState<string | null>(null);
+    const loading = loadedKey !== requestKey;
+
+    // Debounce search
     useEffect(() => {
         const t = setTimeout(() => {
             setDebouncedSearch(searchTerm);
@@ -43,10 +48,10 @@ export function useUsers({
         return () => clearTimeout(t);
     }, [searchTerm]);
 
-
+    // Fetch data
     useEffect(() => {
         let cancelled = false;
-        setLoading(true);
+
         (async () => {
             try {
                 const page = await fetchUsers(
@@ -57,16 +62,17 @@ export function useUsers({
                 setData(page.data);
                 setTotalPages(page.totalPages);
                 setTotalUsers(page.total);
+                setLoadedKey(requestKey);   // ✅ callback — không bị flag
             } catch (err) {
                 console.error("Lỗi:", err);
-            } finally {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) setLoadedKey(requestKey);   // thoát loading
             }
         })();
+
         return () => {
             cancelled = true;
         };
-    }, [currentPage, pageSize, sort, debouncedSearch, fetcher]);
+    }, [currentPage, pageSize, sort, debouncedSearch, fetcher, requestKey]);
 
     const toggleSort = useCallback(() => {
         setSort((p) => (p === "asc" ? "desc" : "asc"));
@@ -77,14 +83,15 @@ export function useUsers({
         async (id: number, current: number) => {
             const newStatus = current === 1 ? 0 : 1;
             setProcessingIds((prev) => [...prev, id]);
+            setActionError(null);
             try {
                 await updateUserStatus(id, newStatus, fetcher);
                 setData((prev) =>
-                    prev.map((u) => (u.ID === id ? { ...u, TrangThai: newStatus } : u)),
+                    prev.map((u) => (u.ID === id ? { ...u, TrangThai: newStatus } : u))
                 );
             } catch (err) {
                 console.error(err);
-                alert("Không thể thay đổi trạng thái người dùng");
+                setActionError("Không thể thay đổi trạng thái người dùng");
             } finally {
                 setProcessingIds((prev) => prev.filter((x) => x !== id));
             }
@@ -110,6 +117,8 @@ export function useUsers({
         data,
         loading,
         processingIds,
+        actionError,
+        clearActionError: () => setActionError(null),
         sort,
         searchTerm,
         setSearchTerm,

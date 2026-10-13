@@ -1,80 +1,45 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import { taskStatus, type TaskStatusType } from "@/constants/statuses";
-
-interface CongViec {
-    ID: number;
-    Ten: string;
-    Mota: string;
-    TrangThai: number;
-    HetHan: string;
-}
-
-const STATUS_CONFIG: Record<
-    TaskStatusType,
-    { label: string; bg: string; color: string }
-> = {
-    [taskStatus.Active]: {
-        label: "Đang thực hiện",
-        bg: "#DBEAFE",
-        color: "#1D4ED8",
-    },
-    [taskStatus.Complete]: {
-        label: "Hoàn thành",
-        bg: "#DCFCE7",
-        color: "#15803D",
-    },
-    [taskStatus.Overdue]: {
-        label: "Quá hạn",
-        bg: "#FEE2E2",
-        color: "#B91C1C",
-    },
-};
-
-function getDisplayStatus(item: CongViec): TaskStatusType {
-    if (item.TrangThai === taskStatus.Complete) return taskStatus.Complete;
-    if (new Date(item.HetHan) < new Date()) return taskStatus.Overdue;
-    return taskStatus.Active;
-}
-
-function formatDate(value: string): string {
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return value;
-    return d.toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
+import {
+    useDeferredValue,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+import { taskStatus } from "@/constants/statuses";
+import { useMediaQuery } from "@/app/api/tasks/useMediaQuery";
+import { TaskList, type CongViec } from "./taskRow";
 
 export default function Home() {
     const [data, setData] = useState<CongViec[]>([]);
     const [loading, setLoading] = useState(true);
     const [listError, setListError] = useState<string | null>(null);
 
+    // 🔍 Search: state ngay (input) + giá trị trì hoãn (bảng)
+    const [searchTerm, setSearchTerm] = useState("");
+    const deferredSearch = useDeferredValue(searchTerm);
+
     const [addTask, setAddTask] = useState(false);
     const [addTen, setAddTen] = useState("");
     const [addMota, setAddMota] = useState("");
     const [addNgayHetHan, setAddNgayHetHan] = useState("");
 
-    // Lỗi inline cho form
     const [formErrors, setFormErrors] = useState<{
         Ten?: string;
         HetHan?: string;
         general?: string;
     }>({});
 
-    // Lỗi khi toggle status (theo ID)
     const [toggleError, setToggleError] = useState<{
         id: number;
         message: string;
     } | null>(null);
 
+    // 📱 Chọn layout theo màn hình
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+
     // ==============================
-    // Fetch danh sách khi mount
+    // Fetch danh sách
     // ==============================
     useEffect(() => {
         fetch("/api/tasks", { credentials: "include" })
@@ -100,7 +65,20 @@ export default function Home() {
     }, []);
 
     // ==============================
-    // Modal thêm công việc
+    // Lọc theo search (dùng deferred)
+    // ==============================
+    const filtered = useMemo(() => {
+        const q = deferredSearch.trim().toLowerCase();
+        if (!q) return data;
+        return data.filter(
+            t =>
+                t.Ten.toLowerCase().includes(q) ||
+                t.Mota.toLowerCase().includes(q)
+        );
+    }, [data, deferredSearch]);
+
+    // ==============================
+    // Modal thêm
     // ==============================
     const openAdd = () => {
         setAddTen("");
@@ -116,7 +94,6 @@ export default function Home() {
     };
 
     const handleAddTask = async () => {
-        // Validate → gom lỗi, không alert
         const errors: typeof formErrors = {};
         if (!addTen.trim()) errors.Ten = "Vui lòng nhập tên công việc";
         if (!addNgayHetHan) errors.HetHan = "Vui lòng chọn ngày hết hạn";
@@ -163,7 +140,7 @@ export default function Home() {
     };
 
     // ==============================
-    // Đổi trạng thái (0 ↔ 1)
+    // Đổi trạng thái
     // ==============================
     const handleToggleStatus = async (item: CongViec) => {
         const newStatus =
@@ -206,10 +183,16 @@ export default function Home() {
         }
     };
 
+    const errorForItem = (item: CongViec): string | null =>
+        toggleError?.id === item.ID ? toggleError.message : null;
+
+    // ==============================
+    // Render
+    // ==============================
     return (
         <main className="min-h-screen bg-gray-100 p-8">
             <div className="mx-auto max-w-6xl">
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-800">
                             Danh sách công việc
@@ -219,123 +202,72 @@ export default function Home() {
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={openAdd}
-                        className="rounded-md bg-[#6B7280] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4B5563]"
-                    >
-                        + Thêm công việc
-                    </button>
+                    <div className="flex gap-2">
+                        <input
+                            type="search"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            placeholder="Tìm kiếm..."
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:w-64"
+                        />
+
+                        <button
+                            type="button"
+                            onClick={openAdd}
+                            className="whitespace-nowrap rounded-md bg-[#6B7280] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4B5563]"
+                        >
+                            + Thêm công việc
+                        </button>
+                    </div>
                 </div>
 
-                {/* Banner lỗi khi fetch list thất bại */}
                 {listError && (
                     <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                         {listError}
                     </div>
                 )}
 
-                <div className="overflow-hidden rounded-xl bg-white shadow-md">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 text-gray-800">
-                                <tr className="border-b">
-                                    <th className="px-6 py-4">ID</th>
-                                    <th className="px-6 py-4">Tên công việc</th>
-                                    <th className="px-6 py-4">Mô tả</th>
-                                    <th className="px-6 py-4">Trạng thái</th>
-                                    <th className="px-6 py-4">Hết hạn</th>
-                                    <th className="px-6 py-4">Hành động</th>
-                                </tr>
-                            </thead>
-
-                            <tbody className="divide-y">
-                                {loading && (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                                            Đang tải...
-                                        </td>
+                {/* 🖥 Desktop: table | 📱 Mobile: card */}
+                {isDesktop ? (
+                    <div className="overflow-hidden rounded-xl bg-white shadow-md">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-gray-50 text-gray-800">
+                                    <tr className="border-b">
+                                        <th className="px-6 py-4">ID</th>
+                                        <th className="px-6 py-4">Tên công việc</th>
+                                        <th className="px-6 py-4">Mô tả</th>
+                                        <th className="px-6 py-4">Trạng thái</th>
+                                        <th className="px-6 py-4">Hết hạn</th>
+                                        <th className="px-6 py-4">Hành động</th>
                                     </tr>
-                                )}
-
-                                {!loading && data.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                                            Chưa có công việc nào
-                                        </td>
-                                    </tr>
-                                )}
-
-                                {!loading && data.map(item => {
-                                    const displayStatus = getDisplayStatus(item);
-                                    const config = STATUS_CONFIG[displayStatus];
-                                    const isComplete = item.TrangThai === taskStatus.Complete;
-                                    const rowError =
-                                        toggleError?.id === item.ID
-                                            ? toggleError.message
-                                            : null;
-
-                                    return (
-                                        <tr
-                                            key={item.ID}
-                                            className="transition hover:bg-gray-50"
-                                        >
-                                            <td className="px-6 py-4 text-gray-600">
-                                                {item.ID}
-                                            </td>
-
-                                            <td className="px-6 py-4 font-medium text-gray-800">
-                                                {item.Ten}
-                                            </td>
-
-                                            <td className="px-6 py-4 text-gray-600">
-                                                {item.Mota}
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <span
-                                                    className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
-                                                    style={{
-                                                        backgroundColor: config.bg,
-                                                        color: config.color,
-                                                    }}
-                                                >
-                                                    {config.label}
-                                                </span>
-                                            </td>
-
-                                            <td className="px-6 py-4 text-gray-600">
-                                                {formatDate(item.HetHan)}
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleToggleStatus(item)}
-                                                    className={
-                                                        isComplete
-                                                            ? "rounded-md bg-gray-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-gray-600"
-                                                            : "rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-green-700"
-                                                    }
-                                                >
-                                                    {isComplete ? "Mở lại" : "Hoàn thành"}
-                                                </button>
-
-                                                {rowError && (
-                                                    <p className="mt-1 text-xs text-red-600">
-                                                        {rowError}
-                                                    </p>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y">
+                                    <TaskList
+                                        items={filtered}
+                                        variant="table"
+                                        loading={loading}
+                                        errorForItem={errorForItem}
+                                        onToggle={handleToggleStatus}
+                                    />
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="space-y-3">
+                        <TaskList
+                            items={filtered}
+                            variant="card"
+                            loading={loading}
+                            errorForItem={errorForItem}
+                            onToggle={handleToggleStatus}
+                        />
+                    </div>
+                )}
             </div>
 
+            {/* Modal thêm công việc */}
             {addTask && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -349,7 +281,6 @@ export default function Home() {
                             <h2 className="text-xl font-bold text-gray-800">
                                 Thêm công việc
                             </h2>
-
                             <button
                                 type="button"
                                 onClick={closeAdd}
@@ -359,7 +290,6 @@ export default function Home() {
                             </button>
                         </div>
 
-                        {/* Lỗi chung từ API */}
                         {formErrors.general && (
                             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
                                 {formErrors.general}
@@ -371,17 +301,13 @@ export default function Home() {
                                 <label className="mb-1 block text-sm font-medium">
                                     Tên công việc
                                 </label>
-
                                 <input
                                     type="text"
                                     value={addTen}
                                     onChange={e => {
                                         setAddTen(e.target.value);
                                         if (formErrors.Ten) {
-                                            setFormErrors(prev => ({
-                                                ...prev,
-                                                Ten: undefined,
-                                            }));
+                                            setFormErrors(prev => ({ ...prev, Ten: undefined }));
                                         }
                                     }}
                                     placeholder="Nhập tên công việc"
@@ -391,11 +317,8 @@ export default function Home() {
                                             : "w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                     }
                                 />
-
                                 {formErrors.Ten && (
-                                    <p className="mt-1 text-xs text-red-600">
-                                        {formErrors.Ten}
-                                    </p>
+                                    <p className="mt-1 text-xs text-red-600">{formErrors.Ten}</p>
                                 )}
                             </div>
 
@@ -403,7 +326,6 @@ export default function Home() {
                                 <label className="mb-1 block text-sm font-medium">
                                     Mô tả công việc
                                 </label>
-
                                 <textarea
                                     value={addMota}
                                     onChange={e => setAddMota(e.target.value)}
@@ -417,17 +339,13 @@ export default function Home() {
                                 <label className="mb-1 block text-sm font-medium">
                                     Ngày hết hạn
                                 </label>
-
                                 <input
                                     type="datetime-local"
                                     value={addNgayHetHan}
                                     onChange={e => {
                                         setAddNgayHetHan(e.target.value);
                                         if (formErrors.HetHan) {
-                                            setFormErrors(prev => ({
-                                                ...prev,
-                                                HetHan: undefined,
-                                            }));
+                                            setFormErrors(prev => ({ ...prev, HetHan: undefined }));
                                         }
                                     }}
                                     className={
@@ -436,11 +354,8 @@ export default function Home() {
                                             : "w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                     }
                                 />
-
                                 {formErrors.HetHan && (
-                                    <p className="mt-1 text-xs text-red-600">
-                                        {formErrors.HetHan}
-                                    </p>
+                                    <p className="mt-1 text-xs text-red-600">{formErrors.HetHan}</p>
                                 )}
                             </div>
                         </div>
@@ -453,7 +368,6 @@ export default function Home() {
                             >
                                 Hủy
                             </button>
-
                             <button
                                 type="button"
                                 onClick={handleAddTask}

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { User, UserUpdatePayload } from "./api";
 
 interface Props {
@@ -10,22 +10,20 @@ interface Props {
 }
 
 export function EditUserModal({ user, onClose, onSave }: Props) {
+    // ✅ Khởi tạo 1 lần từ props — cha dùng key để reset khi user đổi
     const [name, setName] = useState(user.HoTen ?? "");
     const [email, setEmail] = useState(user.Email ?? "");
     const [phone, setPhone] = useState(user.SDT ?? "");
     const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        setName(user.HoTen ?? "");
-        setEmail(user.Email ?? "");
-        setPhone(user.SDT ?? "");
-    }, [user]);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSave = async () => {
         if (!name.trim() || !email.trim()) {
-            alert("Vui lòng nhập họ tên và email");
+            setError("Vui lòng nhập họ tên và email");
             return;
         }
+
+        setError(null);
         setSaving(true);
         try {
             await onSave({
@@ -37,7 +35,9 @@ export function EditUserModal({ user, onClose, onSave }: Props) {
             onClose();
         } catch (err) {
             console.error(err);
-            alert("Lưu người dùng thất bại");
+            setError(
+                err instanceof Error ? err.message : "Lưu người dùng thất bại"
+            );
         } finally {
             setSaving(false);
         }
@@ -47,6 +47,13 @@ export function EditUserModal({ user, onClose, onSave }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-lg rounded-lg bg-white p-6 text-[#0f172a] shadow-lg">
                 <h2 className="mb-4 text-xl font-semibold">Sửa người dùng</h2>
+
+                {error && (
+                    <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                        {error}
+                    </div>
+                )}
+
                 <FormField label="Họ tên" value={name} onChange={setName} />
                 <FormField label="Email" type="email" value={email} onChange={setEmail} />
                 <FormField label="SĐT" value={phone} onChange={setPhone} />
