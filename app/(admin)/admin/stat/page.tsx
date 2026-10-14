@@ -26,9 +26,14 @@ interface DashboardData {
 
 const COLORS = [
     "#F59E0B",
-    "#3B82F6",
-    "#22C55E"
+    "#1cd815",
+    "#e63213"
 ];
+function getColor(index: number) {
+    return COLORS[index % COLORS.length];
+}
+
+
 
 export default function DashboardPage() {
     const [data, setData] =
@@ -137,7 +142,7 @@ export default function DashboardPage() {
                 <p className="mt-1 text-xs text-[#64748B] sm:text-sm">
                     Tổng quan hệ thống quản lý công việc
                 </p>
-                    
+
                 {/* ================= CARDS ================= */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 
@@ -246,7 +251,7 @@ export default function DashboardPage() {
                                         {data.taskStats.map((_, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
-                                                fill={COLORS[index % COLORS.length]}
+                                                fill={getColor(index)}
                                             />
                                         ))}
                                     </Pie>
@@ -288,7 +293,7 @@ export default function DashboardPage() {
                                                 className="h-3 w-3 rounded-full sm:h-4 sm:w-4"
                                                 style={{
                                                     backgroundColor:
-                                                        COLORS[index % COLORS.length],
+                                                        getColor(index),
                                                 }}
                                             />
 
@@ -324,7 +329,7 @@ export default function DashboardPage() {
                                             style={{
                                                 width: `${item.percent}%`,
                                                 backgroundColor:
-                                                    COLORS[index % COLORS.length],
+                                                    getColor(index),
                                             }}
                                         />
 
@@ -348,7 +353,7 @@ export default function DashboardPage() {
                                     className="h-3 w-3 rounded-full"
                                     style={{
                                         backgroundColor:
-                                            COLORS[index % COLORS.length],
+                                            getColor(index),
                                     }}
                                 />
 

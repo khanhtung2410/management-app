@@ -4,8 +4,8 @@ import { getDb } from "@/lib/db";
 import { requireRole, ForbiddenError } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
 
-const sortableColumn: Record<string,string> = {
-    id:"ID"
+const sortableColumn: Record<string, string> = {
+    id: "ID"
 }
 
 export async function GET(request: NextRequest) {
@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
 
         const [result, countResult] = await Promise.all([
             db
-            .request()
+                .request()
                 .input("offset", sql.Int, offset)
                 .input("roleId", sql.Int, userRole.USER)
-            .input("search", sql.NVarChar(255), search)
-            .input("pageSize", sql.Int, pageSize)
-            .query(`
+                .input("search", sql.NVarChar(255), search)
+                .input("pageSize", sql.Int, pageSize)
+                .query(`
                 SELECT ID, HoTen, Email, SDT, TrangThai
                 FROM [User]
                 WHERE RoleId = @roleId
@@ -46,10 +46,10 @@ export async function GET(request: NextRequest) {
             `),
 
             db
-            .request()
-            .input("search", sql.NVarChar(255), search)
-            .input("roleId", sql.Int, userRole.USER)
-            .query(`
+                .request()
+                .input("search", sql.NVarChar(255), search)
+                .input("roleId", sql.Int, userRole.USER)
+                .query(`
                 SELECT COUNT(*) AS total
                 FROM [User]
                 WHERE RoleId = @roleId
