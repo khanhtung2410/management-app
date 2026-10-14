@@ -34,7 +34,7 @@ export function useUsers({
 
     const [state, setState] = useState<UsersState>({ status: "idle" })
 
-    const [processingIds, setProcessingIds] = useState<number[]>([]);
+    const [processingIds, setProcessingIds] = useState<Set<number>>(() => new Set());
     const [actionError, setActionError] = useState<string | null>(null);
 
 
@@ -43,12 +43,10 @@ export function useUsers({
 
     const [currentPage, setCurrentPage] = useState(1);
 
-
     // Debounce search
     useEffect(() => {
         const t = setTimeout(() => {
             setDebouncedSearch(searchTerm);
-            setCurrentPage(1);
         }, SEARCH_DEBOUNCE_MS);
         return () => clearTimeout(t);
     }, [searchTerm]);
@@ -72,8 +70,7 @@ export function useUsers({
                     total: page.total
                 })
             } catch (err) {
-                console.error("Lỗi:", err);
-                if (!cancelled)
+                if (cancelled)
                     console.error("Lỗi:", err);
                 setState({
                     status: "error",
@@ -97,7 +94,11 @@ export function useUsers({
     const toggleStatus = useCallback(
         async (id: number, current: number) => {
             const newStatus = current === userStatus.Active ? userStatus.Inactive : userStatus.Active;
-            setProcessingIds((prev) => [...prev, id]);
+            setProcessingIds((prev) => {
+                const next = new Set(prev);
+                next.add(id);
+                return next
+            });
             setActionError(null);
             try {
                 await updateUserStatus(id, newStatus, fetcher);
@@ -111,7 +112,11 @@ export function useUsers({
                 console.error(err);
                 setActionError("Không thể thay đổi trạng thái người dùng");
             } finally {
-                setProcessingIds((prev) => prev.filter((x) => x !== id));
+                setProcessingIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(id);
+                    return next
+                });
             }
         },
         [fetcher],

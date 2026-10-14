@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { User } from "./api";
 import { useUsers } from "./useUser";
 import { UserTableRow, UserCard } from "./UserRow";
@@ -29,6 +29,7 @@ export default function UserList() {
     } = useUsers({ searchTerm: deferredSearch });
 
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const closeEditModal = useCallback(() => { setEditingUser(null); }, [])
 
     const placeholder =
         state.status === "idle" || state.status === "loading"
@@ -56,7 +57,10 @@ export default function UserList() {
                             id="search"
                             type="text"
                             value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
+                            onChange={(e) => {
+                                setInputValue(e.target.value);
+                                setCurrentPage(1);}
+                            }
                             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-[#334155] outline-none focus:border-[#1E40AF] focus:ring-1 focus:ring-[#1E40AF]"
                         />
                     </div>
@@ -99,14 +103,14 @@ export default function UserList() {
                                         <UserTableRow
                                             key={item.ID}
                                             user={item}
-                                            processing={processingIds.includes(item.ID)}
+                                            processing={processingIds.has(item.ID)}
                                             onEdit={setEditingUser}
                                             onToggle={toggleStatus}
                                         />
                                     ) : (<UserCard
                                         key={item.ID}
                                         user={item}
-                                        processing={processingIds.includes(item.ID)}
+                                        processing={processingIds.has(item.ID)}
                                         onEdit={setEditingUser}
                                         onToggle={toggleStatus}
                                     />
@@ -127,7 +131,7 @@ export default function UserList() {
             {editingUser && (
                 <EditUserModal
                     user={editingUser}
-                    onClose={() => setEditingUser(null)}
+                    onClose={closeEditModal}
                     onSave={saveUser}
                 />
             )

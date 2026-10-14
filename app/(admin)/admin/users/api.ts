@@ -15,7 +15,8 @@ export interface UsersPage {
 export interface FetchUsersParams {
     page: number;
     pageSize: number;
-    sortBy?: "id" | "hoTen" | "email" | "sdt";
+    sortBy?: "id" 
+    // | "hoTen" | "email" | "sdt";
     order?: "asc" | "desc";
     search: string;
 }
