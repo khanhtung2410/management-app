@@ -48,10 +48,11 @@ export default function DashboardPage() {
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 768);
-        check();
-        window.addEventListener("resize", check);
-        return () => window.removeEventListener("resize", check);
+        const mq = window.matchMedia("(max-width: 767px)")
+        setIsMobile(mq.matches);
+        const handleChange = (e: MediaQueryListEvent) => { setIsMobile(e.matches) }
+        mq.addEventListener("change", handleChange);
+        return () => mq.removeEventListener("change", handleChange);
     }, []);
 
     useEffect(() => {

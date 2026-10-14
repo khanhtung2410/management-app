@@ -1,5 +1,5 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
-import * as sql from "mssql";
+import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { requireRole ,ForbiddenError} from "@/lib/auth";
 import { userRole } from "@/constants/roles";
