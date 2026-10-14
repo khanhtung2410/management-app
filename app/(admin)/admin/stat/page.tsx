@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";

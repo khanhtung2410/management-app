@@ -1,4 +1,4 @@
-﻿import sql from "mssql";
+import sql from "mssql";
 
 function requireEnv(name: string): string {
     const value = process.env[name];

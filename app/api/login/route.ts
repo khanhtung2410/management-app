@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { createToken } from "@/lib/auth";

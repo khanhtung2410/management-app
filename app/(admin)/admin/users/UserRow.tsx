@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { User } from "./api";
 import { memo } from "react";

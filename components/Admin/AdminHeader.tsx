@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useLayout } from "@/components/LayoutProvider";
 
 export default function AdminHeader() {

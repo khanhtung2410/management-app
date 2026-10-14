@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma skills sync || exit 0"
+    "postinstall": "prisma skills sync || exit 0",
+    "fix:bom": "node scripts/strip-bom.mjs",
+    "check:bom": "node scripts/check-bom.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

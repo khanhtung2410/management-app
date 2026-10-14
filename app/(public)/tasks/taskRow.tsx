@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
 

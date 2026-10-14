@@ -1,4 +1,4 @@
-﻿# Contributing Guide
+# Contributing Guide
 
 Cảm ơn bạn đã quan tâm đóng góp cho **Website quản lý công việc cá nhân**.
 Tài liệu này mô tả quy trình làm việc, quy tắc code, commit và pull request.

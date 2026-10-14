@@ -1,4 +1,4 @@
-﻿import { UserStatusType } from "@/constants/statuses";
+import { UserStatusType } from "@/constants/statuses";
 
 export interface User {
     ID: number;
