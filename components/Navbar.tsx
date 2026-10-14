@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userName, setUserName] = useState("");
+    const router = useRouter();
 
     useEffect(() => {
         fetch("/api/auth/me", {
@@ -40,7 +42,7 @@ export default function Navbar() {
             if (response.ok) {
                 setIsLoggedIn(false);
                 setUserName("");
-                window.location.href = "/";
+                router.push("/");
             }
         } catch (error) {
             console.error("Lỗi đăng xuất:", error);
@@ -56,9 +58,9 @@ export default function Navbar() {
                     </Link>
 
                     {isLoggedIn && (
-                            <Link href="/tasks" className="hover:underline">
-                                Công việc
-                            </Link>
+                        <Link href="/tasks" className="hover:underline">
+                            Công việc
+                        </Link>
                     )}
                 </div>
 

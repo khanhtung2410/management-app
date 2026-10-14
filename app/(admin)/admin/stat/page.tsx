@@ -10,6 +10,7 @@ import {
     Legend,
     ResponsiveContainer
 } from "recharts";
+import { useSyncExternalStore } from "react";
 
 interface TaskStat {
     status: TaskStatusType;
@@ -33,7 +34,20 @@ function getColor(index: number) {
     return COLORS[index % COLORS.length];
 }
 
+function useIsMobile(breakpoint = 768) {
+    const query = `(max-width: ${breakpoint - 1}px)`;
 
+    const subscribe = (callback: () => void) => {
+        const mq = window.matchMedia(query);
+        mq.addEventListener("change", callback);
+        return () => mq.removeEventListener("change", callback);
+    };
+
+    const getSnapshot = () => window.matchMedia(query).matches;
+    const getServerSnapshot = () => false; // SSR mặc định desktop
+
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
 
 export default function DashboardPage() {
     const [data, setData] =
@@ -45,15 +59,7 @@ export default function DashboardPage() {
     const [error, setError] =
         useState("");
 
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const mq = window.matchMedia("(max-width: 767px)")
-        setIsMobile(mq.matches);
-        const handleChange = (e: MediaQueryListEvent) => { setIsMobile(e.matches) }
-        mq.addEventListener("change", handleChange);
-        return () => mq.removeEventListener("change", handleChange);
-    }, []);
+    const isMobile = useIsMobile(768);
 
     useEffect(() => {
         const loadDashboard = async () => {

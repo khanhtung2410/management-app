@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { userRole } from "@/constants/roles"
+import { useRouter } from "next/navigation";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,11 +41,10 @@ export default function Login() {
             }
 
             const user = await meResponse.json();
-
             if (user.roleId === userRole.ADMIN) {
-                location.href = "/admin";
+                router.push("/admin");
             } else {
-                location.href = "/";
+                router.push("/");
             }
         } catch (error) {
             console.error(error);
