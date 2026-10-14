@@ -1,16 +1,15 @@
 ﻿"use client";
 
-import { TaskStatusType } from "@/constants/statuses";
-import { useEffect, useState } from "react";
+import { TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
     PieChart,
     Pie,
-    Cell,
     Tooltip,
     Legend,
-    ResponsiveContainer
+    ResponsiveContainer,
 } from "recharts";
-import { useSyncExternalStore } from "react";
+import { TaskSector } from "./TaskSector";
 
 interface TaskStat {
     status: TaskStatusType;
@@ -25,13 +24,16 @@ interface DashboardData {
     taskStats: TaskStat[];
 }
 
-const COLORS = [
-    "#F59E0B",
-    "#1cd815",
-    "#e63213"
-];
-function getColor(index: number) {
-    return COLORS[index % COLORS.length];
+function StatusShell({ children }: { children: ReactNode }) {
+    return (
+        <main className="min-h-screen bg-[#F3F6FA] p-8">
+            <div className="mx-auto max-w-7xl">
+                <div className="rounded-xl bg-white p-8 text-center shadow-md">
+                    {children}
+                </div>
+            </div>
+        </main>
+    );
 }
 
 function useIsMobile(breakpoint = 768) {
@@ -107,29 +109,17 @@ export default function DashboardPage() {
 
     if (loading) {
         return (
-            <main className="min-h-screen bg-[#F3F6FA] p-8">
-                <div className="mx-auto max-w-7xl">
-                    <div className="rounded-xl bg-white p-8 text-center shadow-md">
-                        <p className="text-[#64748B]">
-                            Đang tải dữ liệu...
-                        </p>
-                    </div>
-                </div>
-            </main>
+            <StatusShell>
+                <p className="text-[#647488]">Đang tải dữ liệu...</p>
+            </StatusShell>
         );
     }
 
     if (error) {
         return (
-            <main className="min-h-screen bg-[#F3F6FA] p-8">
-                <div className="mx-auto max-w-7xl">
-                    <div className="rounded-xl bg-white p-8 text-center shadow-md">
-                        <p className="text-red-600">
-                            {error}
-                        </p>
-                    </div>
-                </div>
-            </main>
+            <StatusShell>
+                <p className="text-red-600">{error}</p>
+            </StatusShell>
         );
     }
 
@@ -245,6 +235,7 @@ export default function DashboardPage() {
                                         data={data.taskStats}
                                         dataKey="total"
                                         nameKey="name"
+                                        shape={TaskSector}
                                         cx="50%"
                                         cy="50%"
                                         outerRadius={isMobile ? 80 : 125}
@@ -254,15 +245,7 @@ export default function DashboardPage() {
                                         label={({ percent }) =>
                                             isMobile ? "" : `${(percent || 0).toFixed(2)}%`
                                         }
-                                    >
-                                        {data.taskStats.map((_, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={getColor(index)}
-                                            />
-                                        ))}
-                                    </Pie>
-
+                                    />
                                     <Tooltip
                                         formatter={(value, name, props) => {
                                             const percent = props?.payload?.percent ?? 0;
@@ -287,7 +270,7 @@ export default function DashboardPage() {
 
                         {/* ===== DETAIL ===== */}
                         <div className="w-full min-w-0 space-y-3 sm:space-y-4">
-                            {data.taskStats.map((item, index) => (
+                            {data.taskStats.map((item) => (
                                 <div
                                     key={item.status}
                                     className="rounded-xl border border-[#E2E8F0] p-3 sm:p-5"
@@ -299,8 +282,7 @@ export default function DashboardPage() {
                                             <span
                                                 className="h-3 w-3 rounded-full sm:h-4 sm:w-4"
                                                 style={{
-                                                    backgroundColor:
-                                                        getColor(index),
+                                                    backgroundColor: STATUS_CONFIG[item.status].color
                                                 }}
                                             />
 
@@ -335,8 +317,7 @@ export default function DashboardPage() {
                                             className="h-full rounded-full transition-all"
                                             style={{
                                                 width: `${item.percent}%`,
-                                                backgroundColor:
-                                                    getColor(index),
+                                                backgroundColor: STATUS_CONFIG[item.status].color
                                             }}
                                         />
 
@@ -349,7 +330,7 @@ export default function DashboardPage() {
                 {/* ================= SUMMARY ================= */}
                 <div className="mt-6 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
 
-                    {data.taskStats.map((item, index) => (
+                    {data.taskStats.map((item) => (
                         <div
                             key={item.status}
                             className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-[#E2E8F0] sm:p-5"
@@ -358,10 +339,7 @@ export default function DashboardPage() {
 
                                 <span
                                     className="h-3 w-3 rounded-full"
-                                    style={{
-                                        backgroundColor:
-                                            getColor(index),
-                                    }}
+                                    style={{ backgroundColor: STATUS_CONFIG[item.status].color }}
                                 />
 
                                 <span className="text-xs text-[#64748B] sm:text-sm">

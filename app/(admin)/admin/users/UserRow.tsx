@@ -2,7 +2,7 @@
 
 import type { User } from "./api";
 import { memo } from "react";
-import { userStatus } from "@/constants/statuses"
+import { USER_STATUS_CONFIG, userStatus, UserStatusType } from "@/constants/statuses"
 
 interface RowProps {
     user: User;
@@ -11,17 +11,17 @@ interface RowProps {
     onToggle: (id: number, current: number) => void;
 }
 
-export const StatusBadge = memo(function StatusBadge({ trangThai }: { trangThai: number }) {
-    const active = trangThai === userStatus.Active;
+export const StatusBadge = memo(function StatusBadge({ trangThai }: { trangThai: UserStatusType }) {
+    const cfg = USER_STATUS_CONFIG[trangThai];
     return (
         <span
             className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium"
             style={{
-                backgroundColor: active ? "#DCFCE7" : "#FEE2E2",
-                color: active ? "#15803D" : "#B91C1C",
+                backgroundColor: cfg.bg,
+                color: cfg.color,
             }}
         >
-            {active ? "Đang hoạt động" : "Ngừng hoạt động"}
+            {cfg.label}
         </span>
     );
 })

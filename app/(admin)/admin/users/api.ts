@@ -1,9 +1,11 @@
-﻿export interface User {
+﻿import { UserStatusType } from "@/constants/statuses";
+
+export interface User {
     ID: number;
     HoTen: string;
     Email: string;
     SDT: string;
-    TrangThai: number;
+    TrangThai: UserStatusType;
 }
 
 export interface UsersPage {

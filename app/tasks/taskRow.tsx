@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { taskStatus, type TaskStatusType } from "@/constants/statuses";
+import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
 
 export interface CongViec {
     ID: number;
@@ -10,14 +10,7 @@ export interface CongViec {
     HetHan: string;
 }
 
-const STATUS_CONFIG: Record<
-    TaskStatusType,
-    { label: string; bg: string; color: string }
-> = {
-    [taskStatus.Active]:   { label: "Đang thực hiện", bg: "#DBEAFE", color: "#1D4ED8" },
-    [taskStatus.Complete]: { label: "Hoàn thành",     bg: "#DCFCE7", color: "#15803D" },
-    [taskStatus.Overdue]:  { label: "Quá hạn",        bg: "#FEE2E2", color: "#B91C1C" },
-};
+
 
 function getDisplayStatus(item: CongViec): TaskStatusType {
     if (item.TrangThai === taskStatus.Complete) return taskStatus.Complete;
