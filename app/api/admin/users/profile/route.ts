@@ -34,7 +34,7 @@ export async function PUT(request: NextRequest) {
             .input("userId", sql.Int, userId)
             .input("HoTen", sql.NVarChar(255), HoTen)
             .input("Email", sql.NVarChar(255), Email)
-            .input("SDT", sql.NVarChar(50), SDT)
+            .input("SDT", sql.NVarChar(10), SDT)
             .input("userRole",sql.TinyInt,userRole.USER)
             .query(`
                 UPDATE [User]

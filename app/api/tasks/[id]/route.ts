@@ -3,6 +3,7 @@ import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { UnauthorizedError, ForbiddenError } from "@/lib/auth/errors";
+import { taskStatus } from "@/constants/statuses";
 
 function handleError(error: unknown, fallbackMessage: string) {
     if (error instanceof UnauthorizedError) {
@@ -32,7 +33,6 @@ export async function PATCH(
     try {
         const { userId } = await requireAuth(req);
 
-        // Next.js 15+: params là Promise
         const { id } = await params;
         const taskId = Number(id);
 
@@ -54,7 +54,7 @@ export async function PATCH(
         const TrangThai = Number(body.TrangThai);
 
         // Chỉ cho phép 2 giá trị hợp lệ
-        if (TrangThai !== 0 && TrangThai !== 1) {
+        if (TrangThai !== taskStatus.Active && TrangThai !== taskStatus.Complete) {
             return NextResponse.json(
                 { message: "Trạng thái không hợp lệ" },
                 { status: 400 }

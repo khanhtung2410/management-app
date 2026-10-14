@@ -1,6 +1,6 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import sql from "mssql"
+import sql from "mssql";
 import { requireRole } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
 import { taskStatus } from "@/constants/statuses";

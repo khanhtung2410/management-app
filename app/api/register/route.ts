@@ -86,7 +86,7 @@ export async function POST(req: Request) {
             .request()
             .input("HoTen", sql.NVarChar(255), hoTen)
             .input("Email", sql.NVarChar(255), email)
-            .input("SDT", sql.NVarChar(20), sdt)
+            .input("SDT", sql.NVarChar(10), sdt)
             .input("PasswordHash", sql.NVarChar(255), passwordHash)
             .input("RoleId", sql.Int, userRole.USER)
             .input("TrangThai", sql.Int, userStatus.Active)

@@ -3,6 +3,7 @@ import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { requireRole ,ForbiddenError} from "@/lib/auth";
 import { userRole } from "@/constants/roles";
+import { userStatus } from "@/constants/statuses";
 
 export async function PUT(request: NextRequest) {
     try {
@@ -19,7 +20,7 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        if (status !== 0 && status !== 1) {
+        if (status !== userStatus.Active && status !== userStatus.Inactive) {
             return NextResponse.json(
                 { message: "Trạng thái không hợp lệ" },
                 { status: 400 }
@@ -30,11 +31,11 @@ export async function PUT(request: NextRequest) {
         const result = await db
             .request()
             .input("userId", sql.Int, userId)
-            .input("status", sql.TinyInt, status)
+            .input("userStatus", sql.TinyInt, status)
             .input("userRole",sql.TinyInt,userRole.USER)
             .query(`
                 UPDATE [User]
-                SET TrangThai = @status
+                SET TrangThai = @userStatus
                 WHERE ID = @userId
                   AND RoleId = @userRole
                 `)
