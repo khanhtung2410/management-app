@@ -7,6 +7,7 @@ import { UserTableRow, UserCard } from "./UserRow";
 import { Pagination } from "./Pagination";
 import { EditUserModal } from "./EditUserModal";
 import { useDeferredValue } from "react";
+import { useMediaQuery } from "@/app/api/tasks/useMediaQuery";
 
 export default function UserList() {
 
@@ -14,6 +15,7 @@ export default function UserList() {
     const deferredSearch = useDeferredValue(inputValue);
 
     const isStale = inputValue !== deferredSearch;
+    const isDesktop = useMediaQuery("(min-width: 760px)")
 
     const {
         state,
@@ -27,6 +29,17 @@ export default function UserList() {
     } = useUsers({ searchTerm: deferredSearch });
 
     const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    const placeholder =
+        state.status === "idle" || state.status === "loading"
+            ? "Đang tải dữ liệu..."
+            : state.status === "error"
+                ? state.message
+                : state.status === "success" && state.data.length === 0
+                    ? "Chưa có người dùng nào"
+                    : null;
+
+    const users = state.status === "success" ? state.data : [];
 
     return (
         <main className="min-h-screen bg-[#F3F6FA] p-4 sm:p-8">
@@ -59,80 +72,48 @@ export default function UserList() {
                             : "opacity-100 transition-opacity duration-150"
 
                     }>
-                        {/* Desktop */}
-                        <div className="hidden md:block">
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[900px] text-left">
-                                    <thead className="bg-[#F1F5F9] text-[#0f172a]">
-                                        <tr className="border-b border-[#E2E8F0]">
-                                            <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                                <button onClick={toggleSort}>
-                                                    ID {sort === "asc" ? "🔺" : "🔻"}
-                                                </button>
-                                            </th>
-                                            <Th>Họ tên</Th>
-                                            <Th>Email</Th>
-                                            <Th>SĐT</Th>
-                                            <Th>Trạng thái</Th>
-                                            <th className="w-64 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                                Hành động
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#E2E8F0]">
-                                        {(state.status === "idle" ||
-                                            state.status === "loading"
-                                        ) && (
-                                                <PlaceholderRow colSpan={6}>Đang tải dữ liệu...</PlaceholderRow>
-                                            )}
-                                        {state.status === "error" && (
-                                            <PlaceholderRow colSpan={6}>
-                                                {state.message}
-                                            </PlaceholderRow>
-                                        )}
-                                        {state.status === "success" && state.data.length === 0 && (
-                                            <PlaceholderRow colSpan={6}>Chưa có người dùng nào.</PlaceholderRow>
-                                        )}
-                                        {state.status === "success" &&
-                                            state.data.map((item) => (
-                                                <UserTableRow
-                                                    key={item.ID}
-                                                    user={item}
-                                                    processing={processingIds.includes(item.ID)}
-                                                    onEdit={setEditingUser}
-                                                    onToggle={toggleStatus}
-                                                />
-                                            ))
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Mobile */}
-                        <div className="md:hidden">
-                            {(state.status === "idle" || state.status === "loading") && (
-                                <Placeholder>Đang tải dữ liệu...</Placeholder>
-                            )}
-                            {state.status === "error" && (
-                                <Placeholder>{state.message}</Placeholder>
-                            )}
-                            {state.status === "success" && state.data.length === 0 && (
-                                <Placeholder>Chưa có người dùng nào.</Placeholder>
-                            )}
-                            {state.status === "success" && (
-                                <div className="divide-y divide-[#E2E8F0]">
-                                    {state.data.map((item) => (
-                                        <UserCard 
+                        {placeholder ? (
+                            <Placeholder>{placeholder}</Placeholder>
+                        ) : (
+                            <UsersLayout
+                                isDesktop={isDesktop}
+                                headers={
+                                    <tr className="border-b border-[#E2E8F0]">
+                                        <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                            <button onClick={toggleSort}>
+                                                ID {sort === "asc" ? "🔺" : "🔻"}
+                                            </button>
+                                        </th>
+                                        <Th>Họ tên</Th>
+                                        <Th>Email</Th>
+                                        <Th>SĐT</Th>
+                                        <Th>Trạng thái</Th>
+                                        <th className="w-64 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
+                                            Hành động
+                                        </th>
+                                    </tr>
+                                }
+                            >
+                                {users.map((item) =>
+                                    isDesktop ? (
+                                        <UserTableRow
+                                            key={item.ID}
+                                            user={item}
+                                            processing={processingIds.includes(item.ID)}
+                                            onEdit={setEditingUser}
+                                            onToggle={toggleStatus}
+                                        />
+                                    ) : (<UserCard
                                         key={item.ID}
                                         user={item}
                                         processing={processingIds.includes(item.ID)}
                                         onEdit={setEditingUser}
-                                        onToggle={toggleStatus} />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                        onToggle={toggleStatus}
+                                    />
+                                    )
+                                )}
+                            </UsersLayout>
+                        )}
                     </div>
 
                     <Pagination
@@ -140,8 +121,8 @@ export default function UserList() {
                         totalPages={state.status === "success" ? state.totalPages : 1}
                         onPageChange={setCurrentPage}
                     />
-                </div>
-            </div>
+                </div >
+            </div >
 
             {editingUser && (
                 <EditUserModal
@@ -149,9 +130,35 @@ export default function UserList() {
                     onClose={() => setEditingUser(null)}
                     onSave={saveUser}
                 />
-            )}
-        </main>
+            )
+            }
+        </main >
     );
+}
+function UsersLayout({
+    isDesktop,
+    headers,
+    children,
+}: {
+    isDesktop: boolean;
+    headers: React.ReactNode;
+    children: React.ReactNode;
+}) {
+    if (isDesktop) {
+        return (
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-left">
+                    <thead className="bg-[#F1F5F9] text-[#0f172a]">
+                        {headers}
+                    </thead>
+                    <tbody className="divide-y divide-[#E2E8F0]">
+                        {children}
+                    </tbody>
+                </table>
+            </div>
+        );
+    }
+    return <div className="divide-y divide-[#E2E8F0]">{children}</div>
 }
 
 function Th({ children }: { children: React.ReactNode }) {
@@ -159,22 +166,6 @@ function Th({ children }: { children: React.ReactNode }) {
         <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wide">
             {children}
         </th>
-    );
-}
-
-function PlaceholderRow({
-    colSpan,
-    children,
-}: {
-    colSpan: number;
-    children: React.ReactNode;
-}) {
-    return (
-        <tr>
-            <td colSpan={colSpan} className="px-6 py-12 text-center text-[#64748B]">
-                {children}
-            </td>
-        </tr>
     );
 }
 

@@ -1,17 +1,29 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { userRole } from "@/constants/roles"
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { userRole } from "@/constants/roles";
 
-export default function Login() {
+function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const [showRegisterSuccess] = useState(
+        () => searchParams.get("registered") === "1"
+    );
+
+    useEffect(() => {
+        if (showRegisterSuccess) {
+            window.history.replaceState(null, "", "/login");
+        };
+    }, [showRegisterSuccess]);
+
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError("");
         setLoading(true);
@@ -19,9 +31,7 @@ export default function Login() {
         try {
             const response = await fetch("/api/login", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
             });
 
@@ -32,7 +42,6 @@ export default function Login() {
                 return;
             }
 
-
             const meResponse = await fetch("/api/auth/me");
 
             if (!meResponse.ok) {
@@ -41,6 +50,7 @@ export default function Login() {
             }
 
             const user = await meResponse.json();
+
             if (user.roleId === userRole.ADMIN) {
                 router.push("/admin");
             } else {
@@ -61,6 +71,12 @@ export default function Login() {
                     <h1 className="text-[54px] font-bold">
                         Đăng nhập
                     </h1>
+
+                    {showRegisterSuccess && (
+                        <p className="mt-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+                            Đăng ký thành công! Vui lòng đăng nhập.
+                        </p>
+                    )}
 
                     <form
                         onSubmit={handleSubmit}
@@ -101,5 +117,19 @@ export default function Login() {
                 </main>
             </div>
         </div>
+    );
+}
+
+export default function Login() {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex min-h-screen items-center justify-center">
+                    Đang tải...
+                </div>
+            }
+        >
+            <LoginForm />
+        </Suspense>
     );
 }
