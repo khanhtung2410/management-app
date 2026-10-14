@@ -26,6 +26,8 @@ export default function UserList() {
         toggleSort,
         toggleStatus,
         saveUser,
+        actionError,
+        clearActionError,
     } = useUsers({ searchTerm: deferredSearch });
 
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -59,7 +61,8 @@ export default function UserList() {
                             value={inputValue}
                             onChange={(e) => {
                                 setInputValue(e.target.value);
-                                setCurrentPage(1);}
+                                setCurrentPage(1);
+                            }
                             }
                             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-[#334155] outline-none focus:border-[#1E40AF] focus:ring-1 focus:ring-[#1E40AF]"
                         />
@@ -68,7 +71,23 @@ export default function UserList() {
                         {state.status === "success" ? `${state.total} người dùng` : "-"}
                     </span>
                 </div>
-
+                {actionError && (
+                    <div role="alert"
+                        className="mb-4 flex items-start justify-between gap-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                        <div className="flex items-start gap-2">
+                            <span aria-hidden>⚠️</span>
+                            <span>{actionError}</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={clearActionError}
+                            className="shrink-0 rounded px-2 py-0.5 text-red-700 hover:bg-red-100"
+                            aria-label="Đóng thông báo lỗi"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
                 <div className="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-[#E2E8F0]">
                     <div className={
                         isStale

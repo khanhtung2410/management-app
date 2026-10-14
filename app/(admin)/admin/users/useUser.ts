@@ -70,8 +70,8 @@ export function useUsers({
                     total: page.total
                 })
             } catch (err) {
-                if (cancelled)
-                    console.error("Lỗi:", err);
+                if (cancelled) return
+                console.error("Lỗi:", err);
                 setState({
                     status: "error",
                     message: err instanceof Error ? err.message : "Lỗi không xác định",
