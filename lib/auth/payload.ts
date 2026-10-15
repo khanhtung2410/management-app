@@ -1,9 +1,10 @@
+import { UserRoleType } from "@/constants/roles";
 import { JWTPayload} from "jose";
 
 export interface AuthPayload extends JWTPayload {
     userId: number,
     userName: string,
-    roleId: number
+    roleId: UserRoleType
 }
 
 export function isAuthPayload(p: JWTPayload): p is AuthPayload {
