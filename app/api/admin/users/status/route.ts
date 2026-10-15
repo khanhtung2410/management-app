@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "mssql";
 import { getDb } from "@/lib/db";
-import { requireRole ,ForbiddenError} from "@/lib/auth";
+import { requireRole, ForbiddenError } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
 import { userStatus } from "@/constants/statuses";
 
@@ -9,30 +9,50 @@ export async function PUT(request: NextRequest) {
     try {
         await requireRole(request, userRole.ADMIN);
 
-        const body = await request.json();
-        const userId = Number(body.userId);
-        const status = Number(body.status);
+        let body: unknown;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json(
+                { message: "Body không phải JSON hợp lệ" },
+                { status: 400 },
+            );
+        }
+        if (typeof body != "object" || body == null) {
+            return NextResponse.json(
+                { message: "Body không hợp lệ" },
+                { status: 400 },
+            );
+        }
+        const { userId: rawUserId, status: rawStatus } = body as Record<string, unknown>;
 
-        if (!userId) {
+        const userId = Number(rawUserId);
+        if (!Number.isInteger(userId) || userId <= 0) {
             return NextResponse.json(
                 { message: "ID người dùng không hợp lệ" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
-        if (status !== userStatus.Active && status !== userStatus.Inactive) {
+        if (
+            rawStatus !== userStatus.Active &&
+            rawStatus !== userStatus.Inactive
+        ) {
             return NextResponse.json(
                 { message: "Trạng thái không hợp lệ" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
+
+        // Danh sách user trong UI chỉ hiển thị user thường (RoleId = USER).
+        // Filter thêm RoleId ở đây để chặn trường hợp client bị sửa gửi ID admin.
         const db = await getDb();
         const result = await db
             .request()
             .input("userId", sql.Int, userId)
-            .input("userStatus", sql.TinyInt, status)
-            .input("userRole",sql.TinyInt,userRole.USER)
+            .input("userStatus", sql.TinyInt, rawStatus)
+            .input("userRole", sql.TinyInt, userRole.USER)
             .query(`
                 UPDATE [User]
                 SET TrangThai = @userStatus

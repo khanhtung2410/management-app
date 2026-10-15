@@ -8,25 +8,60 @@ export async function PUT(request: NextRequest) {
     try {
         await requireRole(request, userRole.ADMIN);
 
-        const body = await request.json();
-        const userId = Number(body.userId);
-        const HoTen = String(body.HoTen || "").trim();
-        const Email = String(body.Email || "").trim();
-        const SDT = String(body.SDT || "").trim();
+        let body: unknown;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json(
+                { message: "Body không phải JSON hợp lệ" },
+                { status: 400 },
+            );
+        }
 
-        if (!userId) {
+        if (typeof body !== "object" || body === null) {
+            return NextResponse.json(
+                { message: "Body không hợp lệ" },
+                { status: 400 },
+            );
+        }
+        const {
+            userId: rawUserId,
+            HoTen: rawHoTen,
+            Email: rawEmail,
+            SDT: rawSDT,
+        } = body as Record<string, unknown>;
+
+        const userId = Number(rawUserId);
+        if (!Number.isInteger(userId) || userId <= 0) {
             return NextResponse.json(
                 { message: "ID người dùng không hợp lệ" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
-        if (!HoTen || !Email) {
+        if (typeof rawHoTen !== "string" || rawHoTen.trim() === "") {
             return NextResponse.json(
-                { message: "Dữ liệu không hợp lệ" },
-                { status: 400 }
+                { message: "Họ tên không hợp lệ" },
+                { status: 400 },
             );
         }
+
+        if (typeof rawEmail !== "string" || rawEmail.trim() === "") {
+            return NextResponse.json(
+                { message: "Email không hợp lệ" },
+                { status: 400 },
+            );
+        }
+        if (rawSDT !== undefined && typeof rawSDT !== "string") {
+            return NextResponse.json(
+                { message: "Số điện thoại không hợp lệ" },
+                { status: 400 },
+            );
+        }
+
+        const HoTen = rawHoTen.trim();
+        const Email = rawEmail.trim();
+        const SDT = (rawSDT as string | undefined)?.trim() ?? "";
 
         const db = await getDb();
         const result = await db
@@ -35,7 +70,7 @@ export async function PUT(request: NextRequest) {
             .input("HoTen", sql.NVarChar(255), HoTen)
             .input("Email", sql.NVarChar(255), Email)
             .input("SDT", sql.NVarChar(10), SDT)
-            .input("userRole",sql.TinyInt,userRole.USER)
+            .input("userRole", sql.TinyInt, userRole.USER)
             .query(`
                 UPDATE [User]
                 SET
