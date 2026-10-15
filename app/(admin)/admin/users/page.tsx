@@ -2,13 +2,12 @@
 
 import { useCallback, useState } from "react";
 import type { User } from "./api";
-import { renderByState, UsersState, useUsers } from "./useUser";
+import { renderByState, useUsers } from "./useUser";
 import { UserTableRow, UserCard } from "./UserRow";
 import { Pagination } from "./Pagination";
 import { EditUserModal } from "./EditUserModal";
 import { useDeferredValue } from "react";
 import { useMediaQuery } from "@/app/api/tasks/useMediaQuery";
-import { userStatus } from "@/constants/statuses";
 
 export default function UserList() {
 
