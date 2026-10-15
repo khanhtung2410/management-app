@@ -23,46 +23,69 @@ const config: sql.config = {
     },
 };
 
-let pool: sql.ConnectionPool | null = null;
+// Cache PROMISE thay vì cache pool.
+// - Nhiều request đến cùng lúc sẽ cùng await MỘT promise → cùng nhận MỘT pool.
+// - `if (!poolPromise)` và `poolPromise = ...` nằm sát nhau, không có `await`
+//   xen giữa → không request nào chen vào được → không race.
+let poolPromise: Promise<sql.ConnectionPool> | null;
 
-export async function getDb(): Promise<sql.ConnectionPool> {
-    // Còn sống → dùng lại
-    if (pool?.connected) {
-        return pool;
-    }
+async function createPool(): Promise<sql.ConnectionPool> {
+    const pool = new sql.ConnectionPool(config);
 
-    // Pool cũ chết → đóng sạch trước khi tạo mới
-    if (pool) {
-        try {
-            await pool.close();
-        } catch {
-            // bỏ qua — pool đã hỏng, chỉ cần dọn
-        }
-        pool = null;
-    }
+    // Guard: chỉ đóng pool một lần dù event "error" fire nhiều lần.
+    let closing = false;
 
-    // Tạo pool mới
-    const newPool = new sql.ConnectionPool(config);
-
-    // Bắt event error để không crash process
-    newPool.on("error", (err) => {
+    pool.on("error", (err: Error) => {
         console.error("[db] pool error:", err);
-        // Đánh dấu pool hỏng để lần sau tạo mới
-        if (pool === newPool) {
-            pool = null;
+
+        if (closing) return;
+        closing = true;
+
+        // Đóng pool để giải phóng connection.
+        // Nuốt lỗi vì pool đã hỏng, close() có thể throw.
+        pool.close().catch(() => {
+            // bỏ qua — pool đã hỏng, chỉ cần dọn
+        });
+
+        // Reset cache CHỈ khi promise hiện tại vẫn là promise của pool này.
+        // Nếu request khác đã thay poolPromise bằng promise mới, không đụng vào.
+        if (poolPromise) {
+            poolPromise.catch(() => { /* nuốt lỗi cũ nếu có */ });
+            poolPromise = null;
         }
     });
-
-    await newPool.connect();
-    pool = newPool;
+    await pool.connect();
     return pool;
 }
 
+export async function getDb(): Promise<sql.ConnectionPool> {
+    if (poolPromise) return poolPromise;
+
+    // Gán promise NGAY LẬP TỨC — không await giữa check và gán.
+    // Reset CHỈ khi fail — giữ cache khi thành công để không race.
+
+    poolPromise = createPool().catch((err) => {
+        // Nếu không reset: promise rejected bị cache vĩnh viễn, mọi request sau đều nhận cùng lỗi cũ dù DB đã hoạt động lại
+        poolPromise = null;
+        throw err;
+    });
+
+    return poolPromise;
+}
+
 export async function closeDb(): Promise<void> {
-    if (!pool) return;
+    if (!poolPromise) return;
+
+    // Lấy promise ra biến local rồi mới set null:
+    // tránh trường hợp getDb() được gọi xen vào giữa 2 dòng và gán
+    // poolPromise mới, rồi dòng dưới xoá mất promise mới đó.
+    const promise = poolPromise;
+    poolPromise = null;
+
     try {
+        const pool = await promise;
         await pool.close();
-    } finally {
-        pool = null;
+    } catch {
+        // pool có thể đã hỏng trước khi closeDb() gọi — không cần xử lý.
     }
 }
