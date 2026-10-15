@@ -10,6 +10,7 @@ import {
     type UserUpdatePayload,
 } from "./api";
 import { userStatus } from "@/constants/statuses";
+import { assertNever } from "@/lib/assertNever";
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 500;
@@ -26,6 +27,21 @@ export type UsersState =
     | { status: "success"; data: User[], totalPages: number, total: number }
     | { status: "error"; message: string };
 
+export function renderByState(state: UsersState): string | null {
+    switch (state.status) {
+        case "idle":
+        case "loading":
+            return "Đang tải dữ liệu...";
+        case "error":
+            return state.message;
+        case "success":
+            return state.data.length === 0
+                ? "Chưa có người dùng nào"
+                : null;
+        default:
+            return assertNever(state);
+    }
+}
 export function useUsers({
     pageSize = DEFAULT_PAGE_SIZE,
     fetcher,

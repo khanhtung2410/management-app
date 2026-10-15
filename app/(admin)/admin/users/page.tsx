@@ -2,12 +2,13 @@
 
 import { useCallback, useState } from "react";
 import type { User } from "./api";
-import { useUsers } from "./useUser";
+import { renderByState, UsersState, useUsers } from "./useUser";
 import { UserTableRow, UserCard } from "./UserRow";
 import { Pagination } from "./Pagination";
 import { EditUserModal } from "./EditUserModal";
 import { useDeferredValue } from "react";
 import { useMediaQuery } from "@/app/api/tasks/useMediaQuery";
+import { userStatus } from "@/constants/statuses";
 
 export default function UserList() {
 
@@ -33,15 +34,7 @@ export default function UserList() {
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const closeEditModal = useCallback(() => { setEditingUser(null); }, [])
 
-    const placeholder =
-        state.status === "idle" || state.status === "loading"
-            ? "Đang tải dữ liệu..."
-            : state.status === "error"
-                ? state.message
-                : state.status === "success" && state.data.length === 0
-                    ? "Chưa có người dùng nào"
-                    : null;
-
+    const placeholder = renderByState(state)
     const users = state.status === "success" ? state.data : [];
 
     return (
