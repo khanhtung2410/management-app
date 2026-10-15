@@ -73,7 +73,7 @@ export async function fetchUsers(
 
 export async function updateUserStatus(
     userId: number,
-    status: number,
+    status: UserStatusType,
     fetchImpl: Fetcher = fetch,
 ): Promise<void> {
     const res = await fetchImpl("/api/admin/users/status", {

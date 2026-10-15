@@ -8,7 +8,7 @@ interface RowProps {
     user: User;
     processing: boolean;
     onEdit: (user: User) => void;
-    onToggle: (id: number, current: number) => void;
+    onToggle: (id: number, current: UserStatusType) => void;
 }
 
 export const StatusBadge = memo(function StatusBadge({ trangThai }: { trangThai: UserStatusType }) {

@@ -9,7 +9,7 @@ import {
     type User,
     type UserUpdatePayload,
 } from "./api";
-import { userStatus } from "@/constants/statuses";
+import { userStatus, UserStatusType } from "@/constants/statuses";
 import { assertNever } from "@/lib/assertNever";
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -24,7 +24,7 @@ export interface UseUsersOptions {
 export type UsersState =
     | { status: "idle" }
     | { status: "loading" }
-    | { status: "success"; data: User[], totalPages: number, total: number }
+    | { status: "success"; data: User[]; totalPages: number; total: number }
     | { status: "error"; message: string };
 
 export function renderByState(state: UsersState): string | null {
@@ -74,6 +74,7 @@ export function useUsers({
 
         (async () => {
             try {
+                setState({status:"loading"})
                 const page = await fetchUsers(
                     { page: currentPage, pageSize, sortBy: "id", order: sort, search: debouncedSearch },
                     fetcher,
@@ -108,7 +109,7 @@ export function useUsers({
     const clearActionError = useCallback(() => setActionError(null), []);
 
     const toggleStatus = useCallback(
-        async (id: number, current: number) => {
+        async (id: number, current: UserStatusType) => {
             const newStatus = current === userStatus.Active ? userStatus.Inactive : userStatus.Active;
             setProcessingIds((prev) => {
                 const next = new Set(prev);
