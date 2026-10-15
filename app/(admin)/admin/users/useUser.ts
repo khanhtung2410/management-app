@@ -11,6 +11,7 @@ import {
 } from "./api";
 import { userStatus, UserStatusType } from "@/constants/statuses";
 import { assertNever } from "@/lib/assertNever";
+import { isAbortError } from "@/lib/isAbortError";
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 500;
@@ -74,7 +75,7 @@ export function useUsers({
 
         (async () => {
             try {
-                setState({status:"loading"})
+                setState({ status: "loading" })
                 const page = await fetchUsers(
                     { page: currentPage, pageSize, sortBy: "id", order: sort, search: debouncedSearch },
                     fetcher,
@@ -91,7 +92,9 @@ export function useUsers({
                 console.error("Lỗi:", err);
                 setState({
                     status: "error",
-                    message: err instanceof Error ? err.message : "Lỗi không xác định",
+                    message: isAbortError(err) ?
+                        "Yêu cầu quá lâu, vui lòng thử lại"
+                        : err instanceof Error ? err.message : "Lỗi không xác định",
                 });
             }
         })();

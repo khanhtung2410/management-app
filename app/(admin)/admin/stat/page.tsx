@@ -10,6 +10,8 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { TaskSector } from "./TaskSector";
+import { isAbortError } from "@/lib/isAbortError";
+import { DEFAULT_TIMEOUT_MS } from "@/lib/withTimeout";
 
 interface TaskStat {
     status: TaskStatusType;
@@ -64,17 +66,22 @@ export default function DashboardPage() {
     const isMobile = useIsMobile(768);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         const loadDashboard = async () => {
             try {
                 setLoading(true);
                 setError("");
 
+                const timeoutSignal = AbortSignal.timeout(DEFAULT_TIMEOUT_MS);
+                const signal = AbortSignal.any([controller.signal, timeoutSignal]);
                 const response = await fetch(
                     "/api/admin/stat",
                     {
                         method: "GET",
                         credentials: "include",
-                        cache: "no-store"
+                        cache: "no-store",
+                        signal,
                     }
                 );
 
@@ -89,18 +96,24 @@ export default function DashboardPage() {
 
                 setData(result);
             } catch (error) {
+                if (controller.signal.aborted) return;
+
                 console.error(
                     "DASHBOARD ERROR:",
                     error
                 );
 
                 setError(
-                    error instanceof Error
-                        ? error.message
-                        : "Không thể tải Dashboard"
+                    isAbortError(error)
+                        ? "Yêu cầu quá lâu, vui lòng thử lại"
+                        : error instanceof Error
+                            ? error.message
+                            : "Không thể tải Dashboard"
                 );
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
 

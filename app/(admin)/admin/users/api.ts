@@ -1,4 +1,5 @@
 import { UserStatusType } from "@/constants/statuses";
+import { withTimeout } from "@/lib/withTimeout";
 
 export interface User {
     ID: number;
@@ -17,7 +18,7 @@ export interface UsersPage {
 export interface FetchUsersParams {
     page: number;
     pageSize: number;
-    sortBy?: "id" 
+    sortBy?: "id"
     // | "hoTen" | "email" | "sdt";
     order?: "asc" | "desc";
     search: string;
@@ -53,14 +54,15 @@ export async function fetchUsers(
     const qs = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
-        sortBy,        
-        order,      
+        sortBy,
+        order,
         search,
     });
 
-    const res = await fetchImpl(`/api/admin/users?${qs}`, {
+    const res = await fetchImpl(`/api/admin/users?${qs}`, withTimeout({
         credentials: "include",
-    });
+    },
+    ));
     if (!res.ok) throw await toError(res, "Không thể lấy dữ liệu");
 
     const body = await res.json();
@@ -76,12 +78,14 @@ export async function updateUserStatus(
     status: UserStatusType,
     fetchImpl: Fetcher = fetch,
 ): Promise<void> {
-    const res = await fetchImpl("/api/admin/users/status", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, status }),
-    });
+    const res = await fetchImpl("/api/admin/users/status", withTimeout
+        ({
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, status }),
+        }),
+    );
     if (!res.ok) throw await toError(res, "Không thể cập nhật trạng thái");
 }
 
@@ -96,11 +100,12 @@ export async function updateUser(
     payload: UserUpdatePayload,
     fetchImpl: Fetcher = fetch,
 ): Promise<void> {
-    const res = await fetchImpl("/api/admin/users/profile", {
+    const res = await fetchImpl("/api/admin/users/profile", withTimeout({
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-    });
+    },
+    ));
     if (!res.ok) throw await toError(res, "Không thể lưu người dùng");
 }

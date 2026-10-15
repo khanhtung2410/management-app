@@ -3,6 +3,8 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { userRole } from "@/constants/roles";
+import { withTimeout } from "@/lib/withTimeout";
+import { isAbortError } from "@/lib/isAbortError";
 
 function LoginForm() {
     const [email, setEmail] = useState("");
@@ -29,11 +31,12 @@ function LoginForm() {
         setLoading(true);
 
         try {
-            const response = await fetch("/api/login", {
+            const response = await fetch("/api/login", withTimeout({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
-            });
+            }),
+            );
 
             const data = await response.json();
 
@@ -42,7 +45,7 @@ function LoginForm() {
                 return;
             }
 
-            const meResponse = await fetch("/api/auth/me");
+            const meResponse = await fetch("/api/auth/me", withTimeout({}));
 
             if (!meResponse.ok) {
                 setError("Không thể lấy thông tin người dùng");
@@ -58,7 +61,10 @@ function LoginForm() {
             }
         } catch (error) {
             console.error(error);
-            setError("Có lỗi xảy ra khi đăng nhập");
+            setError(isAbortError(error)
+                ? "Yêu cầu quá lâu, vui lòng thử lại"
+                : "Có lỗi xảy ra khi đăng nhập"
+            );
         } finally {
             setLoading(false);
         }
