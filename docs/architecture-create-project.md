@@ -142,3 +142,55 @@ sequenceDiagram
 | `PUT /api/admin/users/status` | `requireRole(ADMIN)` | Cập nhật trạng thái người dùng |
 | `GET /api/admin/stat` | `requireRole(ADMIN)` | Thống kê quản trị |
 | `PUT /api/admin/users/profile` | `requireRole(ADMIN)` | Cập nhật hồ sơ người dùng |
+
+## Quy trình phân tích yêu cầu trước khi code
+
+Trước khi sửa code, hãy ghi rõ vấn đề, phạm vi, câu hỏi còn mở và cách kiểm chứng. Có thể dùng AI để tìm điểm mù và so sánh phương án, nhưng người thực hiện phải đối chiếu câu trả lời với code, schema và hành vi thật của dự án.
+
+### Nên hỏi AI những gì
+
+- “Câu hỏi nào trong yêu cầu này tôi chưa nghĩ tới?” — giúp phát hiện yêu cầu mơ hồ, điều kiện tiên quyết và phụ thuộc giữa các phần.
+- “Liệt kê 10 trường hợp biên có thể làm tính năng này hỏng, xếp theo mức độ nghiêm trọng.” — tạo danh sách để chọn ca cần test, không mặc định mọi trường hợp AI nêu đều áp dụng.
+- “Đưa ra 3 cách triển khai; với mỗi cách, nêu ưu, nhược và ảnh hưởng lên code hiện tại.” — giúp so sánh hướng làm trước khi chọn; quyết định cuối cùng phải dựa vào cấu trúc repo và yêu cầu thực tế.
+- “Hãy chỉ ra các nơi trong repo cần kiểm tra nếu đổi [API/schema/hành vi] này; chưa viết code.” — dùng kết quả làm danh sách tìm kiếm, rồi tự xác nhận bằng cách đọc các caller, handler và schema liên quan.
+
+### Không nên giao AI tự quyết định hoặc tự viết trọn
+
+- **Không giao AI tự viết toàn bộ route đăng nhập mà không đưa yêu cầu và bắt kiểm tra code hiện tại.** Route `/api/login` của dự án phải dùng `bcrypt.compare` với `PasswordHash` và từ chối tài khoản không ở trạng thái `Active`; thiếu một trong hai thay đổi bảo mật và luồng xác thực.
+- **Không cho rằng trang hoặc proxy đã bảo vệ API quản trị.** Matcher trong `proxy.ts` không có `/api/*`; route quản lý người dùng phải tự gọi `requireRole(ADMIN)`. AI cần kiểm tra handler trực tiếp thay vì suy luận quyền truy cập từ vị trí trang.
+- **Không chấp nhận thay đổi kiểu database hoặc chuyển đổi dữ liệu chỉ vì AI đề xuất.** Ví dụ, khi đổi `CongViec.TrangThai` từ `bit` sang `int`, cần kiểm tra kiểu cột thực tế và ánh xạ dữ liệu cũ; thay đổi không tương thích có thể làm truy vấn sai hoặc mất ý nghĩa trạng thái.
+- **Không để AI tự xác nhận tính năng “đã chạy đúng” bằng cách đọc code.** Luồng đăng nhập, quyền truy cập và cập nhật công việc cần được kiểm tra bằng test phù hợp hoặc chạy thực tế; tài liệu và câu trả lời của AI không thay thế được việc xác minh.
+
+### Lỗi đã gặp và câu hỏi giúp phát hiện
+
+| Lỗi | Câu hỏi trước khi sửa | Câu hỏi có bắt được không? Giới hạn cần kiểm tra |
+| --- | --- | --- |
+| Tìm kiếm làm số trang/kết quả không khớp | “Câu đếm tổng có cùng điều kiện lọc với câu lấy dữ liệu không? Khi đổi từ khóa có reset trang hiện tại không?” | Có thể phát hiện bằng cách so sánh hai query và luồng state; vẫn cần test trang 3 rồi tìm từ khóa chỉ còn một kết quả để bắt lỗi phối hợp giữa UI, hook và API. |
+| Kiểu `TrangThai` trong code hoặc tham số SQL không khớp kiểu cột | “Kiểu cột trong schema là gì, và kiểu mới có biểu diễn được hết các giá trị trạng thái đang dùng không?” | Câu hỏi giúp yêu cầu kiểm tra schema và miền giá trị; chỉ chạy migration/query trên dữ liệu đại diện mới xác nhận được tác động của chuyển đổi. |
+| Client và server dùng tên tham số sắp xếp khác nhau (`sortById`/`sortBy`) | “Client gửi chính xác tên và giá trị nào; server đọc tên nào?” | Thường phát hiện được khi lần theo request; cần kiểm thử request thực tế để xác nhận tham số được truyền và áp dụng đúng. |
+| Đổi tên file làm hỏng import | “Ai đang import file này, và đã cập nhật tất cả đường dẫn import chưa?” | Tìm kiếm tham chiếu và type-check thường bắt được import bị thiếu; cần build để kiểm tra toàn bộ graph mà test riêng lẻ có thể không nạp tới. |
+| Nút “Hoàn thành” gọi endpoint không tồn tại và nhận 404 | “Endpoint và method này đã tồn tại chưa; route có hỗ trợ đúng method không?” | Đọc danh sách API và handler giúp phát hiện trước; chạy luồng từ giao diện hoặc test tích hợp mới xác nhận URL, method và response khớp nhau. |
+
+Các câu hỏi chỉ giúp hướng việc kiểm tra đúng chỗ, không tự chứng minh hệ thống hoạt động. Lỗi ở nhiều lớp (giao diện, request, API và database) có thể vẫn lọt nếu chỉ đọc một file hoặc chỉ hỏi AI; cần bổ sung test hồi quy hay chạy luồng thực tế tương ứng.
+
+### Mẫu phân tích yêu cầu dùng trong Pull Request
+
+```markdown
+## Phân tích
+Vấn đề:
+Cách tái hiện:
+Sẽ làm:
+Không làm:
+Câu hỏi đã chốt:
+| Câu hỏi | Câu trả lời | Ai trả lời |
+| --- | --- | --- |
+| ... | ... | ... |
+Trường hợp biên và cách xử lý:
+| Trường hợp | Cách xử lý |
+| --- | --- |
+| ... | ... |
+File/API/schema bị ảnh hưởng:
+Kiểm chứng (test/lệnh/luồng thủ công):
+```
+
+Điền câu hỏi đã chốt cùng người cung cấp câu trả lời (ví dụ: người yêu cầu, người phụ trách database hoặc người review). Nếu chưa có câu trả lời, ghi rõ giả định và xin xác nhận trước khi triển khai phần có ảnh hưởng đáng kể.
