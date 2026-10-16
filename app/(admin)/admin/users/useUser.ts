@@ -6,11 +6,9 @@ import {
     updateUser,
     updateUserStatus,
     type Fetcher,
-    type User,
     type UserUpdatePayload,
 } from "./api";
 import { userStatus, UserStatusType } from "@/constants/statuses";
-import { assertNever } from "@/lib/assertNever";
 import { isAbortError } from "@/lib/isAbortError";
 import { UsersState } from "./renderByState";
 
