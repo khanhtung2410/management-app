@@ -51,8 +51,8 @@ export async function PUT(request: NextRequest) {
         const result = await db
             .request()
             .input("userId", sql.Int, userId)
-            .input("userStatus", sql.TinyInt, rawStatus)
-            .input("userRole", sql.TinyInt, userRole.USER)
+            .input("userStatus", sql.Int, rawStatus)
+            .input("userRole", sql.Int, userRole.USER)
             .query(`
                 UPDATE [User]
                 SET TrangThai = @userStatus
