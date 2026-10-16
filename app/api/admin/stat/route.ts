@@ -4,6 +4,7 @@ import sql from "mssql";
 import { requireRole } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
 import { STATUS_CONFIG, taskStatus } from "@/constants/statuses";
+import { getPercent } from "@/lib/percent";
 
 export async function GET(req: NextRequest) {
     try {
@@ -60,11 +61,6 @@ export async function GET(req: NextRequest) {
         const hoanThanh = Number(row?.HoanThanh || 0);
         const quaHan = Number(row?.QuaHan || 0);
 
-        const getPercent = (value: number) => {
-            if (totalTasks === 0) return 0;
-            return Math.round((value / totalTasks) * 10000) / 100;
-        };
-
         const taskStats = [
             { status: taskStatus.Active, total: dangThucHien },
             { status: taskStatus.Complete, total: hoanThanh },
@@ -73,7 +69,7 @@ export async function GET(req: NextRequest) {
             status,
             name: STATUS_CONFIG[status].label,
             total,
-            percent: getPercent(total),
+           percent: getPercent(total, totalTasks),
         }));
 
         return NextResponse.json({
