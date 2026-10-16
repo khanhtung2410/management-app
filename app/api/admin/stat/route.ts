@@ -6,6 +6,8 @@ import { userRole } from "@/constants/roles";
 import { STATUS_CONFIG, taskStatus } from "@/constants/statuses";
 import { getPercent } from "@/lib/percent";
 
+
+
 export async function GET(req: NextRequest) {
     try {
         await requireRole(req, userRole.ADMIN);
@@ -70,6 +72,17 @@ export async function GET(req: NextRequest) {
             name: STATUS_CONFIG[status].label,
             total,
            percent: getPercent(total, totalTasks),
+        }));
+
+        const taskStats = [
+            { status: taskStatus.Active, total: dangThucHien },
+            { status: taskStatus.Complete, total: hoanThanh },
+            { status: taskStatus.Overdue, total: quaHan },
+        ].map(({ status, total }) => ({
+            status,
+            name: STATUS_CONFIG[status].label,
+            total,
+            percent: getPercent(total),
         }));
 
         return NextResponse.json({
