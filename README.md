@@ -139,7 +139,9 @@ Chạy tại thư mục gốc:
 ```bash
 npm run check:bom
 npm run lint
+npx tsc --noEmit
+npm run test:run
 npm run build
 ```
 
-`check:bom` kiểm tra BOM trong mã nguồn; `lint` chạy ESLint; `build` xác nhận ứng dụng build được cho production. Đảm bảo `.env.local` hợp lệ và SQL Server/database truy cập được trước khi chạy build. Hiện `package.json` chưa định nghĩa script test riêng.
+`check:bom` kiểm tra BOM trong mã nguồn; `lint` chạy ESLint; `tsc` kiểm tra kiểu TypeScript; `test:run` chạy Vitest một lần; `build` xác nhận ứng dụng build được cho production. Đảm bảo `.env.local` hợp lệ và SQL Server/database truy cập được trước khi chạy build.

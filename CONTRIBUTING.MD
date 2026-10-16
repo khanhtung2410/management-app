@@ -9,10 +9,10 @@ Tài liệu này mô tả quy trình làm việc, quy tắc code, commit và pul
 
 ## 1. Quy trình làm việc
 
-Mô hình: **GitHub Flow** (đơn giản, phù hợp team nhỏ, deploy liên tục).
+Mô hình: **GitHub Flow** — làm việc trên nhánh riêng rồi mở Pull Request về nhánh chính.
 
 ```
-main        ← production, luôn stable, mọi commit đều deploy được
+master      ← nhánh chính của repository
 feature/*   ← nhánh tính năng
 fix/*       ← nhánh sửa bug
 chore/*     ← cấu hình, dependency, CI
@@ -21,28 +21,28 @@ docs/*      ← chỉ sửa tài liệu
 
 **Các bước:**
 
-1. Cập nhật `main` mới nhất:
+1. Cập nhật `master` mới nhất:
 
    ```bash
-   git checkout main
-   git pull origin main
+   git switch master
+   git pull --ff-only origin master
    ```
 
-2. Tạo nhánh mới từ `main`:
+2. Tạo nhánh mới từ `master`:
 
    ```bash
-   git checkout -b feature/TASK-12-tao-cong-viec
+   git switch -c feature/task-12-tao-cong-viec
    ```
 
-3. Code, chạy test, commit theo quy tắc bên dưới.
+3. Code, chạy các lệnh kiểm tra phù hợp ở mục Testing, rồi commit theo quy tắc bên dưới.
 
-4. Push và mở Pull Request vào `main`:
+4. Push và mở Pull Request vào `master`:
 
    ```bash
-   git push -u origin feature/TASK-12-tao-cong-viec
+   git push -u origin feature/task-12-tao-cong-viec
    ```
 
-5. Chờ CI pass + ít nhất 1 approval → squash merge → xóa nhánh.
+5. Đảm bảo các kiểm tra bắt buộc và review theo yêu cầu của repository đã hoàn tất trước khi merge. Sau khi merge, xóa nhánh đã hoàn thành.
 
 **Quy tắc đặt tên nhánh:**
 
@@ -52,11 +52,11 @@ docs/*      ← chỉ sửa tài liệu
 
 Ví dụ:
 
-- `feature/TASK-12-tao-cong-viec`
-- `fix/TASK-34-search-khong-reset-page`
-- `chore/TASK-40-nang-cap-next-15`
+- `feature/task-12-create-task`
+- `fix/task-34-search-page-reset`
+- `chore/task-40-upgrade-next`
 
-Không có ticket ID? Dùng mô tả ngắn: `feature/them-trang-dang-ky`.
+Chỉ dùng chữ ASCII, chữ số và dấu gạch ngang trong tên nhánh. Không có ticket ID thì dùng mô tả ngắn, ví dụ `feature/add-register-page`.
 
 ---
 
@@ -73,47 +73,25 @@ Không có ticket ID? Dùng mô tả ngắn: `feature/them-trang-dang-ky`.
 
 ### Cấu trúc file
 
-Tuân theo cấu trúc trong README:
-
 ```
-app/         ← route, page, layout, API route handler
-features/    ← logic theo domain (auth, tasks, users)
-lib/         ← tiện ích dùng chung (db, jwt, validation)
+app/          ← route, page, layout, API route handler
+components/   ← component giao diện dùng chung
+constants/    ← hằng số và cấu hình domain
+lib/          ← tiện ích và logic dùng chung (auth, database)
 ```
 
-**Quy tắc đặt file:**
-
-| Loại | Vị trí | Ví dụ |
-|---|---|---|
-| Route / page | `app/` | `app/tasks/page.tsx` |
-| API handler | `app/api/` | `app/api/tasks/route.ts` |
-| Component theo domain | `features/<domain>/components/` | `features/tasks/components/TaskList.tsx` |
-| Hook theo domain | `features/<domain>/hooks/` | `features/tasks/hooks/useTasks.ts` |
-| API client | `features/<domain>/api/` | `features/tasks/api/tasksApi.ts` |
-| Tiện ích chung | `lib/` | `lib/db.ts` |
+Đặt code gần route hoặc domain đang sử dụng; chỉ tạo thư mục dùng chung khi có nhiều nơi thực sự cần dùng.
 
 ### Server vs Client Component
 
 - **Mặc định là Server Component** — không thêm `"use client"` trừ khi cần.
 - Chỉ thêm `"use client"` khi dùng `useState`, `useEffect`, event handler, hoặc browser API.
-- **`page.tsx` không có `"use client"`** — để giữ metadata và auth check ở server.
-- Component có state đặt `"use client"` ở **component lá**, không phải `page.tsx`.
+- Trang có thể là Client Component nếu cần tương tác phía trình duyệt; nếu chỉ một phần cần tương tác, cân nhắc tách riêng phần đó.
 
 ### Tầng gọi API
 
-- Component **không** gọi `fetch` trực tiếp.
-- Luôn đi qua `features/<domain>/api/<domain>Api.ts` — đây là seam để test.
-- Logic state + fetch gói trong hook (`useTasks`, `useUsers`).
-
-```tsx
-// ❌ Sai
-useEffect(() => {
-  fetch("/api/tasks").then(...)
-}, []);
-
-// ✅ Đúng
-const { data, loading } = useTasks();
-```
+- Không gọi database trực tiếp từ component phía trình duyệt; database chỉ được truy cập trong server-side code/API route.
+- Một số trang hiện gọi API bằng `fetch`, một số luồng dùng API client/hook riêng. Khi mở rộng, ưu tiên tái sử dụng hoặc trích xuất API client/hook nếu logic cần dùng ở nhiều nơi hoặc cần kiểm thử độc lập.
 
 ### Database (MSSQL)
 
@@ -129,36 +107,32 @@ const { data, loading } = useTasks();
     .query("SELECT * FROM Users WHERE Email = @email");
   ```
 
-- Không viết SQL trong component — đặt trong `features/<domain>/` hoặc `lib/db/`.
+- Không viết SQL trong component; đặt truy vấn trong API route hoặc server-side module phù hợp.
 - Mọi thay đổi schema phải có file migration, không sửa DB thủ công.
 
 ### Validation
 
-- Dùng **Zod** cho mọi input từ client (form, query param, body).
-- Schema đặt cạnh API handler hoặc trong `features/<domain>/schemas.ts`.
-- Validate ở **server**, không tin client.
+- Validate dữ liệu không đáng tin cậy ở server, gồm body, query param và dữ liệu từ bên ngoài.
+- Dùng kiểu và helper đã có trong dự án; nếu thêm thư viện validation mới, cần cập nhật dependency và tài liệu tương ứng.
 
 ### Testing
 
 - **Tính năng mới phải có test đi kèm.**
 - Bug fix phải có test tái hiện lỗi trước khi fix.
-- Hook test bằng `renderHook` + mock `usersApi` (không mock `fetch`).
-- API route test bằng cách gọi handler trực tiếp với `Request` giả.
-- Coverage tối thiểu: **70%** cho `features/` và `lib/`.
+- Dùng Vitest và các test hiện có làm mẫu; ưu tiên kiểm thử hàm thuần và hành vi có thể tái hiện một cách ổn định.
+- Với thay đổi giao diện, kiểm tra thủ công các luồng bị ảnh hưởng; repository hiện chưa có script E2E.
 
 ```bash
-pnpm test          # chạy trước khi commit
-pnpm test:e2e      # trước khi mở PR nếu đụng UI
+npm run test:run   # chạy Vitest một lần, trước khi commit
 ```
 
 ### Format & Lint
 
-- Đã cấu hình **ESLint + Prettier** qua Husky pre-commit hook.
-- Không bypass hook (`--no-verify`) trừ trường hợp khẩn cấp, phải báo trong PR.
+- Repository cấu hình ESLint; hiện chưa cấu hình Prettier hoặc Husky pre-commit hook.
 
 ```bash
-pnpm lint          # kiểm tra
-pnpm lint --fix    # tự sửa
+npm run lint             # kiểm tra
+npm run lint -- --fix    # yêu cầu ESLint tự sửa lỗi có thể tự động sửa
 ```
 
 ---
@@ -197,35 +171,33 @@ Dùng tên domain: `auth`, `tasks`, `users`, `admin`, `db`, `ui`.
 ### Ví dụ
 
 ```
-feat(tasks): thêm form tạo công việc
+feat(tasks): add task creation form
 
-fix(tasks): reset trang khi đổi từ khóa tìm kiếm
+fix cause: fetch effect depends on raw searchTerm without resetting
+currentPage. Narrowing the search can leave currentPage beyond totalPages.
 
-Nguyên nhân: useEffect fetch phụ thuộc searchTerm thô, không reset
-currentPage. Khi search thu hẹp kết quả, currentPage cũ vượt totalPages
-gây hiển thị rỗng.
-
-Closes TASK-34
+Refs TASK-34
 ```
 
 ```
-refactor(users): tách useUsers hook khỏi UserList
+refactor(users): extract useUsers hook from user list
 
-chore: nâng Next.js lên 15.0.3
+chore: upgrade Next.js to 16.3.8
 ```
 
 ### Quy tắc viết
 
 - Dòng tiêu đề **≤ 72 ký tự**, không viết hoa đầu câu, không dấu chấm cuối.
-- Dùng **thể mệnh lệnh**: "thêm" không phải "đã thêm", "sửa" không phải "đang sửa".
+- Dùng chữ ASCII trong commit message để thống nhất với tên nhánh và tránh lỗi encoding ở công cụ.
+- Dùng **thể mệnh lệnh** bằng tiếng Anh: `add` thay vì `added`, `fix` thay vì `fixing`.
 - Mỗi commit là một thay đổi logic hoàn chỉnh — build được, test pass.
 - Body giải thích **tại sao**, không phải **cái gì** (cái gì thì diff đã thể hiện).
 - Breaking change: thêm `!` sau type và ghi rõ trong footer:
 
   ```
-  feat(api)!: đổi response format của /api/tasks
+  feat(api)!: change tasks api response format
 
-  BREAKING CHANGE: trường `items` đổi thành `data`, ảnh hưởng mọi client.
+  BREAKING CHANGE: rename the items field to data; this affects all clients.
   ```
 
 ---
@@ -234,10 +206,12 @@ chore: nâng Next.js lên 15.0.3
 
 ### Trước khi mở PR
 
-- [ ] Đã rebase lên `main` mới nhất (`git rebase main`).
-- [ ] `pnpm lint` pass.
-- [ ] `pnpm test` pass.
-- [ ] `pnpm build` thành công.
+- [ ] Đã cập nhật từ `master` mới nhất và giải quyết conflict nếu có.
+- [ ] `npm run check:bom` pass.
+- [ ] `npm run lint` pass.
+- [ ] `npx tsc --noEmit` pass.
+- [ ] `npm run test:run` pass.
+- [ ] `npm run build` thành công.
 - [ ] Đã tự review diff trên GitHub.
 - [ ] Đã cập nhật README / docs nếu thay đổi hành vi hoặc cấu hình.
 
@@ -246,13 +220,13 @@ chore: nâng Next.js lên 15.0.3
 Theo cùng format Conventional Commits:
 
 ```
-feat(tasks): thêm form tạo công việc
-fix(tasks): reset trang khi đổi từ khóa tìm kiếm
+feat(tasks): add task creation form
+fix(tasks): reset page when search changes
 ```
 
 ### Mô tả PR
 
-Dùng template sau (đã có sẵn khi tạo PR):
+Có thể dùng mẫu sau để mô tả PR:
 
 ```markdown
 ## What
@@ -268,11 +242,11 @@ Cách tiếp cận chính. Điểm cần lưu ý khi review.
 Ví dụ: "Tách logic fetch ra hook useUsers để test được không cần DOM."
 
 ## Testing
-Đã test những gì, bằng cách nào.
+Liệt kê các kiểm tra đã chạy và kết quả.
 
-- [x] Unit test cho useUsers (5 case)
-- [x] Thủ công: tạo 20 user, kiểm tra phân trang
-- [ ] Chưa test trên Safari
+- [ ] Unit test liên quan
+- [ ] Lint, type-check và build
+- [ ] Kiểm tra thủ công (nếu cần), nêu môi trường và kết quả
 
 ## Screenshots (nếu là UI)
 | Trước | Sau |
@@ -282,6 +256,7 @@ Ví dụ: "Tách logic fetch ra hook useUsers để test được không cần D
 ## Checklist
 - [ ] Test pass
 - [ ] Lint pass
+- [ ] Type-check pass
 - [ ] Không có breaking change (hoặc đã ghi rõ ở footer commit)
 - [ ] Đã cập nhật docs nếu cần
 ```
@@ -294,8 +269,7 @@ Ví dụ: "Tách logic fetch ra hook useUsers để test được không cần D
 
 ### Review
 
-- Cần tối thiểu **1 approval** trước khi merge.
-- Reviewer phản hồi trong vòng **24 giờ làm việc**.
+- Tuân theo yêu cầu review và kiểm tra bắt buộc được cấu hình cho repository.
 - Tác giả không tự merge PR của mình (trừ hotfix khẩn cấp, phải báo team).
 
 **Cách để lại comment:**
@@ -320,14 +294,12 @@ Dùng parameterized query.
 
 ### Merge
 
-- Dùng **Squash and merge** — giữ `main` sạch, mỗi PR = 1 commit.
-- Xóa nhánh sau khi merge.
-- Nếu PR có nhiều commit có ý nghĩa riêng, có thể dùng **Rebase and merge** — nhưng phải đảm bảo mỗi commit build được.
+- Dùng phương thức merge được repository cho phép; ưu tiên **Squash and merge** để lịch sử nhánh chính gọn.
+- Xóa nhánh sau khi merge nếu không còn cần dùng.
 
 ### Sau khi merge
 
-- CI tự động deploy lên staging.
-- Kiểm tra staging chạy đúng trước khi báo "done".
+- Kiểm tra môi trường triển khai nếu repository có cấu hình deploy; không mặc định CI hoặc staging đã được thiết lập.
 - Nếu phát hiện lỗi → mở PR `fix/...` mới, không revert trừ khi nghiêm trọng.
 
 ---
