@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 import sql from "mssql";
 import { requireRole } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
-import { taskStatus } from "@/constants/statuses";
+import { STATUS_CONFIG, taskStatus } from "@/constants/statuses";
 
 export async function GET(req: NextRequest) {
     try {
@@ -12,11 +12,11 @@ export async function GET(req: NextRequest) {
         const pool = await getDb();
 
         // Tổng người dùng thường
-        const [userResult,taskResult] = await Promise.all([
+        const [userResult, taskResult] = await Promise.all([
             pool
-            .request()
-            .input("userRole", sql.Int,userRole.USER)
-            .query(`
+                .request()
+                .input("userRole", sql.Int, userRole.USER)
+                .query(`
                 SELECT COUNT(*) AS totalUsers
                 FROM [dbo].[User]
                 WHERE RoleId = @userRole
@@ -26,10 +26,10 @@ export async function GET(req: NextRequest) {
             // Complete = TrangThai 1
             // Overdue  = TrangThai 0 + đã quá hạn
             pool
-            .request()
-            .input("statusActive",sql.Int,taskStatus.Active)
-            .input("statusComplete",sql.Int,taskStatus.Complete)
-            .query(`
+                .request()
+                .input("statusActive", sql.Int, taskStatus.Active)
+                .input("statusComplete", sql.Int, taskStatus.Complete)
+                .query(`
                 SELECT
                     COUNT(*) AS totalTasks,
 
@@ -65,29 +65,21 @@ export async function GET(req: NextRequest) {
             return Math.round((value / totalTasks) * 10000) / 100;
         };
 
+        const taskStats = [
+            { status: taskStatus.Active, total: dangThucHien },
+            { status: taskStatus.Complete, total: hoanThanh },
+            { status: taskStatus.Overdue, total: quaHan },
+        ].map(({ status, total }) => ({
+            status,
+            name: STATUS_CONFIG[status].label,
+            total,
+            percent: getPercent(total),
+        }));
+
         return NextResponse.json({
             totalUsers,
             totalTasks,
-            taskStats: [
-                {
-                    status: taskStatus.Active,
-                    name: "Đang thực hiện",
-                    total: dangThucHien,
-                    percent: getPercent(dangThucHien),
-                },
-                {
-                    status: taskStatus.Complete,
-                    name: "Hoàn thành",
-                    total: hoanThanh,
-                    percent: getPercent(hoanThanh),
-                },
-                {
-                    status: taskStatus.Overdue,
-                    name: "Quá hạn",
-                    total: quaHan,
-                    percent: getPercent(quaHan),
-                },
-            ],
+            taskStats,
         });
     } catch (error) {
         console.error("GET DASHBOARD ERROR:", error);
