@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
             // Overdue  = TrangThai 0 + đã quá hạn
             pool
             .request()
-            .input("statusActive",sql.TinyInt,taskStatus.Active)
-            .input("statusComplete",sql.TinyInt,taskStatus.Complete)
+            .input("statusActive",sql.Int,taskStatus.Active)
+            .input("statusComplete",sql.Int,taskStatus.Complete)
             .query(`
                 SELECT
                     COUNT(*) AS totalTasks,
