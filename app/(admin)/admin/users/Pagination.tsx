@@ -14,11 +14,12 @@ export function getPageNumbers(
         return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
     const pages: (number | "...")[] = [1];
-    if (currentPage > 4) pages.push("...");
     const start = Math.max(2, currentPage - 1);
     const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) pages.push("...");
     for (let i = start; i <= end; i++) pages.push(i);
-    if (currentPage < totalPages - 3) pages.push("...");
+    if (end < totalPages - 1) pages.push("...");
     pages.push(totalPages);
     return pages;
 }
@@ -58,8 +59,8 @@ export function Pagination({
                                 type="button"
                                 onClick={() => onPageChange(page)}
                                 className={`min-w-9 rounded-md px-3 py-2 text-sm transition ${currentPage === page
-                                        ? "bg-[#1E40AF] text-white"
-                                        : "border text-[#334155] hover:bg-[#F1F5F9]"
+                                    ? "bg-[#1E40AF] text-white"
+                                    : "border text-[#334155] hover:bg-[#F1F5F9]"
                                     }`}
                             >
                                 {page}
