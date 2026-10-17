@@ -6,7 +6,7 @@ export interface CongViec {
     ID: number;
     Ten: string;
     Mota: string;
-    TrangThai: number;
+    TrangThai: TaskStatusType;
     HetHan: string;
 }
 
