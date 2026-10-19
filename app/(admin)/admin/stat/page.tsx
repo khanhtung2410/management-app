@@ -245,7 +245,10 @@ export default function DashboardPage() {
                                 <PieChart>
 
                                     <Pie
-                                        data={data.taskStats}
+                                        data={data.taskStats.map((item) => ({
+                                            ...item,
+                                            fill: STATUS_CONFIG[item.status].color,
+                                        }))}
                                         dataKey="total"
                                         nameKey="name"
                                         shape={TaskSector}
