@@ -42,6 +42,12 @@ function withFallback<K extends string | number>(
     return new Proxy(config, {
         get(target, prop, receiver) {
             if (typeof prop === "symbol") return Reflect.get(target, prop, receiver);
+
+            // Không phải số → không phải status key, pass through
+            // (bắt $$typeof, then, toJSON, constructor, hasOwnProperty, ...)
+            if (!/^-?\d+$/.test(prop)) {
+                return Reflect.get(target, prop, receiver);
+            }
             const value = (target as Record<string, StatusConfig>)[prop];
             if (value === undefined) {
                 if (process.env.NODE_ENV !== "production") {
@@ -54,5 +60,5 @@ function withFallback<K extends string | number>(
         },
     });
 }
-export const STATUS_CONFIG      = withFallback(TASK_STATUS_CONFIG_RAW);
+export const STATUS_CONFIG = withFallback(TASK_STATUS_CONFIG_RAW);
 export const USER_STATUS_CONFIG = withFallback(USER_STATUS_CONFIG_RAW);
