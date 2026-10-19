@@ -50,7 +50,7 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="px-6 py-4" style={{ background: "var(--surface)", color: "var(--foreground)" }}>
+        <nav className="sticky top-0 z-50 px-6 py-4" style={{ background: "var(--surface)", color: "var(--foreground)" }}>
             <div className="flex justify-between">
                 <div className="flex gap-6">
                     <Link href="/" className="hover:underline">
