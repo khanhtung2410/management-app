@@ -1,5 +1,5 @@
 import { Sector, type PieSectorDataItem } from "recharts";
-import { STATUS_CONFIG, type TaskStatusType } from "@/constants/statuses";
+import { STATUS_CONFIG, type TaskStatusType, UNKNOWN_STATUS_CONFIG } from "@/constants/statuses";
 
 interface TaskStatPayload {
     status: TaskStatusType;
@@ -7,5 +7,5 @@ interface TaskStatPayload {
 
 export function TaskSector(props: PieSectorDataItem) {
     const payload = props.payload as TaskStatPayload;
-    return <Sector {...props} fill={STATUS_CONFIG[payload.status].color} />;
+    return <Sector {...props} fill={(STATUS_CONFIG[payload.status] ?? UNKNOWN_STATUS_CONFIG).color} />;
 }
