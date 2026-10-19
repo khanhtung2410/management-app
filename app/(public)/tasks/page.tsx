@@ -6,7 +6,7 @@ import {
     useMemo,
     useState,
 } from "react";
-import { taskStatus } from "@/constants/statuses";
+import { taskStatus } from "@/constants/statuses";  
 import { useMediaQuery } from "@/app/api/tasks/useMediaQuery";
 import { TaskList, type CongViec } from "./taskRow";
 import { TaskFormModal } from "./TaskFormModal";
@@ -21,7 +21,7 @@ export default function Home() {
 
     const [addTask, setAddTask] = useState(false);
 
-    const [toggleError, setToggleError] = useState<{
+    const [toggleError, setToggleError] = useState<{    
         id: number;
         message: string;
     } | null>(null);

@@ -2,7 +2,7 @@
 
 import type { User } from "./api";
 import { memo } from "react";
-import { USER_STATUS_CONFIG, userStatus, UserStatusType } from "@/constants/statuses"
+import { UNKNOWN_STATUS_CONFIG, USER_STATUS_CONFIG, userStatus, UserStatusType } from "@/constants/statuses"
 
 interface RowProps {
     user: User;
@@ -12,7 +12,7 @@ interface RowProps {
 }
 
 export const StatusBadge = memo(function StatusBadge({ trangThai }: { trangThai: UserStatusType }) {
-    const cfg = USER_STATUS_CONFIG[trangThai];
+    const cfg = USER_STATUS_CONFIG[trangThai] ?? UNKNOWN_STATUS_CONFIG;
     return (
         <span
             className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium"
