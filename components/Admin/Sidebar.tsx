@@ -23,7 +23,7 @@ export default function Sidebar() {
 
             {/* Sidebar - off-canvas on mobile, inline on md+ */}
             <aside
-                className={`fixed z-50 inset-y-0 left-0 transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative md:inset-auto md:flex-shrink-0 bg-[color:var(--surface)] text-[color:var(--foreground)] overflow-hidden ${sidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 ease-in-out`}
+                className={`fixed z-50 inset-y-0 left-0 transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:self-start md:flex-shrink-0 bg-[color:var(--surface)] text-[color:var(--foreground)] overflow-hidden ${sidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 ease-in-out`}
             >
                 <div className={`p-4 text-xl font-bold flex ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
                     {sidebarOpen && <p>Admin</p>}
