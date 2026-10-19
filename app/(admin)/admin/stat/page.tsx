@@ -64,6 +64,7 @@ export default function DashboardPage() {
         useState("");
 
     const isMobile = useIsMobile(768);
+    const isCompactLayout = useIsMobile(1536);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -233,8 +234,8 @@ export default function DashboardPage() {
                         </p>
                     </div>
 
-                    {/* Grid responsive: mobile 1 cột, desktop 2 cột */}
-                    <div className="flex flex-col items-center gap-4 lg:grid lg:grid-cols-2 lg:gap-8">
+                    {/* Stack chart and details until there is enough room for two columns */}
+                    <div className="flex flex-col items-center gap-4 2xl:grid 2xl:grid-cols-2 2xl:gap-8">
 
                         {/* ===== PIE ===== */}
                         <div
@@ -257,9 +258,9 @@ export default function DashboardPage() {
                                         outerRadius={isMobile ? 80 : 125}
                                         innerRadius={isMobile ? 45 : 65}
                                         paddingAngle={3}
-                                        labelLine={!isMobile}
+                                        labelLine={!isCompactLayout}
                                         label={({ percent }) =>
-                                            isMobile ? "" : `${(percent || 0).toFixed(2)}%`
+                                            isCompactLayout ? "" : `${(percent || 0).toFixed(2)}%`
                                         }
                                     />
                                     <Tooltip
@@ -270,9 +271,9 @@ export default function DashboardPage() {
                                     />
 
                                     <Legend
-                                        verticalAlign={isMobile ? "bottom" : "middle"}
-                                        align={isMobile ? "center" : "right"}
-                                        layout={isMobile ? "horizontal" : "vertical"}
+                                        verticalAlign={isCompactLayout ? "bottom" : "middle"}
+                                        align={isCompactLayout ? "center" : "right"}
+                                        layout={isCompactLayout ? "horizontal" : "vertical"}
                                         iconType="circle"
                                         wrapperStyle={{
                                             fontSize: isMobile ? 12 : 14,
