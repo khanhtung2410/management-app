@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userName, setUserName] = useState("");
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         fetch("/api/auth/me", {
@@ -30,7 +31,7 @@ export default function Navbar() {
                 setIsLoggedIn(false);
                 setUserName("");
             });
-    }, []);
+    }, [pathname]);
 
     const handleLogout = async () => {
         try {
