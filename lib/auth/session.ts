@@ -1,6 +1,9 @@
+import sql from "mssql";
+import { userStatus } from "@/constants/statuses";
+import { getDb } from "@/lib/db";
 import { UnauthorizedError } from "./errors";
 import { verifyToken } from "./token"
-import { AuthPayload } from "./payload";
+import type { AuthPayload } from "./payload";
 
 export interface RequestLike{
     headers: { get(name: string): string | null }; 
@@ -18,5 +21,20 @@ export async function getAuthFromRequest(req: RequestLike): Promise<AuthPayload>
     if (!token) {
         throw new UnauthorizedError("Missing token");
     }
-    return verifyToken(token);
+
+    const payload = await verifyToken(token);
+    const pool = await getDb();
+    const result = await pool
+        .request()
+        .input("ID", sql.Int, payload.userId)
+        .query(`SELECT TrangThai FROM [dbo].[User] WHERE ID = @ID`);
+
+    if (
+        !result.recordset[0] ||
+        Number(result.recordset[0].TrangThai) !== userStatus.Active
+    ) {
+        throw new UnauthorizedError("Account is inactive");
+    }
+
+    return payload;
 }
