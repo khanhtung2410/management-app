@@ -7,7 +7,7 @@ import {
     useState,
 } from "react";
 import { taskStatus } from "@/constants/statuses";  
-import { useMediaQuery } from "@/app/api/tasks/useMediaQuery";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { TaskList, type CongViec } from "./taskRow";
 import { TaskFormModal } from "./TaskFormModal";
 
