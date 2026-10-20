@@ -1,24 +1,21 @@
 "use client";
 
-import { TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import {
-    PieChart,
-    Pie,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-} from "recharts";
-import { TaskSector } from "./TaskSector";
+import dynamic from "next/dynamic";
+import { STATUS_CONFIG } from "@/constants/statuses";
+import { useEffect, useState, type ReactNode } from "react";
 import { isAbortError } from "@/lib/isAbortError";
 import { DEFAULT_TIMEOUT_MS } from "@/lib/withTimeout";
+import type { TaskStat } from "./TaskStatsChart";
 
-interface TaskStat {
-    status: TaskStatusType;
-    name: string;
-    total: number;
-    percent: number;
-}
+const TaskStatsChart = dynamic(() => import("./TaskStatsChart"), {
+    loading: () => (
+        <div
+            className="h-[260px] w-full min-w-0 md:h-[380px]"
+            role="status"
+            aria-label="Đang tải biểu đồ"
+        />
+    ),
+});
 
 interface DashboardData {
     totalUsers: number;
@@ -38,21 +35,6 @@ function StatusShell({ children }: { children: ReactNode }) {
     );
 }
 
-function useIsMobile(breakpoint = 768) {
-    const query = `(max-width: ${breakpoint - 1}px)`;
-
-    const subscribe = (callback: () => void) => {
-        const mq = window.matchMedia(query);
-        mq.addEventListener("change", callback);
-        return () => mq.removeEventListener("change", callback);
-    };
-
-    const getSnapshot = () => window.matchMedia(query).matches;
-    const getServerSnapshot = () => false; // SSR mặc định desktop
-
-    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
-
 export default function DashboardPage() {
     const [data, setData] =
         useState<DashboardData | null>(null);
@@ -62,9 +44,6 @@ export default function DashboardPage() {
 
     const [error, setError] =
         useState("");
-
-    const isMobile = useIsMobile(768);
-    const isCompactLayout = useIsMobile(1536);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -237,53 +216,7 @@ export default function DashboardPage() {
                     {/* Stack chart and details until there is enough room for two columns */}
                     <div className="flex flex-col items-center gap-4 2xl:grid 2xl:grid-cols-2 2xl:gap-8">
 
-                        {/* ===== PIE ===== */}
-                        <div
-                            className="w-full min-w-0"
-                            style={{ height: isMobile ? 260 : 380 }}
-                        >
-                            <ResponsiveContainer width="100%" height="100%" debounce={50}>
-                                <PieChart>
-
-                                    <Pie
-                                        data={data.taskStats.map((item) => ({
-                                            ...item,
-                                            fill: STATUS_CONFIG[item.status].color,
-                                        }))}
-                                        dataKey="total"
-                                        nameKey="name"
-                                        shape={TaskSector}
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={isMobile ? 80 : 125}
-                                        innerRadius={isMobile ? 45 : 65}
-                                        paddingAngle={3}
-                                        labelLine={!isCompactLayout}
-                                        label={({ percent }) =>
-                                            isCompactLayout ? "" : `${(percent || 0).toFixed(2)}%`
-                                        }
-                                    />
-                                    <Tooltip
-                                        formatter={(value, name, props) => {
-                                            const percent = props?.payload?.percent ?? 0;
-                                            return [`${value} công việc (${percent}%)`, name];
-                                        }}
-                                    />
-
-                                    <Legend
-                                        verticalAlign={isCompactLayout ? "bottom" : "middle"}
-                                        align={isCompactLayout ? "center" : "right"}
-                                        layout={isCompactLayout ? "horizontal" : "vertical"}
-                                        iconType="circle"
-                                        wrapperStyle={{
-                                            fontSize: isMobile ? 12 : 14,
-                                            paddingTop: isMobile ? 8 : 0,
-                                        }}
-                                    />
-
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
+                        <TaskStatsChart taskStats={data.taskStats} />
 
                         {/* ===== DETAIL ===== */}
                         <div className="w-full min-w-0 space-y-3 sm:space-y-4">

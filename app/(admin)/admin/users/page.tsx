@@ -7,7 +7,7 @@ import { UserTableRow, UserCard } from "./UserRow";
 import { Pagination } from "./Pagination";
 import { EditUserModal } from "./EditUserModal";
 import { useDeferredValue } from "react";
-import { useMediaQuery } from "@/app/api/tasks/useMediaQuery";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { renderByState } from "./renderByState";
 
 export default function UserList() {
