@@ -84,12 +84,12 @@ export default async function TaskDetailPage({
     const statusConfig = STATUS_CONFIG[displayStatus];
 
     return (
-        <main className="min-h-screen bg-gray-100 p-8">
+        <main className="min-h-screen bg-gray-100 p-4 sm:p-8">
             <div className="mx-auto max-w-4xl">
-                <div className="mb-6 flex items-center justify-between gap-3">
+                <div className="mb-6 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <Link
                         href="/tasks"
-                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        className="inline-flex w-fit items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                     >
                         ← Quay lại
                     </Link>
@@ -100,13 +100,13 @@ export default async function TaskDetailPage({
                 </div>
 
                 <div className="overflow-hidden rounded-xl bg-white shadow-md">
-                    <div className="border-b border-gray-200 bg-gray-50 px-6 py-5">
+                    <div className="border-b border-gray-200 bg-gray-50 px-4 py-5 sm:px-6">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <p className="text-sm font-medium uppercase tracking-wide text-gray-500">
                                     Công việc #{task.ID}
                                 </p>
-                                <h1 className="mt-1 text-3xl font-bold text-gray-800">
+                                <h1 className="mt-1 break-words text-2xl font-bold text-gray-800 sm:text-3xl">
                                     {task.Ten}
                                 </h1>
                             </div>
@@ -123,7 +123,7 @@ export default async function TaskDetailPage({
                         </div>
                     </div>
 
-                    <div className="grid gap-6 p-6 md:grid-cols-2">
+                    <div className="grid gap-6 p-4 sm:p-6 md:grid-cols-2">
                         <div className="md:col-span-2">
                             <h2 className="mb-2 text-lg font-semibold text-gray-800">
                                 Mô tả

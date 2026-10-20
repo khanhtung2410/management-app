@@ -52,6 +52,15 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
         </button>
     );
 
+    const detailLink = (
+        <Link
+            href={`/tasks/${item.ID}`}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
+        >
+            Chi tiết
+        </Link>
+    );
+
     // ----- Card (mobile) -----
     if (variant === "card") {
         return (
@@ -68,11 +77,14 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
                     <p className="mt-2 text-sm text-gray-600">{item.Mota}</p>
                 )}
 
-                <div className="mt-3 flex items-center justify-between">
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-xs text-gray-500">
                         {formatTaskDate(item.HetHan)}
                     </span>
-                    {toggleButton}
+                    <div className="flex gap-2">
+                        {toggleButton}
+                        {detailLink}
+                    </div>
                 </div>
 
                 {errorMessage && (
@@ -92,12 +104,7 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
             <td className="px-6 py-4 text-gray-600">{formatTaskDate(item.HetHan)}</td>
             <td className="px-6 py-4 flex gap-4">
                 {toggleButton}
-                <Link
-                    href={`/tasks/${item.ID}`}
-                    className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
-                >
-                    Chi tiết
-                </Link>
+                {detailLink}
                 {errorMessage && (
                     <p className="mt-1 text-xs text-red-600">{errorMessage}</p>
                 )}
