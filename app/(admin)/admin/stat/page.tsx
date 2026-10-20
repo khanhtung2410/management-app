@@ -5,7 +5,7 @@ import { STATUS_CONFIG } from "@/constants/statuses";
 import { useEffect, useState, type ReactNode } from "react";
 import { isAbortError } from "@/lib/isAbortError";
 import { DEFAULT_TIMEOUT_MS } from "@/lib/withTimeout";
-import type { TaskStat } from "./TaskStatsChart";
+import type { TaskStat } from "./types";
 
 const TaskStatsChart = dynamic(() => import("./TaskStatsChart"), {
     loading: () => (

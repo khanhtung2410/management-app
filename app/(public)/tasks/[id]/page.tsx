@@ -4,10 +4,11 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import sql from "mssql";
 import { cache } from "react";
-import { STATUS_CONFIG, taskStatus, TaskStatusType } from "@/constants/statuses";
+import { STATUS_CONFIG, type TaskStatusType } from "@/constants/statuses";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { TaskStatusButton } from "./TaskStatusButton";
+import { formatTaskDate, getTaskDisplayStatus } from "../taskUtils";
 
 interface TaskDetail {
     ID: number;
@@ -73,29 +74,13 @@ export async function generateMetadata({
     };
 }
 
-function formatDate(value: Date) {
-    return value.toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-function getDisplayStatus(task: TaskDetail) {
-    if (task.TrangThai === taskStatus.Complete) return taskStatus.Complete;
-    if (task.HetHan < new Date()) return taskStatus.Overdue;
-    return taskStatus.Active;
-}
-
 export default async function TaskDetailPage({
     params,
 }: PageProps<"/tasks/[id]">) {
     const { id } = await params;
     const task = await getTask(id);
 
-    const displayStatus = getDisplayStatus(task);
+    const displayStatus = getTaskDisplayStatus(task.TrangThai, task.HetHan);
     const statusConfig = STATUS_CONFIG[displayStatus];
 
     return (
@@ -153,7 +138,7 @@ export default async function TaskDetailPage({
                                 Hạn hoàn thành
                             </h2>
                             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-700">
-                                {formatDate(task.HetHan)}
+                                {formatTaskDate(task.HetHan)}
                             </div>
                         </div>
 

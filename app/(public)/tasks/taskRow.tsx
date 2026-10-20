@@ -2,6 +2,7 @@
 
 import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
 import Link from "next/link";
+import { formatTaskDate, getTaskDisplayStatus } from "./taskUtils";
 
 export interface CongViec {
     ID: number;
@@ -12,21 +13,6 @@ export interface CongViec {
 }
 
 
-
-function getDisplayStatus(item: CongViec): TaskStatusType {
-    if (item.TrangThai === taskStatus.Complete) return taskStatus.Complete;
-    if (new Date(item.HetHan) < new Date()) return taskStatus.Overdue;
-    return taskStatus.Active;
-}
-
-function formatDate(value: string): string {
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return value;
-    return d.toLocaleString("vi-VN", {
-        day: "2-digit", month: "2-digit", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
-    });
-}
 
 // ============================================================
 // TaskRow — 1 dòng table HOẶC 1 card
@@ -39,7 +25,7 @@ interface TaskRowProps {
 }
 
 export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps) {
-    const displayStatus = getDisplayStatus(item);
+    const displayStatus = getTaskDisplayStatus(item.TrangThai, item.HetHan);
     const config = STATUS_CONFIG[displayStatus];
     const isComplete = item.TrangThai === taskStatus.Complete;
 
@@ -84,7 +70,7 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
 
                 <div className="mt-3 flex items-center justify-between">
                     <span className="text-xs text-gray-500">
-                        {formatDate(item.HetHan)}
+                        {formatTaskDate(item.HetHan)}
                     </span>
                     {toggleButton}
                 </div>
@@ -103,7 +89,7 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
             <td className="px-6 py-4 font-medium text-gray-800">{item.Ten}</td>
             <td className="px-6 py-4 text-gray-600">{item.Mota}</td>
             <td className="px-6 py-4">{statusBadge}</td>
-            <td className="px-6 py-4 text-gray-600">{formatDate(item.HetHan)}</td>
+            <td className="px-6 py-4 text-gray-600">{formatTaskDate(item.HetHan)}</td>
             <td className="px-6 py-4 flex gap-4">
                 {toggleButton}
                 <Link

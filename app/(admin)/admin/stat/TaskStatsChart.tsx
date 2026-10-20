@@ -10,16 +10,10 @@ import {
     type DefaultTooltipContentProps,
     type PieLabelRenderProps,
 } from "recharts";
-import { STATUS_CONFIG, type TaskStatusType } from "@/constants/statuses";
+import { STATUS_CONFIG } from "@/constants/statuses";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { TaskSector } from "./TaskSector";
-
-export interface TaskStat {
-    status: TaskStatusType;
-    name: string;
-    total: number;
-    percent: number;
-}
+import type { TaskStat } from "./types";
 
 type TooltipFormatter = NonNullable<DefaultTooltipContentProps["formatter"]>;
 
