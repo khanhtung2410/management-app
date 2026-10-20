@@ -26,6 +26,47 @@ function handleError(error: unknown, fallbackMessage: string) {
     );
 }
 
+export async function GET(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { userId } = await requireAuth(req);
+
+        const { id } = await params;
+        const taskId = Number(id);
+
+        if (!Number.isInteger(taskId) || taskId <= 0) {
+            return NextResponse.json(
+                { message: "ID công việc không hợp lệ" },
+                { status: 400 }
+            );
+        }
+
+        const pool = await getDb();
+        const result = await pool
+            .request()
+            .input("ID", sql.Int, taskId)
+            .input("UserID", sql.Int, Number(userId))
+            .query(`
+                SELECT ID, Ten, Mota, TrangThai, HetHan
+                FROM [dbo].[CongViec]
+                WHERE ID = @ID AND UserID = @UserID
+            `);
+
+        if (result.recordset.length === 0) {
+            return NextResponse.json(
+                { message: "Không tìm thấy công việc" },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json(result.recordset[0]);
+    } catch (error) {
+        return handleError(error, "Lỗi khi lấy chi tiết công việc");
+    }
+}
+
 export async function PATCH(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }

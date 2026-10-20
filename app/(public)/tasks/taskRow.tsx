@@ -1,6 +1,7 @@
 "use client";
 
 import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
+import Link from "next/link";
 
 export interface CongViec {
     ID: number;
@@ -103,8 +104,14 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
             <td className="px-6 py-4 text-gray-600">{item.Mota}</td>
             <td className="px-6 py-4">{statusBadge}</td>
             <td className="px-6 py-4 text-gray-600">{formatDate(item.HetHan)}</td>
-            <td className="px-6 py-4">
+            <td className="px-6 py-4 flex gap-4">
                 {toggleButton}
+                <Link
+                    href={`/tasks/${item.ID}`}
+                    className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
+                >
+                    Chi tiết
+                </Link>
                 {errorMessage && (
                     <p className="mt-1 text-xs text-red-600">{errorMessage}</p>
                 )}
