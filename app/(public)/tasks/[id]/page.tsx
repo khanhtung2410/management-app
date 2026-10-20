@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import sql from "mssql";
+import { cache } from "react";
 import { STATUS_CONFIG, taskStatus, TaskStatusType } from "@/constants/statuses";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
@@ -15,26 +17,7 @@ interface TaskDetail {
     HetHan: Date;
 }
 
-function formatDate(value: Date) {
-    return value.toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-function getDisplayStatus(task: TaskDetail) {
-    if (task.TrangThai === taskStatus.Complete) return taskStatus.Complete;
-    if (task.HetHan < new Date()) return taskStatus.Overdue;
-    return taskStatus.Active;
-}
-
-export default async function TaskDetailPage({
-    params,
-}: PageProps<"/tasks/[id]">) {
-    const { id } = await params;
+const getTask = cache(async (id: string): Promise<TaskDetail> => {
     const taskId = Number(id);
 
     if (!Number.isInteger(taskId) || taskId <= 0) {
@@ -71,6 +54,46 @@ export default async function TaskDetailPage({
     if (!task) {
         notFound();
     }
+
+    return task;
+});
+
+export async function generateMetadata({
+    params,
+}: PageProps<"/tasks/[id]">): Promise<Metadata> {
+    const { id } = await params;
+    const task = await getTask(id);
+    const description = task.Mota?.trim() ?? "";
+
+    return {
+        title: `${task.Ten} | Chi tiết công việc`,
+        description: description
+            ? description.slice(0, 160)
+            : `Chi tiết công việc: ${task.Ten}`,
+    };
+}
+
+function formatDate(value: Date) {
+    return value.toLocaleString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function getDisplayStatus(task: TaskDetail) {
+    if (task.TrangThai === taskStatus.Complete) return taskStatus.Complete;
+    if (task.HetHan < new Date()) return taskStatus.Overdue;
+    return taskStatus.Active;
+}
+
+export default async function TaskDetailPage({
+    params,
+}: PageProps<"/tasks/[id]">) {
+    const { id } = await params;
+    const task = await getTask(id);
 
     const displayStatus = getDisplayStatus(task);
     const statusConfig = STATUS_CONFIG[displayStatus];
