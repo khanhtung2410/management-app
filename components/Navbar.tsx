@@ -80,7 +80,7 @@ export default function Navbar() {
                         <>
                             <span>Xin chào, {userName}</span>
 
-                            <button onClick={handleLogout} className="hover:underline">
+                            <button type="button" onClick={handleLogout} className="hover:underline">
                                 Đăng xuất
                             </button>
                         </>

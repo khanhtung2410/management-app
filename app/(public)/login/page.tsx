@@ -90,6 +90,7 @@ function LoginForm() {
                     >
                         <input
                             type="email"
+                            aria-label="Email"
                             placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -99,6 +100,7 @@ function LoginForm() {
 
                         <input
                             type="password"
+                            aria-label="Mật khẩu"
                             placeholder="Mật khẩu"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}

@@ -54,6 +54,7 @@ export default function UserList() {
                             value={inputValue}
                             onChange={(e) => {
                                 setInputValue(e.target.value);
+                                // Reset in the input event; the fetch effect observes page changes but never resets them.
                                 setCurrentPage(1);
                             }
                             }
@@ -96,7 +97,7 @@ export default function UserList() {
                                 headers={
                                     <tr className="border-b border-[#E2E8F0]">
                                         <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                            <button onClick={toggleSort}>
+                                            <button type="button" onClick={toggleSort}>
                                                 ID {sort === "asc" ? "🔺" : "🔻"}
                                             </button>
                                         </th>
