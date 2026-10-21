@@ -1,5 +1,3 @@
-"use client";
-
 import type { User } from "./api";
 import { memo } from "react";
 import { UNKNOWN_STATUS_CONFIG, USER_STATUS_CONFIG, userStatus, UserStatusType } from "@/constants/statuses"

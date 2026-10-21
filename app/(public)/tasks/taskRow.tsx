@@ -1,5 +1,3 @@
-"use client";
-
 import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
 import Link from "next/link";
 import { formatTaskDate, getTaskDisplayStatus } from "./taskUtils";
