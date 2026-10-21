@@ -7,7 +7,7 @@ export interface CongViec {
     Ten: string;
     Mota: string;
     TrangThai: TaskStatusType;
-    HetHan: string;
+    HetHan: string | Date;
 }
 
 
@@ -112,12 +112,11 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
 }
 
 // ============================================================
-// TaskList — xử lý loading/empty/map Ở MỘT CHỖ DUY NHẤT
+// TaskList — xử lý empty/map Ở MỘT CHỖ DUY NHẤT
 // ============================================================
 interface TaskListProps {
     items: CongViec[];
     variant: "table" | "card";
-    loading: boolean;
     errorForItem: (item: CongViec) => string | null;
     onToggle: (item: CongViec) => void;
 }
@@ -125,25 +124,9 @@ interface TaskListProps {
 export function TaskList({
     items,
     variant,
-    loading,
     errorForItem,
     onToggle,
 }: TaskListProps) {
-    // Trạng thái loading — render khác nhau theo variant
-    if (loading) {
-        return variant === "table" ? (
-            <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                    Đang tải...
-                </td>
-            </tr>
-        ) : (
-            <div className="rounded-xl bg-white p-10 text-center text-gray-500 shadow-md">
-                Đang tải...
-            </div>
-        );
-    }
-
     // Trạng thái rỗng
     if (items.length === 0) {
         return variant === "table" ? (
