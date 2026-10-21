@@ -8,15 +8,7 @@ export async function PUT(request: NextRequest) {
     try {
         await requireRole(request, userRole.ADMIN);
 
-        let body: unknown;
-        try {
-            body = await request.json();
-        } catch {
-            return NextResponse.json(
-                { message: "Body không phải JSON hợp lệ" },
-                { status: 400 },
-            );
-        }
+        const body: unknown = await request.json().catch(() => null);
 
         if (typeof body !== "object" || body === null) {
             return NextResponse.json(
