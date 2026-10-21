@@ -86,6 +86,7 @@ export default function RegisterPage() {
 
                         <input
                             type="text"
+                            aria-label="Họ tên"
                             placeholder="Họ tên"
                             value={hoTen}
                             onChange={(e) => setHoTen(e.target.value)}
@@ -95,6 +96,7 @@ export default function RegisterPage() {
 
                         <input
                             type="email"
+                            aria-label="Email"
                             placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -104,6 +106,7 @@ export default function RegisterPage() {
 
                         <input
                             type="tel"
+                            aria-label="Số điện thoại (tùy chọn)"
                             placeholder="Số điện thoại (tùy chọn)"
                             value={sdt}
                             onChange={(e) => setSdt(e.target.value)}
@@ -112,6 +115,7 @@ export default function RegisterPage() {
 
                         <input
                             type="password"
+                            aria-label="Mật khẩu"
                             placeholder="Mật khẩu (ít nhất 6 ký tự)"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -121,6 +125,7 @@ export default function RegisterPage() {
 
                         <input
                             type="password"
+                            aria-label="Nhập lại mật khẩu"
                             placeholder="Nhập lại mật khẩu"
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}

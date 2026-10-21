@@ -54,9 +54,9 @@ export function EditUserModal({ user, onClose, onSave }: Props) {
                     </div>
                 )}
 
-                <FormField label="Họ tên" value={name} onChange={setName} />
-                <FormField label="Email" type="email" value={email} onChange={setEmail} />
-                <FormField label="SĐT" value={phone} onChange={setPhone} />
+                <FormField id="edit-user-name" label="Họ tên" value={name} onChange={setName} />
+                <FormField id="edit-user-email" label="Email" type="email" value={email} onChange={setEmail} />
+                <FormField id="edit-user-phone" label="SĐT" value={phone} onChange={setPhone} />
 
                 <div className="mt-5 flex justify-end gap-2">
                     <button
@@ -82,11 +82,13 @@ export function EditUserModal({ user, onClose, onSave }: Props) {
 }
 
 function FormField({
+    id,
     label,
     value,
     onChange,
     type = "text",
 }: {
+    id: string;
     label: string;
     value: string;
     onChange: (v: string) => void;
@@ -94,8 +96,9 @@ function FormField({
 }) {
     return (
         <div className="mb-3">
-            <label className="mb-1 block text-sm font-medium">{label}</label>
+            <label htmlFor={id} className="mb-1 block text-sm font-medium">{label}</label>
             <input
+                id={id}
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}

@@ -101,10 +101,11 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
 
                 <div className="space-y-4 text-gray-800">
                     <div>
-                        <label className="mb-1 block text-sm font-medium">
+                        <label htmlFor="task-name" className="mb-1 block text-sm font-medium">
                             Tên công việc
                         </label>
                         <input
+                            id="task-name"
                             type="text"
                             value={ten}
                             onChange={e => {
@@ -126,10 +127,11 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium">
+                        <label htmlFor="task-description" className="mb-1 block text-sm font-medium">
                             Mô tả công việc
                         </label>
                         <textarea
+                            id="task-description"
                             value={mota}
                             onChange={e => setMota(e.target.value)}
                             placeholder="Nhập mô tả công việc"
@@ -139,10 +141,11 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium">
+                        <label htmlFor="task-due-date" className="mb-1 block text-sm font-medium">
                             Ngày hết hạn
                         </label>
                         <input
+                            id="task-due-date"
                             type="datetime-local"
                             value={ngayHetHan}
                             onChange={e => {

@@ -29,6 +29,7 @@ export default function Sidebar() {
                     {sidebarOpen && <p>Admin</p>}
                     {/* collapse button visible on md+ */}
                     <button
+                        type="button"
                         onClick={toggleSidebar}
                         className="hidden md:inline-block text-2xl"
                         aria-label="Thu gọn menu"
