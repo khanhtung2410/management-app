@@ -81,4 +81,45 @@ describe("getPageNumbers — edge case", () => {
     it("currentPage > totalPages → không crash", () => {
         expect(() => getPageNumbers(99, 10)).not.toThrow();
     });
+
+    it("đang ở trang 5 nhưng chỉ còn 2 trang → chỉ hiển thị [1, 2]", () => {
+        expect(getPageNumbers(5, 2)).toEqual([1, 2]);
+    });
+
+    it("số trang rất lớn → chỉ tạo các trang lân cận và trang đầu/cuối", () => {
+        expect(getPageNumbers(500_000_000, 1_000_000_000)).toEqual([
+            1,
+            "...",
+            499_999_999,
+            500_000_000,
+            500_000_001,
+            "...",
+            1_000_000_000,
+        ]);
+    });
+});
+
+describe("getPageNumbers — tính thuần", () => {
+    it("trả kết quả độc lập khi sửa mảng của lần gọi trước", () => {
+        const firstResult = getPageNumbers(5, 10);
+        firstResult[0] = 99;
+        firstResult.push(11);
+
+        expect(getPageNumbers(5, 10)).toEqual([
+            1,
+            "...",
+            4,
+            5,
+            6,
+            "...",
+            10,
+        ]);
+    });
+
+    it("trả mảng rỗng mới cho mỗi lần gọi khi không có trang", () => {
+        const firstResult = getPageNumbers(1, 0);
+        firstResult.push(1);
+
+        expect(getPageNumbers(1, 0)).toEqual([]);
+    });
 });

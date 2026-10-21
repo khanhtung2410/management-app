@@ -28,6 +28,10 @@ describe("getPercent — làm tròn 2 chữ số", () => {
         expect(getPercent(2, 3)).toBe(66.67);
     });
 
+    it("1/8 → 12.5", () => {
+        expect(getPercent(1, 8)).toBe(12.5);
+    });
+
     it("1/7 → 14.29", () => {
         expect(getPercent(1, 7)).toBe(14.29);
     });
@@ -72,6 +76,14 @@ describe("getPercent — value vượt total", () => {
     it("150/100 → 150 (không cap ở 100)", () => {
         // Hàm không cap — tầng UI quyết định cap hay không
         expect(getPercent(150, 100)).toBe(150);
+    });
+
+    it("giá trị vượt xa total vẫn được tính chính xác", () => {
+        expect(getPercent(1_000_000_000, 1)).toBe(100_000_000_000);
+    });
+
+    it("value bằng total → chính xác 100", () => {
+        expect(getPercent(123_456, 123_456)).toBe(100);
     });
 });
 
