@@ -54,11 +54,10 @@ function LoginForm() {
 
             const user = await meResponse.json();
 
-            if (user.roleId === userRole.ADMIN) {
-                router.push("/admin");
-            } else {
-                router.push("/");
-            }
+            const destination =
+                user.roleId === userRole.ADMIN ? "/admin" : "/";
+
+            window.location.replace(destination);
         } catch (error) {
             console.error(error);
             setError(isAbortError(error)
