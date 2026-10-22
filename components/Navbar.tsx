@@ -1,54 +1,9 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { getAuth } from "@/lib/auth/server";
+import { HandleLogout } from "./Logout";
 
-export default function Navbar() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userName, setUserName] = useState("");
-    const router = useRouter();
-    const pathname = usePathname();
-
-    useEffect(() => {
-        fetch("/api/auth/me", {
-            credentials: "include",
-        })
-            .then(async (res) => {
-                if (!res.ok) {
-                    setIsLoggedIn(false);
-                    setUserName("");
-                    return;
-                }
-
-                const data = await res.json();
-
-                setIsLoggedIn(data.isLoggedIn);
-                setUserName(data.userName || "");
-            })
-            .catch((error) => {
-                console.error("Lỗi kiểm tra đăng nhập:", error);
-                setIsLoggedIn(false);
-                setUserName("");
-            });
-    }, [pathname]);
-
-    const handleLogout = async () => {
-        try {
-            const response = await fetch("/api/logout", {
-                method: "POST",
-                credentials: "include",
-            });
-
-            if (response.ok) {
-                setIsLoggedIn(false);
-                setUserName("");
-                router.push("/");
-            }
-        } catch (error) {
-            console.error("Lỗi đăng xuất:", error);
-        }
-    };
+export default async function Navbar() {
+    const user = await getAuth();
 
     return (
         <nav className="sticky top-0 z-50 px-6 py-4" style={{ background: "var(--surface)", color: "var(--foreground)" }}>
@@ -58,7 +13,7 @@ export default function Navbar() {
                         Trang chủ
                     </Link>
 
-                    {isLoggedIn && (
+                    {user && (
                         <Link href="/tasks" className="hover:underline">
                             Công việc
                         </Link>
@@ -66,7 +21,7 @@ export default function Navbar() {
                 </div>
 
                 <div className="flex gap-6">
-                    {!isLoggedIn ? (
+                    {!user ? (
                         <>
                             <Link href="/login" className="hover:underline">
                                 Đăng nhập
@@ -78,11 +33,8 @@ export default function Navbar() {
                         </>
                     ) : (
                         <>
-                            <span>Xin chào, {userName}</span>
-
-                            <button type="button" onClick={handleLogout} className="hover:underline">
-                                Đăng xuất
-                            </button>
+                            <span>Xin chào, {user.userName}</span>
+                            <HandleLogout />
                         </>
                     )}
                 </div>
