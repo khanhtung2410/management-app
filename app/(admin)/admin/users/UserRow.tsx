@@ -1,8 +1,7 @@
 import type { User } from "./api";
 import { memo } from "react";
-import { USER_STATUS_CONFIG, userStatus, UserStatusType } from "@/constants/statuses"
+import { UNKNOWN_STATUS_CONFIG, USER_STATUS_CONFIG, userStatus, UserStatusType } from "@/constants/statuses"
 import { Button } from "@/components/UI/Button";
-import { Badge } from "@/components/UI/Badge";
 
 interface RowProps {
     user: User;
@@ -10,6 +9,22 @@ interface RowProps {
     onEdit: (user: User) => void;
     onToggle: (id: number, current: UserStatusType) => void;
 }
+
+export const StatusBadge = memo(function StatusBadge({ trangThai }: { trangThai: UserStatusType }) {
+    const cfg = USER_STATUS_CONFIG[trangThai] ?? UNKNOWN_STATUS_CONFIG;
+    return (
+        <span
+            className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium"
+            style={{
+                backgroundColor: cfg.bg,
+                color: cfg.color,
+            }}
+        >
+            {cfg.label}
+        </span>
+    );
+})
+
 
 function Actions({
     user,
@@ -54,7 +69,7 @@ export const UserTableRow = memo(function UserTableRow(props: RowProps) {
             <td className="px-6 py-4 text-sm text-[#334155]">{user.Email}</td>
             <td className="px-6 py-4 text-sm text-[#334155]">{user.SDT}</td>
             <td className="px-6 py-4 text-sm">
-                <Badge config={USER_STATUS_CONFIG[user.TrangThai]} />
+                <StatusBadge trangThai={user.TrangThai} />
             </td>
             <td className="px-6 py-4">
                 <Actions {...props} layout="row" />
@@ -69,7 +84,7 @@ export const UserCard = memo(function UserCard(props: RowProps) {
         <div className="space-y-3 p-4">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-[#64748B]">#{user.ID}</span>
-                <Badge config={USER_STATUS_CONFIG[user.TrangThai]} />
+                <StatusBadge trangThai={user.TrangThai} />
             </div>
             <Field label="Họ tên" value={user.HoTen} />
             <Field label="Email" value={user.Email} />

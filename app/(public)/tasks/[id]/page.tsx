@@ -5,8 +5,6 @@ import { notFound, redirect } from "next/navigation";
 import sql from "mssql";
 import { cache } from "react";
 import { STATUS_CONFIG, type TaskStatusType } from "@/constants/statuses";
-import { Badge } from "@/components/UI/Badge";
-import { Card } from "@/components/UI/Card";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { TaskStatusButton } from "./TaskStatusButton";
@@ -101,7 +99,7 @@ export default async function TaskDetailPage({
                     />
                 </div>
 
-                <Card className="overflow-hidden">
+                <div className="overflow-hidden rounded-xl bg-white shadow-md">
                     <div className="border-b border-gray-200 bg-gray-50 px-4 py-5 sm:px-6">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
@@ -113,7 +111,15 @@ export default async function TaskDetailPage({
                                 </h1>
                             </div>
 
-                            <Badge config={statusConfig} size="md" />
+                            <span
+                                className="inline-flex w-fit rounded-full px-3 py-1.5 text-sm font-medium"
+                                style={{
+                                    backgroundColor: statusConfig.bg,
+                                    color: statusConfig.color,
+                                }}
+                            >
+                                {statusConfig.label}
+                            </span>
                         </div>
                     </div>
 
@@ -141,11 +147,19 @@ export default async function TaskDetailPage({
                                 Trạng thái hiện tại
                             </h2>
                             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-700">
-                                <Badge config={statusConfig} />
+                                <span
+                                    className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
+                                    style={{
+                                        backgroundColor: statusConfig.bg,
+                                        color: statusConfig.color,
+                                    }}
+                                >
+                                    {statusConfig.label}
+                                </span>
                             </div>
                         </div>
                     </div>
-                </Card>
+                </div>
             </div>
         </main>
     );

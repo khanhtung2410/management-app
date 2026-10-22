@@ -6,7 +6,6 @@ import { userRole } from "@/constants/roles";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getPercent } from "@/lib/percent";
-import { Card } from "@/components/UI/Card";
 import TaskStatsChart from "./TaskStatsChart";
 import type { TaskStat } from "./types";
 
@@ -94,7 +93,7 @@ export default async function DashboardPage() {
                 </p>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <Card className="p-6 ring-1 ring-[#E2E8F0]">
+                    <div className="rounded-xl bg-white p-6 shadow-md ring-1 ring-[#E2E8F0]">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-[#64748B]">
@@ -114,9 +113,9 @@ export default async function DashboardPage() {
                                 <span className="text-3xl">👥</span>
                             </div>
                         </div>
-                    </Card>
+                    </div>
 
-                    <Card className="p-6 ring-1 ring-[#E2E8F0]">
+                    <div className="rounded-xl bg-white p-6 shadow-md ring-1 ring-[#E2E8F0]">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-[#64748B]">
@@ -136,10 +135,10 @@ export default async function DashboardPage() {
                                 <span className="text-3xl">📋</span>
                             </div>
                         </div>
-                    </Card>
+                    </div>
                 </div>
 
-                <Card className="mt-6 p-4 ring-1 ring-[#E2E8F0] sm:p-6">
+                <div className="mt-6 rounded-xl bg-white p-4 shadow-md ring-1 ring-[#E2E8F0] sm:p-6">
                     <div className="mb-2">
                         <h2 className="text-lg font-semibold text-[#0F172A] sm:text-xl">
                             Thống kê công việc
@@ -199,14 +198,13 @@ export default async function DashboardPage() {
                             ))}
                         </div>
                     </div>
-                </Card>
+                </div>
 
                 <div className="mt-6 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
                     {taskStats.map(item => (
-                        <Card
+                        <div
                             key={item.status}
-                            shadow="sm"
-                            className="p-4 ring-1 ring-[#E2E8F0] sm:p-5"
+                            className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-[#E2E8F0] sm:p-5"
                         >
                             <div className="flex items-center gap-2 sm:gap-3">
                                 <span
@@ -232,7 +230,7 @@ export default async function DashboardPage() {
                             <p className="mt-1 text-xs text-[#64748B] sm:text-sm">
                                 Chiếm {item.percent}% tổng số
                             </p>
-                        </Card>
+                        </div>
                     ))}
                 </div>
             </div>

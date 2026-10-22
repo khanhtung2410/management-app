@@ -1,5 +1,3 @@
-import { Card } from "@/components/UI/Card";
-
 export default function DashboardLoading() {
     return (
         <main
@@ -9,9 +7,9 @@ export default function DashboardLoading() {
             aria-label="Đang tải dữ liệu thống kê"
         >
             <div className="mx-auto max-w-7xl">
-                <Card className="p-8 text-center">
+                <div className="rounded-xl bg-white p-8 text-center shadow-md">
                     <p className="text-[#647488]">Đang tải dữ liệu...</p>
-                </Card>
+                </div>
             </div>
         </main>
     );

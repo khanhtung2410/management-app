@@ -11,7 +11,6 @@ import { TaskList, type CongViec } from "./taskRow";
 import { TaskFormModal } from "./TaskFormModal";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
-import { Card } from "@/components/UI/Card";
 
 export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
     const [data, setData] = useState(initialTasks);
@@ -118,7 +117,7 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                 </div>
 
                 {isDesktop ? (
-                    <Card className="overflow-hidden">
+                    <div className="overflow-hidden rounded-xl bg-white shadow-md">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-gray-50 text-gray-800">
@@ -141,7 +140,7 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                                 </tbody>
                             </table>
                         </div>
-                    </Card>
+                    </div>
                 ) : (
                     <div className="space-y-3">
                         <TaskList
