@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Card } from "@/components/UI/Card";
 
 export const metadata: Metadata = {
   title: "Quản lý công việc",
@@ -60,7 +61,7 @@ export default function Home() {
           </div>
 
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <Card as="article" rounded="2xl" shadow="sm" className="border border-gray-200 p-6">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 font-bold text-blue-700">
                 01
               </span>
@@ -69,9 +70,9 @@ export default function Home() {
                 Tạo công việc kèm mô tả và hạn hoàn thành để kế hoạch của bạn
                 luôn rõ ràng.
               </p>
-            </article>
+            </Card>
 
-            <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <Card as="article" rounded="2xl" shadow="sm" className="border border-gray-200 p-6">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 font-bold text-amber-700">
                 02
               </span>
@@ -80,9 +81,9 @@ export default function Home() {
                 Xem trạng thái và thời hạn để biết việc nào đang chờ xử lý,
                 sắp đến hạn hoặc đã hoàn thành.
               </p>
-            </article>
+            </Card>
 
-            <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <Card as="article" rounded="2xl" shadow="sm" className="border border-gray-200 p-6">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-700">
                 03
               </span>
@@ -91,7 +92,7 @@ export default function Home() {
                 Cập nhật công việc khi hoàn tất và dành sự tập trung cho mục
                 tiêu tiếp theo.
               </p>
-            </article>
+            </Card>
           </div>
         </div>
       </section>

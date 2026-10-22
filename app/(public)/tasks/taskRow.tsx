@@ -2,6 +2,8 @@ import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/stat
 import Link from "next/link";
 import { formatTaskDate, getTaskDisplayStatus } from "./taskUtils";
 import { Button } from "@/components/UI/Button";
+import { Badge } from "@/components/UI/Badge";
+import { Card } from "@/components/UI/Card";
 
 export interface CongViec {
     ID: number;
@@ -28,14 +30,7 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
     const config = STATUS_CONFIG[displayStatus];
     const isComplete = item.TrangThai === taskStatus.Complete;
 
-    const statusBadge = (
-        <span
-            className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
-            style={{ backgroundColor: config.bg, color: config.color }}
-        >
-            {config.label}
-        </span>
-    );
+    const statusBadge = <Badge config={config} />;
 
     const toggleButton = (
         <Button
@@ -60,7 +55,7 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
     // ----- Card (mobile) -----
     if (variant === "card") {
         return (
-            <div className="rounded-xl bg-white p-4 shadow-md">
+            <Card className="p-4">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <div className="text-xs text-gray-500">#{item.ID}</div>
@@ -86,7 +81,7 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
                 {errorMessage && (
                     <p className="mt-2 text-xs text-red-600">{errorMessage}</p>
                 )}
-            </div>
+            </Card>
         );
     }
 
@@ -134,9 +129,9 @@ export function TaskList({
                 </td>
             </tr>
         ) : (
-            <div className="rounded-xl bg-white p-10 text-center text-gray-500 shadow-md">
+            <Card className="p-10 text-center text-gray-500">
                 Chưa có công việc nào
-            </div>
+            </Card>
         );
     }
 
