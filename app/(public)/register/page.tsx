@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/UI/Button";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -133,13 +134,15 @@ export default function RegisterPage() {
                             required
                         />
 
-                        <button
+                        <Button
+                            variant="muted"
                             type="submit"
                             disabled={submitting}
-                            className="rounded-lg bg-gray-800 px-4 py-3 font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            loading={submitting}
+                            className="w-full rounded-lg py-3"
                         >
                             {submitting ? "Đang đăng ký..." : "Đăng ký"}
-                        </button>
+                        </Button>
 
                         <p className="text-sm text-gray-600">
                             Đã có tài khoản?{" "}

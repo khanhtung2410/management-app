@@ -1,3 +1,5 @@
+import { Button } from "@/components/UI/Button";
+
 interface PaginationProps {
     currentPage: number;
     totalPages: number;
@@ -22,9 +24,6 @@ export function getPageNumbers(
     return pages;
 }
 
-const navBtn =
-    "rounded-md border px-3 py-2 text-sm text-[#334155] transition hover:bg-[#F1F5F9] disabled:cursor-not-allowed disabled:opacity-50";
-
 export function Pagination({
     currentPage,
     totalPages,
@@ -32,14 +31,14 @@ export function Pagination({
 }: PaginationProps) {
     return (
         <div className="flex items-center justify-between border-t border-[#E2E8F0] px-4 py-3 sm:px-6 sm:py-4">
-            <button
+            <Button
+                variant="secondary"
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => onPageChange(currentPage - 1)}
-                className={navBtn}
             >
                 Trước
-            </button>
+            </Button>
 
             <div className="flex items-center gap-1">
                 <span className="px-3 py-2 text-sm font-medium text-[#334155] sm:hidden">
@@ -52,30 +51,29 @@ export function Pagination({
                                 ...
                             </span>
                         ) : (
-                            <button
+                            <Button
                                 key={page}
+                                variant={currentPage === page ? "primary" : "secondary"}
                                 type="button"
                                 onClick={() => onPageChange(page)}
-                                className={`min-w-9 rounded-md px-3 py-2 text-sm transition ${currentPage === page
-                                    ? "bg-[#1E40AF] text-white"
-                                    : "border text-[#334155] hover:bg-[#F1F5F9]"
-                                    }`}
+                                aria-current={currentPage === page ? "page" : undefined}
+                                className="min-w-9"
                             >
                                 {page}
-                            </button>
+                            </Button>
                         ),
                     )}
                 </div>
             </div>
 
-            <button
+            <Button
+                variant="secondary"
                 type="button"
                 disabled={currentPage === totalPages}
                 onClick={() => onPageChange(currentPage + 1)}
-                className={navBtn}
             >
                 Sau
-            </button>
+            </Button>
         </div>
     );
 }

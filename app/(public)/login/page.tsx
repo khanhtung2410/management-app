@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { userRole } from "@/constants/roles";
 import { withTimeout } from "@/lib/withTimeout";
 import { isAbortError } from "@/lib/isAbortError";
+import { Button } from "@/components/UI/Button";
 
 function LoginForm() {
     const [email, setEmail] = useState("");
@@ -113,13 +114,15 @@ function LoginForm() {
                             </p>
                         )}
 
-                        <button
+                        <Button
+                            variant="muted"
                             type="submit"
                             disabled={loading}
-                            className="rounded-lg bg-gray-800 px-4 py-3 font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                            loading={loading}
+                            className="w-full rounded-lg py-3"
                         >
                             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-                        </button>
+                        </Button>
                     </form>
                 </main>
             </div>

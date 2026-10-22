@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayout } from "@/components/LayoutProvider";
+import { Button } from "@/components/UI/Button";
 
 const menus = [
     { name: "Dashboard", href: "/admin", icon: "📊" },
@@ -28,14 +29,16 @@ export default function Sidebar() {
                 <div className={`p-4 text-xl font-bold flex ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
                     {sidebarOpen && <p>Admin</p>}
                     {/* collapse button visible on md+ */}
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         type="button"
                         onClick={toggleSidebar}
-                        className="hidden md:inline-block text-2xl"
+                        className="hidden text-2xl md:inline-block"
                         aria-label="Thu gọn menu"
                     >
                         ☰
-                    </button>
+                    </Button>
                 </div>
 
                 <nav className="space-y-2 p-4">

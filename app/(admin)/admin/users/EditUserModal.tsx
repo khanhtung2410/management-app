@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { User, UserUpdatePayload } from "./api";
+import { Button } from "@/components/UI/Button";
 
 interface Props {
     user: User;
@@ -59,22 +60,22 @@ export function EditUserModal({ user, onClose, onSave }: Props) {
                 <FormField id="edit-user-phone" label="SĐT" value={phone} onChange={setPhone} />
 
                 <div className="mt-5 flex justify-end gap-2">
-                    <button
+                    <Button
+                        variant="secondary"
                         type="button"
                         onClick={onClose}
                         disabled={saving}
-                        className="rounded-md border px-4 py-2 text-sm hover:bg-[#F1F5F9] disabled:opacity-50"
                     >
                         Hủy
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
                         onClick={handleSave}
                         disabled={saving}
-                        className="rounded-md bg-[#1E40AF] px-4 py-2 text-sm text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
+                        loading={saving}
                     >
                         {saving ? "Đang lưu..." : "Lưu"}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

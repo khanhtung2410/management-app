@@ -9,6 +9,7 @@ import { taskStatus } from "@/constants/statuses";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { TaskList, type CongViec } from "./taskRow";
 import { TaskFormModal } from "./TaskFormModal";
+import { Button } from "@/components/UI/Button";
 
 export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
     const [data, setData] = useState(initialTasks);
@@ -101,13 +102,14 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                             className="w-full text-gray-800 rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:w-64"
                         />
 
-                        <button
+                        <Button
+                            variant="muted"
                             type="button"
                             onClick={() => setAddTask(true)}
-                            className="whitespace-nowrap rounded-md bg-[#6B7280] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4B5563]"
+                            className="whitespace-nowrap"
                         >
                             + Thêm công việc
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { taskStatus, TaskStatusType } from "@/constants/statuses";
+import { Button } from "@/components/UI/Button";
 
 interface TaskStatusButtonProps {
     taskId: number;
@@ -56,22 +57,19 @@ export function TaskStatusButton({
 
     return (
         <div className="flex flex-col items-end gap-2">
-            <button
+            <Button
+                variant={isComplete ? "muted" : "success"}
                 type="button"
                 onClick={handleToggleStatus}
                 disabled={saving}
-                className={
-                    isComplete
-                        ? "rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-60"
-                        : "rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:opacity-60"
-                }
+                loading={saving}
             >
                 {saving
                     ? "Đang cập nhật..."
                     : isComplete
                       ? "Mở lại công việc"
                       : "Đánh dấu hoàn thành"}
-            </button>
+            </Button>
             {error && (
                 <p role="alert" className="text-right text-sm text-red-600">
                     {error}

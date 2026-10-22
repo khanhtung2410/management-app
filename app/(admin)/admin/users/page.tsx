@@ -9,6 +9,7 @@ import { EditUserModal } from "./EditUserModal";
 import { useDeferredValue } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { renderByState } from "./renderByState";
+import { Button } from "@/components/UI/Button";
 
 export default function UserList() {
 
@@ -72,14 +73,16 @@ export default function UserList() {
                             <span aria-hidden>⚠️</span>
                             <span>{actionError}</span>
                         </div>
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             type="button"
                             onClick={clearActionError}
-                            className="shrink-0 rounded px-2 py-0.5 text-red-700 hover:bg-red-100"
+                            className="shrink-0 text-red-700 hover:bg-red-100"
                             aria-label="Đóng thông báo lỗi"
                         >
                             ✕
-                        </button>
+                        </Button>
                     </div>
                 )}
                 <div className="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-[#E2E8F0]">
@@ -97,9 +100,9 @@ export default function UserList() {
                                 headers={
                                     <tr className="border-b border-[#E2E8F0]">
                                         <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                            <button type="button" onClick={toggleSort}>
+                                            <Button variant="ghost" size="sm" type="button" onClick={toggleSort}>
                                                 ID {sort === "asc" ? "🔺" : "🔻"}
-                                            </button>
+                                            </Button>
                                         </th>
                                         <Th>Họ tên</Th>
                                         <Th>Email</Th>

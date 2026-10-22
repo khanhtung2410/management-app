@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CongViec } from "./taskRow";
+import { Button } from "@/components/UI/Button";
 
 interface TaskFormModalProps {
     onClose: () => void;
@@ -84,13 +85,16 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                     <h2 className="text-xl font-bold text-gray-800">
                         Thêm công việc
                     </h2>
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         type="button"
                         onClick={onClose}
+                        aria-label="Đóng biểu mẫu"
                         className="text-2xl text-gray-400 hover:text-gray-600"
                     >
                         ×
-                    </button>
+                    </Button>
                 </div>
 
                 {errors.general && (
@@ -167,22 +171,22 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                 </div>
 
                 <div className="mt-6 flex justify-end gap-3">
-                    <button
+                    <Button
+                        variant="muted"
                         type="button"
                         onClick={onClose}
                         disabled={submitting}
-                        className="rounded-md bg-[#6B7280] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4B5563] disabled:opacity-60"
                     >
                         Hủy
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
                         onClick={handleSubmit}
                         disabled={submitting}
-                        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1D4ED8] disabled:opacity-60"
+                        loading={submitting}
                     >
                         {submitting ? "Đang thêm..." : "Thêm công việc"}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
