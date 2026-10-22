@@ -51,16 +51,17 @@ export default function UserList() {
                             Tìm kiếm
                         </label>
                         <Input
-                            id="search"
-                            type="text"
-                            value={inputValue}
-                            onChange={(e) => {
-                                setInputValue(e.target.value);
-                                // Reset in the input event; the fetch effect observes page changes but never resets them.
-                                setCurrentPage(1);
-                            }
-                            }
-                            className="rounded-md bg-white text-sm text-[#334155]"
+                            input={{
+                                id: "search",
+                                type: "text",
+                                value: inputValue,
+                                onChange: (e) => {
+                                    setInputValue(e.target.value);
+                                    // Reset in the input event; the fetch effect observes page changes but never resets them.
+                                    setCurrentPage(1);
+                                },
+                                className: "rounded-md bg-white text-sm text-[#334155]",
+                            }}
                         />
                     </div>
                     <span className="inline-flex w-fit items-center rounded-full bg-[#DBEAFE] px-3 py-1 text-sm font-medium text-[#1E40AF]">

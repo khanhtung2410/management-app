@@ -4,9 +4,17 @@ import { Input } from "./Input";
 
 describe("Input", () => {
     it("connects its label to the input", () => {
-        render(<Input label="Email" type="email" />);
+        render(
+            <Input
+                label="Email"
+                input={{ type: "email", "aria-label": "Email address" }}
+            />
+        );
 
-        expect(screen.getByLabelText("Email").getAttribute("type")).toBe("email");
+        const input = screen.getByLabelText("Email");
+
+        expect(input.getAttribute("type")).toBe("email");
+        expect(input.getAttribute("aria-label")).toBe("Email address");
     });
 
     it("exposes errors accessibly and applies error focus styles", () => {
@@ -24,18 +32,23 @@ describe("Input", () => {
     it("keeps caller descriptions and allows style overrides", () => {
         render(
             <Input
-                aria-describedby="email-hint"
-                className="custom-input"
+                className="custom-wrapper"
+                input={{
+                    "aria-describedby": "email-hint",
+                    className: "custom-input",
+                }}
                 error="Email không hợp lệ"
             />
         );
 
         const input = screen.getByRole("textbox");
+        const wrapper = input.parentElement;
 
         expect(input.getAttribute("aria-describedby")).toContain("email-hint");
         expect(input.getAttribute("aria-describedby")).toContain(
             screen.getByRole("alert").id
         );
         expect(input.classList.contains("custom-input")).toBe(true);
+        expect(wrapper?.classList.contains("custom-wrapper")).toBe(true);
     });
 });

@@ -107,19 +107,21 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                 <div className="space-y-4 text-gray-800">
                     <div>
                         <Input
-                            id="task-name"
                             label="Tên công việc"
-                            type="text"
-                            value={ten}
-                            onChange={e => {
-                                setTen(e.target.value);
-                                if (errors.Ten) {
-                                    setErrors(prev => ({ ...prev, Ten: undefined }));
-                                }
-                            }}
-                            placeholder="Nhập tên công việc"
                             error={errors.Ten}
-                            className="rounded-lg px-4 py-2.5"
+                            input={{
+                                id: "task-name",
+                                type: "text",
+                                value: ten,
+                                onChange: e => {
+                                    setTen(e.target.value);
+                                    if (errors.Ten) {
+                                        setErrors(prev => ({ ...prev, Ten: undefined }));
+                                    }
+                                },
+                                placeholder: "Nhập tên công việc",
+                                className: "rounded-lg px-4 py-2.5",
+                            }}
                         />
                     </div>
 
@@ -139,18 +141,20 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
 
                     <div>
                         <Input
-                            id="task-due-date"
                             label="Ngày hết hạn"
-                            type="datetime-local"
-                            value={ngayHetHan}
-                            onChange={e => {
-                                setNgayHetHan(e.target.value);
-                                if (errors.HetHan) {
-                                    setErrors(prev => ({ ...prev, HetHan: undefined }));
-                                }
-                            }}
                             error={errors.HetHan}
-                            className="rounded-lg px-4 py-2.5"
+                            input={{
+                                id: "task-due-date",
+                                type: "datetime-local",
+                                value: ngayHetHan,
+                                onChange: e => {
+                                    setNgayHetHan(e.target.value);
+                                    if (errors.HetHan) {
+                                        setErrors(prev => ({ ...prev, HetHan: undefined }));
+                                    }
+                                },
+                                className: "rounded-lg px-4 py-2.5",
+                            }}
                         />
                     </div>
                 </div>
