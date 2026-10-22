@@ -1,3 +1,4 @@
+// Chỉnh sửa thông tin cơ bản của người dùng được chọn; không dùng để tạo tài khoản hoặc đổi trạng thái người dùng.
 "use client";
 
 import { useState } from "react";

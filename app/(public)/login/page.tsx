@@ -1,3 +1,4 @@
+// Xử lý đăng nhập và chuyển hướng theo vai trò; không dùng cho đăng ký, chỉnh sửa hồ sơ hoặc quản lý phiên.
 "use client";
 
 import { Suspense, useState, useEffect } from "react";

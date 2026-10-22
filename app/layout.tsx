@@ -1,3 +1,4 @@
+// Bọc toàn bộ ứng dụng bằng cấu trúc HTML, font và metadata gốc; không dùng cho bố cục riêng của từng nhóm route.
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";

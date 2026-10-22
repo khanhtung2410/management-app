@@ -1,3 +1,4 @@
+// Hiển thị điều khiển chuyển trang cho danh sách; không dùng để sắp xếp, lọc hoặc tải dữ liệu.
 import { Button } from "@/components/UI/Button";
 
 interface PaginationProps {

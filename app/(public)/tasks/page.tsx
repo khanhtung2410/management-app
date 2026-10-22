@@ -1,3 +1,4 @@
+// Tải danh sách công việc của người dùng đã xác thực ở server; không dùng cho danh sách admin hoặc chi tiết một công việc.
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import sql from "mssql";

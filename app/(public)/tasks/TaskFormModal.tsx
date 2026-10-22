@@ -1,3 +1,4 @@
+// Tạo công việc mới trong modal và trả kết quả cho danh sách; không dùng để sửa công việc hiện có hoặc hiển thị chi tiết.
 "use client";
 
 import { useState } from "react";
@@ -92,7 +93,7 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                         type="button"
                         onClick={onClose}
                         aria-label="Đóng biểu mẫu"
-                        className="text-2xl text-gray-400 hover:text-gray-600"
+                        className="text-2xl text-gray-600 hover:text-gray-700"
                     >
                         ×
                     </Button>
@@ -135,7 +136,7 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                             onChange={e => setMota(e.target.value)}
                             placeholder="Nhập mô tả công việc"
                             rows={4}
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                         />
                     </div>
 
