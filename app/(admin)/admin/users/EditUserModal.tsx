@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { User, UserUpdatePayload } from "./api";
 import { Button } from "@/components/UI/Button";
+import { Input } from "@/components/UI/Input";
 
 interface Props {
     user: User;
@@ -98,12 +99,12 @@ function FormField({
     return (
         <div className="mb-3">
             <label htmlFor={id} className="mb-1 block text-sm font-medium">{label}</label>
-            <input
+            <Input
                 id={id}
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 outline-none focus:border-[#1E40AF] focus:ring-1 focus:ring-[#1E40AF]"
+                className="rounded-md px-3 py-2"
             />
         </div>
     );

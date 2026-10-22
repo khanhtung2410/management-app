@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/UI/Button";
+import { Input } from "@/components/UI/Input";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -85,52 +86,52 @@ export default function RegisterPage() {
                             </div>
                         )}
 
-                        <input
+                        <Input
                             type="text"
                             aria-label="Họ tên"
                             placeholder="Họ tên"
                             value={hoTen}
                             onChange={(e) => setHoTen(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                            className="rounded-lg px-4 py-3"
                             required
                         />
 
-                        <input
+                        <Input
                             type="email"
                             aria-label="Email"
                             placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                            className="rounded-lg px-4 py-3"
                             required
                         />
 
-                        <input
+                        <Input
                             type="tel"
                             aria-label="Số điện thoại (tùy chọn)"
                             placeholder="Số điện thoại (tùy chọn)"
                             value={sdt}
                             onChange={(e) => setSdt(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                            className="rounded-lg px-4 py-3"
                         />
 
-                        <input
+                        <Input
                             type="password"
                             aria-label="Mật khẩu"
                             placeholder="Mật khẩu (ít nhất 6 ký tự)"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                            className="rounded-lg px-4 py-3"
                             required
                         />
 
-                        <input
+                        <Input
                             type="password"
                             aria-label="Nhập lại mật khẩu"
                             placeholder="Nhập lại mật khẩu"
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                            className="rounded-lg px-4 py-3"
                             required
                         />
 

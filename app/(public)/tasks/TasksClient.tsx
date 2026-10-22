@@ -10,6 +10,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { TaskList, type CongViec } from "./taskRow";
 import { TaskFormModal } from "./TaskFormModal";
 import { Button } from "@/components/UI/Button";
+import { Input } from "@/components/UI/Input";
 
 export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
     const [data, setData] = useState(initialTasks);
@@ -93,13 +94,13 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                     </div>
 
                     <div className="flex gap-2">
-                        <input
+                        <Input
                             type="search"
                             aria-label="Tìm kiếm công việc"
                             value={searchTerm}
                             onChange={event => setSearchTerm(event.target.value)}
                             placeholder="Tìm kiếm..."
-                            className="w-full text-gray-800 rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:w-64"
+                            className="text-gray-800 text-sm sm:w-64"
                         />
 
                         <Button
