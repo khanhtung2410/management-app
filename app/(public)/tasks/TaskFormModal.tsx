@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { CongViec } from "./taskRow";
 import { Button } from "@/components/UI/Button";
+import { Input } from "@/components/UI/Input";
 
 interface TaskFormModalProps {
     onClose: () => void;
@@ -105,11 +106,9 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
 
                 <div className="space-y-4 text-gray-800">
                     <div>
-                        <label htmlFor="task-name" className="mb-1 block text-sm font-medium">
-                            Tên công việc
-                        </label>
-                        <input
+                        <Input
                             id="task-name"
+                            label="Tên công việc"
                             type="text"
                             value={ten}
                             onChange={e => {
@@ -119,15 +118,9 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                                 }
                             }}
                             placeholder="Nhập tên công việc"
-                            className={
-                                errors.Ten
-                                    ? "w-full rounded-lg border border-red-400 px-4 py-2.5 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                                    : "w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            }
+                            error={errors.Ten}
+                            className="rounded-lg px-4 py-2.5"
                         />
-                        {errors.Ten && (
-                            <p className="mt-1 text-xs text-red-600">{errors.Ten}</p>
-                        )}
                     </div>
 
                     <div>
@@ -145,11 +138,9 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                     </div>
 
                     <div>
-                        <label htmlFor="task-due-date" className="mb-1 block text-sm font-medium">
-                            Ngày hết hạn
-                        </label>
-                        <input
+                        <Input
                             id="task-due-date"
+                            label="Ngày hết hạn"
                             type="datetime-local"
                             value={ngayHetHan}
                             onChange={e => {
@@ -158,15 +149,9 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                                     setErrors(prev => ({ ...prev, HetHan: undefined }));
                                 }
                             }}
-                            className={
-                                errors.HetHan
-                                    ? "w-full rounded-lg border border-red-400 px-4 py-2.5 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                                    : "w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            }
+                            error={errors.HetHan}
+                            className="rounded-lg px-4 py-2.5"
                         />
-                        {errors.HetHan && (
-                            <p className="mt-1 text-xs text-red-600">{errors.HetHan}</p>
-                        )}
                     </div>
                 </div>
 

@@ -10,6 +10,7 @@ import { useDeferredValue } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { renderByState } from "./renderByState";
 import { Button } from "@/components/UI/Button";
+import { Input } from "@/components/UI/Input";
 
 export default function UserList() {
 
@@ -49,7 +50,7 @@ export default function UserList() {
                         <label htmlFor="search" className="text-sm font-medium text-[#334155]">
                             Tìm kiếm
                         </label>
-                        <input
+                        <Input
                             id="search"
                             type="text"
                             value={inputValue}
@@ -59,7 +60,7 @@ export default function UserList() {
                                 setCurrentPage(1);
                             }
                             }
-                            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-[#334155] outline-none focus:border-[#1E40AF] focus:ring-1 focus:ring-[#1E40AF]"
+                            className="rounded-md bg-white text-sm text-[#334155]"
                         />
                     </div>
                     <span className="inline-flex w-fit items-center rounded-full bg-[#DBEAFE] px-3 py-1 text-sm font-medium text-[#1E40AF]">

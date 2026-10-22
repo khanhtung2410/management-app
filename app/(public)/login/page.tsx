@@ -6,6 +6,7 @@ import { userRole } from "@/constants/roles";
 import { withTimeout } from "@/lib/withTimeout";
 import { isAbortError } from "@/lib/isAbortError";
 import { Button } from "@/components/UI/Button";
+import { Input } from "@/components/UI/Input";
 
 function LoginForm() {
     const [email, setEmail] = useState("");
@@ -88,23 +89,23 @@ function LoginForm() {
                         onSubmit={handleSubmit}
                         className="mt-8 flex w-full max-w-md flex-col gap-4"
                     >
-                        <input
+                        <Input
                             type="email"
                             aria-label="Email"
                             placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                            className="rounded-lg px-4 py-3"
                             required
                         />
 
-                        <input
+                        <Input
                             type="password"
                             aria-label="Mật khẩu"
                             placeholder="Mật khẩu"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                            className="rounded-lg px-4 py-3"
                             required
                         />
 
