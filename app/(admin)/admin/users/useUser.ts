@@ -31,6 +31,7 @@ export function useUsers({
 
     const [processingIds, setProcessingIds] = useState<Set<number>>(() => new Set());
     const [actionError, setActionError] = useState<string | null>(null);
+    const [actionSuccess, setActionSuccess] = useState("");
 
 
     const [sort, setSort] = useState<"asc" | "desc">("asc");
@@ -98,6 +99,7 @@ export function useUsers({
                 return next
             });
             setActionError(null);
+            setActionSuccess("");
             try {
                 await updateUserStatus(id, newStatus, fetcher);
                 setState((prev) =>
@@ -105,6 +107,9 @@ export function useUsers({
                         ? {
                             ...prev, data: prev.data.map((u) => (u.ID === id ? { ...u, TrangThai: newStatus } : u))
                         } : prev,
+                );
+                setActionSuccess(
+                    `Đã ${newStatus === userStatus.Active ? "kích hoạt" : "ngừng"} người dùng ${id}.`
                 );
             } catch (err) {
                 console.error(err);
@@ -140,6 +145,7 @@ export function useUsers({
         state,
         processingIds,
         actionError,
+        actionSuccess,
         clearActionError,
         sort,
         currentPage,

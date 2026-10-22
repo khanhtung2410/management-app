@@ -1,3 +1,4 @@
+// Hiển thị trang từ chối truy cập 403; không dùng cho URL không tồn tại hoặc lỗi đăng nhập thông thường.
 import type { Metadata } from "next";
 import StatusPage from "@/components/StatusPage";
 

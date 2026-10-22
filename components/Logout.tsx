@@ -1,3 +1,4 @@
+// Đăng xuất người dùng qua API và hiển thị trạng thái/lỗi; không dùng thay cho điều hướng hoặc xử lý phiên hết hạn.
 "use client";
 
 import { useState } from "react";

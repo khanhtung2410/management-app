@@ -1,9 +1,9 @@
+// Bọc các route admin bằng điều hướng và state dùng chung; không dùng cho route công khai hoặc trang cần shell độc lập.
 import Sidebar from "@/components/Admin/Sidebar";
 import { LayoutProvider } from "@/components/LayoutProvider";
 import AdminHeader from "@/components/Admin/AdminHeader"
 import Navbar from "@/components/Navbar";
 
-// Wraps admin pages with their shared shell; public routes should not inherit admin navigation or state.
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     return (
         <LayoutProvider>

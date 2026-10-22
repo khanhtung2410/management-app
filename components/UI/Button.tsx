@@ -1,3 +1,4 @@
+// Cung cấp nút thao tác chuẩn hóa variant, kích thước và trạng thái tải; không dùng cho liên kết điều hướng.
 import type { ButtonHTMLAttributes } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

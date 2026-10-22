@@ -1,3 +1,4 @@
+// Cung cấp state đóng/mở sidebar và menu mobile cho shell admin; không dùng làm state provider chung cho toàn ứng dụng.
 "use client"
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";

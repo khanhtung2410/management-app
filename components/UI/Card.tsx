@@ -1,3 +1,4 @@
+// Cung cấp khung bề mặt nội dung dạng div/article; không dùng thay cho component tương tác hoặc phần tử ngữ nghĩa chuyên biệt.
 import type { HTMLAttributes } from "react";
 
 interface CardProps extends HTMLAttributes<HTMLElement> {

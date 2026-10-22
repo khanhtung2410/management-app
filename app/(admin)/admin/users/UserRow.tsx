@@ -1,3 +1,4 @@
+// Cung cấp hàng bảng và thẻ responsive cho người dùng admin; không dùng để tải dữ liệu hoặc điều phối trạng thái trang.
 import type { User } from "./api";
 import { memo } from "react";
 import { UNKNOWN_STATUS_CONFIG, USER_STATUS_CONFIG, userStatus, type UserStatusType } from "@/constants/statuses"
@@ -34,6 +35,7 @@ function Actions({
             <Button
                 variant={isActive ? "danger" : "success"}
                 type="button"
+                aria-label={`${isActive ? "Ngừng" : "Kích hoạt"} người dùng ${user.HoTen}`}
                 disabled={processing}
                 loading={processing}
                 onClick={() => onToggle(user.ID, user.TrangThai)}

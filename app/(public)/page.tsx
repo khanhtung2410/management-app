@@ -1,3 +1,4 @@
+// Giới thiệu ứng dụng và dẫn người dùng đến đăng ký/đăng nhập; không dùng làm dashboard sau khi đăng nhập.
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Card } from "@/components/UI/Card";
@@ -31,13 +32,13 @@ export default function Home() {
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center rounded-lg bg-blue-500 px-6 py-3 font-semibold text-white transition hover:bg-blue-400"
+              className="inline-flex items-center justify-center rounded-lg bg-blue-500 px-6 py-3 font-semibold text-white transition hover:bg-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
             >
               Tạo tài khoản miễn phí
             </Link>
             <Link
               href="/login"
-              className="inline-flex items-center justify-center rounded-lg border border-white/25 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-lg border border-white/25 px-6 py-3 font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               Đăng nhập
             </Link>
@@ -109,7 +110,7 @@ export default function Home() {
           </div>
           <Link
             href="/register"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-700"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
           >
             Bắt đầu ngay
           </Link>

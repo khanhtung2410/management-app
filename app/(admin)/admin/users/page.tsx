@@ -1,3 +1,4 @@
+// Quản lý danh sách người dùng admin gồm tìm kiếm, sửa, phân trang và đổi trạng thái; không dùng cho hồ sơ cá nhân.
 "use client";
 
 import { useCallback, useState } from "react";
@@ -31,6 +32,7 @@ export default function UserList() {
         toggleStatus,
         saveUser,
         actionError,
+        actionSuccess,
         clearActionError,
     } = useUsers({ searchTerm: deferredSearch });
 
@@ -88,6 +90,16 @@ export default function UserList() {
                         </Button>
                     </div>
                 )}
+                <p role="status" aria-live="polite" className="sr-only">
+                    {actionSuccess}
+                </p>
+                <p role="status" aria-live="polite" className="sr-only">
+                    {state.status === "success" &&
+                    deferredSearch.trim() &&
+                    state.total === 0
+                        ? "Không tìm thấy người dùng phù hợp."
+                        : ""}
+                </p>
                 <Card className="overflow-hidden ring-1 ring-[#E2E8F0]">
                     <div className={
                         isStale
@@ -103,7 +115,13 @@ export default function UserList() {
                                 headers={
                                     <tr className="border-b border-[#E2E8F0]">
                                         <th className="w-40 px-6 py-4 text-sm font-semibold uppercase tracking-wide">
-                                            <Button variant="ghost" size="sm" type="button" onClick={toggleSort}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                type="button"
+                                                aria-label={`Sắp xếp ID ${sort === "asc" ? "giảm dần" : "tăng dần"}`}
+                                                onClick={toggleSort}
+                                            >
                                                 ID {sort === "asc" ? "🔺" : "🔻"}
                                             </Button>
                                         </th>

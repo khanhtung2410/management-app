@@ -1,3 +1,4 @@
+// Cung cấp TaskRow và TaskList để hiển thị danh sách công việc dạng bảng/thẻ; không dùng để tải dữ liệu hay quản lý state trang.
 import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
 import Link from "next/link";
 import { formatTaskDate, getTaskDisplayStatus } from "./taskUtils";
@@ -46,7 +47,7 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
     const detailLink = (
         <Link
             href={`/tasks/${item.ID}`}
-            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
             Chi tiết
         </Link>

@@ -1,3 +1,4 @@
+// Vẽ biểu đồ tròn thống kê công việc theo trạng thái với bố cục đáp ứng; không dùng để truy vấn hoặc tổng hợp dữ liệu.
 "use client";
 
 import { useCallback, useMemo } from "react";

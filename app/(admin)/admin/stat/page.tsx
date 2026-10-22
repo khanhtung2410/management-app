@@ -1,3 +1,4 @@
+// Tổng hợp số liệu người dùng và công việc cho dashboard admin; không dùng cho người dùng thường hoặc danh sách chi tiết.
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import sql from "mssql";
@@ -89,7 +90,7 @@ export default async function DashboardPage() {
                     Dashboard
                 </h1>
 
-                <p className="mt-1 text-xs text-[#64748B] sm:text-sm">
+                <p className="mt-1 text-xs text-[#475569] sm:text-sm">
                     Tổng quan hệ thống quản lý công việc
                 </p>
 
@@ -97,13 +98,13 @@ export default async function DashboardPage() {
                     <Card className="p-6 ring-1 ring-[#E2E8F0]">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-[#64748B]">
+                                <p className="text-sm font-medium text-[#475569]">
                                     Tổng số người dùng
                                 </p>
                                 <p className="mt-2 text-4xl font-bold text-[#1E40AF]">
                                     {totalUsers}
                                 </p>
-                                <p className="mt-2 text-sm text-[#94A3B8]">
+                                <p className="mt-2 text-sm text-[#64748B]">
                                     Người dùng trong hệ thống
                                 </p>
                             </div>
@@ -119,13 +120,13 @@ export default async function DashboardPage() {
                     <Card className="p-6 ring-1 ring-[#E2E8F0]">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-[#64748B]">
+                                <p className="text-sm font-medium text-[#475569]">
                                     Tổng số công việc
                                 </p>
                                 <p className="mt-2 text-4xl font-bold text-[#7C3AED]">
                                     {totalTasks}
                                 </p>
-                                <p className="mt-2 text-sm text-[#94A3B8]">
+                                <p className="mt-2 text-sm text-[#64748B]">
                                     Tất cả công việc
                                 </p>
                             </div>
@@ -144,7 +145,7 @@ export default async function DashboardPage() {
                         <h2 className="text-lg font-semibold text-[#0F172A] sm:text-xl">
                             Thống kê công việc
                         </h2>
-                        <p className="mt-1 text-xs text-[#64748B] sm:text-sm">
+                        <p className="mt-1 text-xs text-[#475569] sm:text-sm">
                             Tỷ lệ công việc theo trạng thái
                         </p>
                     </div>
@@ -177,7 +178,7 @@ export default async function DashboardPage() {
                                     </div>
 
                                     <div className="mt-2 flex items-center justify-between sm:mt-3">
-                                        <span className="text-xs text-[#64748B] sm:text-sm">
+                                        <span className="text-xs text-[#475569] sm:text-sm">
                                             Tỷ lệ
                                         </span>
                                         <span className="text-xs font-semibold text-[#334155] sm:text-sm">
@@ -215,7 +216,7 @@ export default async function DashboardPage() {
                                         backgroundColor: STATUS_CONFIG[item.status].color,
                                     }}
                                 />
-                                <span className="text-xs text-[#64748B] sm:text-sm">
+                                <span className="text-xs text-[#475569] sm:text-sm">
                                     {item.name}
                                 </span>
                             </div>
@@ -224,12 +225,12 @@ export default async function DashboardPage() {
                                 <span className="text-2xl font-bold text-[#0F172A] sm:text-3xl">
                                     {item.total}
                                 </span>
-                                <span className="mb-1 text-xs text-[#64748B] sm:text-sm">
+                                <span className="mb-1 text-xs text-[#475569] sm:text-sm">
                                     công việc
                                 </span>
                             </div>
 
-                            <p className="mt-1 text-xs text-[#64748B] sm:text-sm">
+                            <p className="mt-1 text-xs text-[#475569] sm:text-sm">
                                 Chiếm {item.percent}% tổng số
                             </p>
                         </Card>

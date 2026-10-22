@@ -25,7 +25,8 @@ describe("Input", () => {
 
         expect(input.getAttribute("aria-invalid")).toBe("true");
         expect(input.getAttribute("aria-describedby")).toBe(error.id);
-        expect(input.classList.contains("focus:ring-red-100")).toBe(true);
+        expect(input.classList.contains("focus-visible:ring-2")).toBe(true);
+        expect(input.classList.contains("focus-visible:ring-red-600")).toBe(true);
         expect(error.textContent).toBe("Email không hợp lệ");
     });
 

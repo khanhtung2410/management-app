@@ -1,3 +1,4 @@
+// Cập nhật trạng thái cho một công việc từ trang chi tiết; không dùng để tạo công việc hoặc thao tác trạng thái hàng loạt.
 "use client";
 
 import { useState } from "react";
@@ -17,6 +18,7 @@ export function TaskStatusButton({
     const router = useRouter();
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState("");
     const isComplete = status === taskStatus.Complete;
 
     const handleToggleStatus = async () => {
@@ -26,6 +28,7 @@ export function TaskStatusButton({
 
         setSaving(true);
         setError(null);
+        setSuccess("");
 
         try {
             const response = await fetch(`/api/tasks/${taskId}`, {
@@ -43,6 +46,9 @@ export function TaskStatusButton({
             }
 
             router.refresh();
+            setSuccess(
+                `Đã ${nextStatus === taskStatus.Complete ? "hoàn thành" : "mở lại"} công việc.`
+            );
         } catch (toggleError) {
             console.error("Lỗi cập nhật trạng thái:", toggleError);
             setError(
@@ -70,6 +76,9 @@ export function TaskStatusButton({
                       ? "Mở lại công việc"
                       : "Đánh dấu hoàn thành"}
             </Button>
+            <p role="status" aria-live="polite" className="sr-only">
+                {success}
+            </p>
             {error && (
                 <p role="alert" className="text-right text-sm text-red-600">
                     {error}

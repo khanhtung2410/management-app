@@ -1,3 +1,4 @@
+// Quản lý tìm kiếm, hiển thị và cập nhật trạng thái danh sách công việc phía client; không dùng để tải dữ liệu hoặc xem chi tiết.
 "use client";
 
 import {
@@ -22,6 +23,7 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
         id: number;
         message: string;
     } | null>(null);
+    const [toggleSuccess, setToggleSuccess] = useState("");
 
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -42,6 +44,7 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                 : taskStatus.Complete;
 
         setToggleError(null);
+        setToggleSuccess("");
 
         try {
             const res = await fetch(`/api/tasks/${item.ID}`, {
@@ -65,6 +68,9 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                         ? { ...task, TrangThai: newStatus }
                         : task
                 )
+            );
+            setToggleSuccess(
+                `Đã ${newStatus === taskStatus.Complete ? "hoàn thành" : "mở lại"} công việc ${item.Ten}.`
             );
         } catch (error) {
             console.error("Lỗi cập nhật trạng thái:", error);
@@ -96,8 +102,8 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
 
                     <div className="flex gap-2">
                         <Input
-                            aria-label="Tìm kiếm công việc"
                             input={{
+                                "aria-label": "Tìm kiếm công việc",
                                 type: "search",
                                 value: searchTerm,
                                 onChange: event => setSearchTerm(event.target.value),
@@ -116,6 +122,13 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                         </Button>
                     </div>
                 </div>
+
+                <p role="status" aria-live="polite" className="sr-only">
+                    {deferredSearch.trim() && filtered.length === 0
+                        ? "Không tìm thấy công việc phù hợp."
+                        : ""}
+                    {toggleSuccess}
+                </p>
 
                 {isDesktop ? (
                     <Card className="overflow-hidden">

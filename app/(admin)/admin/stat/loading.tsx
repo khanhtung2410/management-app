@@ -1,3 +1,4 @@
+// Hiển thị trạng thái tải cho trang thống kê admin; không dùng thay trang dữ liệu hoặc thông báo lỗi.
 import { Card } from "@/components/UI/Card";
 
 export default function DashboardLoading() {

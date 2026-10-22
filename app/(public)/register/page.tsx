@@ -1,3 +1,4 @@
+// Thu thập thông tin để tạo tài khoản mới; không dùng cho đăng nhập, sửa hồ sơ hoặc tạo người dùng admin.
 "use client";
 
 import { useState } from "react";
@@ -159,7 +160,7 @@ export default function RegisterPage() {
                             Đã có tài khoản?{" "}
                             <Link
                                 href="/login"
-                                className="font-medium text-blue-600 hover:underline"
+                                className="font-medium text-blue-600 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                             >
                                 Đăng nhập
                             </Link>

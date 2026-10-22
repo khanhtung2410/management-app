@@ -1,3 +1,4 @@
+// Tải và hiển thị chi tiết một công việc thuộc người dùng hiện tại; không dùng cho danh sách hoặc trang quản trị công việc.
 import Link from "next/link";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
@@ -91,7 +92,7 @@ export default async function TaskDetailPage({
                 <div className="mb-6 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <Link
                         href="/tasks"
-                        className="inline-flex w-fit items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        className="inline-flex w-fit items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                     >
                         ← Quay lại
                     </Link>

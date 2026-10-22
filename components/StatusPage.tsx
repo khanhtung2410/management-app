@@ -1,3 +1,4 @@
+// Hiển thị trang lỗi 403 hoặc 404 dùng chung; không dùng cho lỗi nghiệp vụ hay trạng thái tải dữ liệu.
 import Link from "next/link";
 
 type StatusCode = "403" | "404";

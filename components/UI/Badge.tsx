@@ -1,3 +1,4 @@
+// Hiển thị nhãn trạng thái theo cấu hình màu; không dùng cho hành động tương tác hoặc nội dung cần điều hướng.
 import type { StatusConfig } from "@/constants/statuses";
 
 interface BadgeProps {
