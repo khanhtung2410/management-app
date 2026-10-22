@@ -95,12 +95,14 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
 
                     <div className="flex gap-2">
                         <Input
-                            type="search"
                             aria-label="Tìm kiếm công việc"
-                            value={searchTerm}
-                            onChange={event => setSearchTerm(event.target.value)}
-                            placeholder="Tìm kiếm..."
-                            className="text-gray-800 text-sm sm:w-64"
+                            input={{
+                                type: "search",
+                                value: searchTerm,
+                                onChange: event => setSearchTerm(event.target.value),
+                                placeholder: "Tìm kiếm...",
+                                className: "text-gray-800 text-sm sm:w-64",
+                            }}
                         />
 
                         <Button

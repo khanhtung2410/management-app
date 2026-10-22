@@ -1,19 +1,27 @@
 import { useId, type InputHTMLAttributes } from "react";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps {
     label?: string;
     error?: string;
+    /** Class for the outer layout wrapper. */
+    className?: string;
+    /** Native props and styles for the input element. */
+    input?: InputHTMLAttributes<HTMLInputElement>;
 }
 
 export function Input({
     label,
     error,
-    id,
     className = "",
-    "aria-describedby": ariaDescribedBy,
-    "aria-invalid": ariaInvalid,
-    ...inputProps
+    input = {},
 }: InputProps) {
+    const {
+        id,
+        className: inputClassName = "",
+        "aria-describedby": ariaDescribedBy,
+        "aria-invalid": ariaInvalid,
+        ...inputProps
+    } = input;
     const generatedId = useId();
     const inputId = id ?? generatedId;
     const errorId = `${inputId}-error`;
@@ -22,7 +30,7 @@ export function Input({
         .join(" ") || undefined;
 
     return (
-        <div className="flex-1">
+        <div className={`flex-1 ${className}`.trim()}>
             {label && (
                 <label
                     htmlFor={inputId}
@@ -40,7 +48,7 @@ export function Input({
                     error
                         ? "border-red-400 focus:border-red-500 focus:ring-red-100"
                         : "border-gray-300 focus:border-blue-500 focus:ring-blue-100"
-                } ${className}`}
+                } ${inputClassName}`.trim()}
             />
             {error && (
                 <p

@@ -87,52 +87,62 @@ export default function RegisterPage() {
                         )}
 
                         <Input
-                            type="text"
-                            aria-label="Họ tên"
-                            placeholder="Họ tên"
-                            value={hoTen}
-                            onChange={(e) => setHoTen(e.target.value)}
-                            className="rounded-lg px-4 py-3"
-                            required
+                            input={{
+                                "aria-label": "Họ tên",
+                                type: "text",
+                                placeholder: "Họ tên",
+                                value: hoTen,
+                                onChange: (e) => setHoTen(e.target.value),
+                                className: "rounded-lg px-4 py-3",
+                                required: true,
+                            }}
                         />
 
                         <Input
-                            type="email"
-                            aria-label="Email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="rounded-lg px-4 py-3"
-                            required
+                            input={{
+                                "aria-label": "Email",
+                                type: "email",
+                                placeholder: "Email",
+                                value: email,
+                                onChange: (e) => setEmail(e.target.value),
+                                className: "rounded-lg px-4 py-3",
+                                required: true,
+                            }}
                         />
 
                         <Input
-                            type="tel"
-                            aria-label="Số điện thoại (tùy chọn)"
-                            placeholder="Số điện thoại (tùy chọn)"
-                            value={sdt}
-                            onChange={(e) => setSdt(e.target.value)}
-                            className="rounded-lg px-4 py-3"
+                            input={{
+                                "aria-label": "Số điện thoại (tùy chọn)",
+                                type: "tel",
+                                placeholder: "Số điện thoại (tùy chọn)",
+                                value: sdt,
+                                onChange: (e) => setSdt(e.target.value),
+                                className: "rounded-lg px-4 py-3",
+                            }}
                         />
 
                         <Input
-                            type="password"
-                            aria-label="Mật khẩu"
-                            placeholder="Mật khẩu (ít nhất 6 ký tự)"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="rounded-lg px-4 py-3"
-                            required
+                            input={{
+                                "aria-label": "Mật khẩu",
+                                type: "password",
+                                placeholder: "Mật khẩu (ít nhất 6 ký tự)",
+                                value: password,
+                                onChange: (e) => setPassword(e.target.value),
+                                className: "rounded-lg px-4 py-3",
+                                required: true,
+                            }}
                         />
 
                         <Input
-                            type="password"
-                            aria-label="Nhập lại mật khẩu"
-                            placeholder="Nhập lại mật khẩu"
-                            value={confirm}
-                            onChange={(e) => setConfirm(e.target.value)}
-                            className="rounded-lg px-4 py-3"
-                            required
+                            input={{
+                                "aria-label": "Nhập lại mật khẩu",
+                                type: "password",
+                                placeholder: "Nhập lại mật khẩu",
+                                value: confirm,
+                                onChange: (e) => setConfirm(e.target.value),
+                                className: "rounded-lg px-4 py-3",
+                                required: true,
+                            }}
                         />
 
                         <Button

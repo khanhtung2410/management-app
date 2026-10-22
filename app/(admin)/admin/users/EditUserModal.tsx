@@ -100,11 +100,13 @@ function FormField({
         <div className="mb-3">
             <label htmlFor={id} className="mb-1 block text-sm font-medium">{label}</label>
             <Input
-                id={id}
-                type={type}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="rounded-md px-3 py-2"
+                input={{
+                    id,
+                    type,
+                    value,
+                    onChange: (e) => onChange(e.target.value),
+                    className: "rounded-md px-3 py-2",
+                }}
             />
         </div>
     );

@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/UI/Button";
 
 export function HandleLogout() {
     const [error, setError] = useState<string | null>(null);
     const [pending, setPending] = useState(false);
-    const router = useRouter();
 
     const handleLogout = async () => {
         setPending(true);

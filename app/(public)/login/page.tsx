@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { userRole } from "@/constants/roles";
 import { withTimeout } from "@/lib/withTimeout";
 import { isAbortError } from "@/lib/isAbortError";
@@ -14,7 +14,6 @@ function LoginForm() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const router = useRouter();
     const searchParams = useSearchParams();
 
     const [showRegisterSuccess] = useState(
@@ -90,23 +89,27 @@ function LoginForm() {
                         className="mt-8 flex w-full max-w-md flex-col gap-4"
                     >
                         <Input
-                            type="email"
-                            aria-label="Email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="rounded-lg px-4 py-3"
-                            required
+                            input={{
+                                "aria-label": "Email",
+                                type: "email",
+                                placeholder: "Email",
+                                value: email,
+                                onChange: (e) => setEmail(e.target.value),
+                                className: "rounded-lg px-4 py-3",
+                                required: true,
+                            }}
                         />
 
                         <Input
-                            type="password"
-                            aria-label="Mật khẩu"
-                            placeholder="Mật khẩu"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="rounded-lg px-4 py-3"
-                            required
+                            input={{
+                                "aria-label": "Mật khẩu",
+                                type: "password",
+                                placeholder: "Mật khẩu",
+                                value: password,
+                                onChange: (e) => setPassword(e.target.value),
+                                className: "rounded-lg px-4 py-3",
+                                required: true,
+                            }}
                         />
 
                         {error && (
