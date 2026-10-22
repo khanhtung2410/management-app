@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/UI/Button";
 
 export function HandleLogout() {
     const [error, setError] = useState<string | null>(null);
@@ -34,14 +35,17 @@ export function HandleLogout() {
 
     return (
         <>
-            <button
+            <Button
+                variant="ghost"
+                size="sm"
                 type="button"
                 onClick={handleLogout}
                 disabled={pending}
-                className="hover:underline disabled:opacity-50"
+                loading={pending}
+                className="hover:underline"
             >
                 {pending ? "Đang đăng xuất..." : "Đăng xuất"}
-            </button>
+            </Button>
             {error && <span role="alert">{error}</span>}
         </>
     );

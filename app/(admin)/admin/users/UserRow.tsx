@@ -1,6 +1,7 @@
 import type { User } from "./api";
 import { memo } from "react";
 import { UNKNOWN_STATUS_CONFIG, USER_STATUS_CONFIG, userStatus, UserStatusType } from "@/constants/statuses"
+import { Button } from "@/components/UI/Button";
 
 interface RowProps {
     user: User;
@@ -33,31 +34,28 @@ function Actions({
     onToggle,
 }: RowProps & { layout: "row" | "card" }) {
     const isActive = user.TrangThai === userStatus.Active;
-    const base = "rounded-md px-4 py-2 text-sm font-medium text-white transition";
     const grow = layout === "card" ? "flex-1" : "";
-    const toggleCls = processing
-        ? "bg-[#9CA3AF] cursor-not-allowed"
-        : isActive
-            ? "bg-red-600 hover:bg-red-700"
-            : "bg-green-700 hover:bg-green-800";
 
     return (
         <div className="flex gap-3">
-            <button
+            <Button
+                variant="muted"
                 type="button"
                 onClick={() => onEdit(user)}
-                className={`${base} bg-[#6B7280] hover:bg-[#4B5563] ${grow}`}
+                className={grow}
             >
                 Sửa
-            </button>
-            <button
+            </Button>
+            <Button
+                variant={isActive ? "danger" : "success"}
                 type="button"
                 disabled={processing}
+                loading={processing}
                 onClick={() => onToggle(user.ID, user.TrangThai)}
-                className={`${base} ${grow} ${toggleCls}`}
+                className={grow}
             >
                 {processing ? "Đang..." : isActive ? "Ngừng" : "Kích hoạt"}
-            </button>
+            </Button>
         </div>
     );
 }

@@ -1,6 +1,7 @@
 import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
 import Link from "next/link";
 import { formatTaskDate, getTaskDisplayStatus } from "./taskUtils";
+import { Button } from "@/components/UI/Button";
 
 export interface CongViec {
     ID: number;
@@ -37,17 +38,14 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
     );
 
     const toggleButton = (
-        <button
+        <Button
+            variant={isComplete ? "muted" : "success"}
+            size="xs"
             type="button"
             onClick={() => onToggle(item)}
-            className={
-                isComplete
-                    ? "rounded-md bg-gray-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-gray-600"
-                    : "rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-green-700"
-            }
         >
             {isComplete ? "Mở lại" : "Hoàn thành"}
-        </button>
+        </Button>
     );
 
     const detailLink = (
