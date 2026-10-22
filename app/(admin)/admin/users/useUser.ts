@@ -54,7 +54,11 @@ export function useUsers({
 
         (async () => {
             try {
-                setState({ status: "loading" })
+                setState((previous) =>
+                    previous.status === "success"
+                        ? previous
+                        : { status: "loading" },
+                );
                 const page = await fetchUsers(
                     { page: currentPage, pageSize, sortBy: "id", order: sort, search: debouncedSearch },
                     fetcher,
