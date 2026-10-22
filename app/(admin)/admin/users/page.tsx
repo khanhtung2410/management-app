@@ -11,6 +11,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { renderByState } from "./renderByState";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
+import { Card } from "@/components/UI/Card";
 
 export default function UserList() {
 
@@ -87,7 +88,7 @@ export default function UserList() {
                         </Button>
                     </div>
                 )}
-                <div className="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-[#E2E8F0]">
+                <Card className="overflow-hidden ring-1 ring-[#E2E8F0]">
                     <div className={
                         isStale
                             ? "opacity-60 transition-opacity duration-150"
@@ -143,7 +144,7 @@ export default function UserList() {
                         totalPages={state.status === "success" ? state.totalPages : 1}
                         onPageChange={setCurrentPage}
                     />
-                </div >
+                </Card>
             </div >
 
             {editingUser && (
