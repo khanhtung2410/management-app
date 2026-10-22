@@ -5,15 +5,15 @@ import { UnauthorizedError } from "./errors";
 import { verifyToken } from "./token"
 import type { AuthPayload } from "./payload";
 
-export interface RequestLike{
-    headers: { get(name: string): string | null }; 
-    cookies: { get(name: string): {value: string} |undefined}
+export interface RequestLike {
+    headers: { get(name: string): string | null };
+    cookies: { get(name: string): { value: string } | undefined }
 }
 
 export async function getAuthFromRequest(req: RequestLike): Promise<AuthPayload> {
     const cookieToken = req.cookies.get("token")?.value;
 
-    const prefix="Bearer "
+    const prefix = "Bearer "
     const header = req.headers.get("authorization");
     const headerToken = header?.startsWith(prefix) ? header.slice(prefix.length) : undefined;
 
