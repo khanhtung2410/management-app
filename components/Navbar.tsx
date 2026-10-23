@@ -8,8 +8,8 @@ export default async function Navbar() {
 
     return (
         <nav className="sticky top-0 z-50 px-6 py-4" style={{ background: "var(--surface)", color: "var(--foreground)" }}>
-            <div className="flex justify-between">
-                <div className="flex gap-6">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
                     <Link href="/" className="hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
                         Trang chủ
                     </Link>
@@ -21,7 +21,7 @@ export default async function Navbar() {
                     )}
                 </div>
 
-                <div className="flex gap-6">
+                <div className="flex items-center gap-6">
                     {!user ? (
                         <>
                             <Link href="/login" className="hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
