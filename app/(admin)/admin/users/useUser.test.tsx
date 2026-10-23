@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fetcher as defaultFetcher } from "@/lib/fetcher";
 import type { UsersPage } from "./api";
 
 const { fetchUsersMock } = vi.hoisted(() => ({
@@ -44,6 +45,10 @@ describe("useUsers sorting", () => {
         await waitFor(() => {
             expect(result.current.state.status).toBe("success");
         });
+        expect(fetchUsersMock).toHaveBeenLastCalledWith(
+            expect.any(Object),
+            defaultFetcher,
+        );
 
         const originalState = result.current.state;
         if (originalState.status !== "success") {

@@ -9,6 +9,7 @@ import {
     type UserUpdatePayload,
 } from "./api";
 import { userStatus, UserStatusType } from "@/constants/statuses";
+import { fetcher as defaultFetcher } from "@/lib/fetcher";
 import { isAbortError } from "@/lib/isAbortError";
 import { UsersState } from "./renderByState";
 
@@ -23,7 +24,7 @@ export interface UseUsersOptions {
 
 export function useUsers({
     pageSize = DEFAULT_PAGE_SIZE,
-    fetcher,
+    fetcher = defaultFetcher,
     searchTerm = "",
 }: UseUsersOptions = {}) {
 
