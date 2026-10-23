@@ -7,9 +7,52 @@ import { Card } from "@/components/UI/Card";
 import { userRole } from "@/constants/roles";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { fetcher } from "@/lib/fetcher";
 import { getPercent } from "@/lib/percent";
 import TaskStatsChart from "./TaskStatsChart";
 import type { TaskStat } from "./types";
+
+interface DashboardSummary {
+    totalUsers: number;
+    totalTasks: number;
+    activeTasks: number;
+    completedTasks: number;
+    overdueTasks: number;
+}
+
+function isDashboardSummary(value: unknown): value is DashboardSummary {
+    if (typeof value !== "object" || value === null) return false;
+
+    return [
+        "totalUsers",
+        "totalTasks",
+        "activeTasks",
+        "completedTasks",
+        "overdueTasks",
+    ].every((key) => key in value && typeof value[key as keyof typeof value] === "number");
+}
+
+async function getMockDashboardSummary(): Promise<DashboardSummary> {
+    const response = await fetcher("/api/admin/dashboard/summary");
+    const body: unknown = await response.json();
+
+    if (!response.ok) {
+        const message =
+            typeof body === "object" &&
+            body !== null &&
+            "message" in body &&
+            typeof body.message === "string"
+                ? body.message
+                : "Không thể lấy dữ liệu thống kê.";
+        throw new Error(message);
+    }
+
+    if (!isDashboardSummary(body)) {
+        throw new Error("Dữ liệu thống kê không hợp lệ.");
+    }
+
+    return body;
+}
 
 export default async function DashboardPage() {
     const token = (await cookies()).get("token")?.value;
@@ -31,51 +74,74 @@ export default async function DashboardPage() {
         redirect("/403");
     }
 
-    const pool = await getDb();
-    const [userResult, taskResult] = await Promise.all([
-        pool
-            .request()
-            .input("userRole", sql.Int, userRole.USER)
-            .query<{ totalUsers: number }>(`
-                SELECT COUNT(*) AS totalUsers
-                FROM [dbo].[User]
-                WHERE RoleId = @userRole
-            `),
-        pool
-            .request()
-            .input("statusActive", sql.Int, taskStatus.Active)
-            .input("statusComplete", sql.Int, taskStatus.Complete)
-            .query<{
-                totalTasks: number;
-                DangThucHien: number;
-                HoanThanh: number;
-                QuaHan: number;
-            }>(`
-                SELECT
-                    COUNT(*) AS totalTasks,
-                    SUM(CASE
-                        WHEN TrangThai = @statusActive AND HetHan >= GETDATE()
-                        THEN 1 ELSE 0
-                    END) AS DangThucHien,
-                    SUM(CASE
-                        WHEN TrangThai = @statusComplete
-                        THEN 1 ELSE 0
-                    END) AS HoanThanh,
-                    SUM(CASE
-                        WHEN TrangThai = @statusActive AND HetHan < GETDATE()
-                        THEN 1 ELSE 0
-                    END) AS QuaHan
-                FROM [dbo].[CongViec]
-            `),
-    ]);
+    const isMockMode =
+        process.env.NEXT_PUBLIC_MOCK_API_MODE === "error" ||
+        process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
-    const totalUsers = Number(userResult.recordset[0]?.totalUsers ?? 0);
-    const taskRow = taskResult.recordset[0];
-    const totalTasks = Number(taskRow?.totalTasks ?? 0);
+    let totalUsers: number;
+    let totalTasks: number;
+    let activeTasks: number;
+    let completedTasks: number;
+    let overdueTasks: number;
+
+    if (isMockMode) {
+        const summary = await getMockDashboardSummary();
+        totalUsers = summary.totalUsers;
+        totalTasks = summary.totalTasks;
+        activeTasks = summary.activeTasks;
+        completedTasks = summary.completedTasks;
+        overdueTasks = summary.overdueTasks;
+    } else {
+        const pool = await getDb();
+        const [userResult, taskResult] = await Promise.all([
+            pool
+                .request()
+                .input("userRole", sql.Int, userRole.USER)
+                .query<{ totalUsers: number }>(`
+                    SELECT COUNT(*) AS totalUsers
+                    FROM [dbo].[User]
+                    WHERE RoleId = @userRole
+                `),
+            pool
+                .request()
+                .input("statusActive", sql.Int, taskStatus.Active)
+                .input("statusComplete", sql.Int, taskStatus.Complete)
+                .query<{
+                    totalTasks: number;
+                    DangThucHien: number;
+                    HoanThanh: number;
+                    QuaHan: number;
+                }>(`
+                    SELECT
+                        COUNT(*) AS totalTasks,
+                        SUM(CASE
+                            WHEN TrangThai = @statusActive AND HetHan >= GETDATE()
+                            THEN 1 ELSE 0
+                        END) AS DangThucHien,
+                        SUM(CASE
+                            WHEN TrangThai = @statusComplete
+                            THEN 1 ELSE 0
+                        END) AS HoanThanh,
+                        SUM(CASE
+                            WHEN TrangThai = @statusActive AND HetHan < GETDATE()
+                            THEN 1 ELSE 0
+                        END) AS QuaHan
+                    FROM [dbo].[CongViec]
+                `),
+        ]);
+
+        const taskRow = taskResult.recordset[0];
+        totalUsers = Number(userResult.recordset[0]?.totalUsers ?? 0);
+        totalTasks = Number(taskRow?.totalTasks ?? 0);
+        activeTasks = Number(taskRow?.DangThucHien ?? 0);
+        completedTasks = Number(taskRow?.HoanThanh ?? 0);
+        overdueTasks = Number(taskRow?.QuaHan ?? 0);
+    }
+
     const taskStats: TaskStat[] = [
-        { status: taskStatus.Active, total: Number(taskRow?.DangThucHien ?? 0) },
-        { status: taskStatus.Complete, total: Number(taskRow?.HoanThanh ?? 0) },
-        { status: taskStatus.Overdue, total: Number(taskRow?.QuaHan ?? 0) },
+        { status: taskStatus.Active, total: activeTasks },
+        { status: taskStatus.Complete, total: completedTasks },
+        { status: taskStatus.Overdue, total: overdueTasks },
     ].map(({ status, total }) => ({
         status,
         name: STATUS_CONFIG[status].label,

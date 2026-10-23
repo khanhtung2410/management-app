@@ -39,7 +39,11 @@ export default function UserList() {
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const closeEditModal = useCallback(() => { setEditingUser(null); }, [])
 
-    const placeholder = renderByState(state)
+    const isSearchEmpty =
+        state.status === "success" &&
+        deferredSearch.trim().length > 0 &&
+        state.total === 0;
+    const placeholder = isSearchEmpty ? null : renderByState(state);
     const users = state.status === "success" ? state.data : [];
 
     return (
@@ -135,22 +139,40 @@ export default function UserList() {
                                     </tr>
                                 }
                             >
-                                {users.map((item) =>
+                                {isSearchEmpty ? (
                                     isDesktop ? (
-                                        <UserTableRow
-                                            key={item.ID}
-                                            user={item}
-                                            processing={processingIds.has(item.ID)}
-                                            onEdit={setEditingUser}
-                                            onToggle={toggleStatus}
-                                        />
-                                    ) : (<UserCard
-                                        key={item.ID}
-                                        user={item}
-                                        processing={processingIds.has(item.ID)}
-                                        onEdit={setEditingUser}
-                                        onToggle={toggleStatus}
-                                    />
+                                        <tr>
+                                            <td
+                                                colSpan={6}
+                                                className="px-6 py-12 text-center text-[#64748B]"
+                                            >
+                                                Không tìm thấy người dùng phù hợp
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        <p className="px-6 py-12 text-center text-[#64748B]">
+                                            Không tìm thấy người dùng phù hợp
+                                        </p>
+                                    )
+                                ) : (
+                                    users.map((item) =>
+                                        isDesktop ? (
+                                            <UserTableRow
+                                                key={item.ID}
+                                                user={item}
+                                                processing={processingIds.has(item.ID)}
+                                                onEdit={setEditingUser}
+                                                onToggle={toggleStatus}
+                                            />
+                                        ) : (
+                                            <UserCard
+                                                key={item.ID}
+                                                user={item}
+                                                processing={processingIds.has(item.ID)}
+                                                onEdit={setEditingUser}
+                                                onToggle={toggleStatus}
+                                            />
+                                        ),
                                     )
                                 )}
                             </UsersLayout>
