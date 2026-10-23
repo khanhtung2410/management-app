@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/UI/Button";
 
 export function HandleLogout() {
     const [error, setError] = useState<string | null>(null);
@@ -34,17 +33,14 @@ export function HandleLogout() {
 
     return (
         <>
-            <Button
-                variant="ghost"
-                size="sm"
+            <button
                 type="button"
                 onClick={handleLogout}
                 disabled={pending}
-                loading={pending}
-                className="hover:underline"
+                className="appearance-none border-0 bg-transparent p-0 font-[inherit] leading-[inherit] text-current hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
                 {pending ? "Đang đăng xuất..." : "Đăng xuất"}
-            </Button>
+            </button>
             {error && <span role="alert">{error}</span>}
         </>
     );
