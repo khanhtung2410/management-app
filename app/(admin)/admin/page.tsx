@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import sql from "mssql";
 import { Badge } from "@/components/UI/Badge";
 import { Card } from "@/components/UI/Card";
+import { fetcher } from "@/lib/fetcher";
 import { userRole } from "@/constants/roles";
 import {
     STATUS_CONFIG,
@@ -25,8 +26,19 @@ interface DashboardTask {
     ID: number;
     Ten: string;
     HoTen: string | null;
-    HetHan: Date;
+    HetHan: string | Date;
     TrangThai: TaskStatusType;
+}
+
+interface DashboardData {
+    summary: DashboardSummary | null;
+    summaryError: string | null;
+    recentTasks: DashboardTask[] | null;
+    tasksError: string | null;
+}
+
+interface ApiError {
+    message: string;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
@@ -35,113 +47,176 @@ const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
     year: "numeric",
 });
 
-async function getDashboardData() {
-    const pool = await getDb();
-    const [summaryResult, tasksResult] = await Promise.all([
-        pool
-            .request()
-            .input("userRole", sql.Int, userRole.USER)
-            .input("activeUserStatus", sql.Int, userStatus.Active)
-            .input("activeTaskStatus", sql.Int, taskStatus.Active)
-            .input("completedTaskStatus", sql.Int, taskStatus.Complete)
-            .query<DashboardSummary>(`
-                SELECT
-                    (SELECT COUNT(*) FROM [dbo].[User] WHERE RoleId = @userRole) AS totalUsers,
-                    (SELECT COUNT(*) FROM [dbo].[User]
-                        WHERE RoleId = @userRole AND TrangThai = @activeUserStatus) AS activeUsers,
-                    COUNT(*) AS totalTasks,
-                    ISNULL(SUM(CASE
-                        WHEN TrangThai = @activeTaskStatus AND HetHan >= GETDATE()
-                        THEN 1 ELSE 0
-                    END), 0) AS activeTasks,
-                    ISNULL(SUM(CASE
-                        WHEN TrangThai = @completedTaskStatus
-                        THEN 1 ELSE 0
-                    END), 0) AS completedTasks,
-                    ISNULL(SUM(CASE
-                        WHEN TrangThai = @activeTaskStatus AND HetHan < GETDATE()
-                        THEN 1 ELSE 0
-                    END), 0) AS overdueTasks
-                FROM [dbo].[CongViec]
-            `),
-        pool
-            .request()
-            .input("activeTaskStatus", sql.Int, taskStatus.Active)
-            .input("completedTaskStatus", sql.Int, taskStatus.Complete)
-            .query<DashboardTask>(`
-                SELECT TOP (5)
-                    task.ID,
-                    task.Ten,
-                    assignedUser.HoTen,
-                    task.HetHan,
-                    CASE
-                        WHEN task.TrangThai = @completedTaskStatus THEN @completedTaskStatus
-                        WHEN task.TrangThai = @activeTaskStatus AND task.HetHan < GETDATE()
-                        THEN ${taskStatus.Overdue}
-                        ELSE task.TrangThai
-                    END AS TrangThai
-                FROM [dbo].[CongViec] AS task
-                LEFT JOIN [dbo].[User] AS assignedUser ON assignedUser.ID = task.UserID
-                ORDER BY task.ID DESC
-            `),
-    ]);
+function getErrorMessage(reason: unknown, fallback: string): string {
+    console.error(fallback, reason);
+    return reason instanceof Error ? reason.message : fallback;
+}
 
-    const summary = summaryResult.recordset[0];
-    if (!summary) {
-        throw new Error("Không thể lấy dữ liệu tổng quan từ cơ sở dữ liệu.");
+async function getMockData<T>(path: string): Promise<T> {
+    const response = await fetcher(path);
+    const body: unknown = await response.json();
+
+    if (!response.ok) {
+        const message =
+            typeof body === "object" &&
+            body !== null &&
+            "message" in body &&
+            typeof (body as ApiError).message === "string"
+                ? (body as ApiError).message
+                : "Không thể lấy dữ liệu mock dashboard.";
+        throw new Error(message);
     }
 
+    return body as T;
+}
+
+async function getDashboardData(): Promise<DashboardData> {
+    const isMockMode =
+        process.env.NEXT_PUBLIC_MOCK_API_MODE === "error" ||
+        process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+
+    const summaryRequest: Promise<DashboardSummary> = isMockMode
+        ? getMockData("/api/admin/dashboard/summary")
+        : (async () => {
+              const pool = await getDb();
+              const result = await pool
+                  .request()
+                  .input("userRole", sql.Int, userRole.USER)
+                  .input("activeUserStatus", sql.Int, userStatus.Active)
+                  .input("activeTaskStatus", sql.Int, taskStatus.Active)
+                  .input("completedTaskStatus", sql.Int, taskStatus.Complete)
+                  .query<DashboardSummary>(`
+                      SELECT
+                          (SELECT COUNT(*) FROM [dbo].[User] WHERE RoleId = @userRole) AS totalUsers,
+                          (SELECT COUNT(*) FROM [dbo].[User]
+                              WHERE RoleId = @userRole AND TrangThai = @activeUserStatus) AS activeUsers,
+                          COUNT(*) AS totalTasks,
+                          ISNULL(SUM(CASE
+                              WHEN TrangThai = @activeTaskStatus AND HetHan >= GETDATE()
+                              THEN 1 ELSE 0
+                          END), 0) AS activeTasks,
+                          ISNULL(SUM(CASE
+                              WHEN TrangThai = @completedTaskStatus
+                              THEN 1 ELSE 0
+                          END), 0) AS completedTasks,
+                          ISNULL(SUM(CASE
+                              WHEN TrangThai = @activeTaskStatus AND HetHan < GETDATE()
+                              THEN 1 ELSE 0
+                          END), 0) AS overdueTasks
+                      FROM [dbo].[CongViec]
+                  `);
+
+              const summary = result.recordset[0];
+              if (!summary) {
+                  throw new Error("Không thể lấy dữ liệu tổng quan từ cơ sở dữ liệu.");
+              }
+              return summary;
+          })();
+
+    const tasksRequest: Promise<DashboardTask[]> = isMockMode
+        ? getMockData("/api/admin/dashboard/tasks")
+        : (async () => {
+              const pool = await getDb();
+              const result = await pool
+                  .request()
+                  .input("activeTaskStatus", sql.Int, taskStatus.Active)
+                  .input("completedTaskStatus", sql.Int, taskStatus.Complete)
+                  .query<DashboardTask>(`
+                      SELECT TOP (5)
+                          task.ID,
+                          task.Ten,
+                          assignedUser.HoTen,
+                          task.HetHan,
+                          CASE
+                              WHEN task.TrangThai = @completedTaskStatus THEN @completedTaskStatus
+                              WHEN task.TrangThai = @activeTaskStatus AND task.HetHan < GETDATE()
+                              THEN ${taskStatus.Overdue}
+                              ELSE task.TrangThai
+                          END AS TrangThai
+                      FROM [dbo].[CongViec] AS task
+                      LEFT JOIN [dbo].[User] AS assignedUser ON assignedUser.ID = task.UserID
+                      ORDER BY task.ID DESC
+                  `);
+
+              return result.recordset;
+          })();
+
+    const [summaryResult, tasksResult] = await Promise.allSettled([
+        summaryRequest,
+        tasksRequest,
+    ]);
+
     return {
-        summary,
-        recentTasks: tasksResult.recordset,
+        summary:
+            summaryResult.status === "fulfilled" ? summaryResult.value : null,
+        summaryError:
+            summaryResult.status === "rejected"
+                ? getErrorMessage(
+                      summaryResult.reason,
+                      "Không thể tải thống kê dashboard.",
+                  )
+                : null,
+        recentTasks:
+            tasksResult.status === "fulfilled" ? tasksResult.value : null,
+        tasksError:
+            tasksResult.status === "rejected"
+                ? getErrorMessage(
+                      tasksResult.reason,
+                      "Không thể tải danh sách công việc gần đây.",
+                  )
+                : null,
     };
 }
 
 export default async function AdminPage() {
     await connection();
-    const { summary, recentTasks } = await getDashboardData();
-    const summaryCards = [
-        {
-            label: "Người dùng",
-            value: summary.totalUsers,
-            note: `${summary.activeUsers} đang hoạt động`,
-            icon: "👥",
-            href: "/admin/users",
-            color: "text-blue-700",
-        },
-        {
-            label: "Tổng công việc",
-            value: summary.totalTasks,
-            note: "Tất cả trạng thái",
-            icon: "📋",
-            href: "/admin/stat",
-            color: "text-violet-700",
-        },
-        {
-            label: "Đang thực hiện",
-            value: summary.activeTasks,
-            note: "Công việc còn hạn",
-            icon: "⏳",
-            href: "/admin/stat",
-            color: "text-sky-700",
-        },
-        {
-            label: "Đã hoàn thành",
-            value: summary.completedTasks,
-            note: "Đã xử lý xong",
-            icon: "✅",
-            href: "/admin/stat",
-            color: "text-green-700",
-        },
-        {
-            label: "Quá hạn",
-            value: summary.overdueTasks,
-            note: "Cần được theo dõi",
-            icon: "⚠️",
-            href: "/admin/stat",
-            color: "text-red-700",
-        },
-    ];
+    const { summary, summaryError, recentTasks, tasksError } =
+        await getDashboardData();
+
+    const summaryCards = summary
+        ? [
+              {
+                  label: "Người dùng",
+                  value: summary.totalUsers,
+                  note: `${summary.activeUsers} đang hoạt động`,
+                  icon: "👥",
+                  href: "/admin/users",
+                  color: "text-blue-700",
+              },
+              {
+                  label: "Tổng công việc",
+                  value: summary.totalTasks,
+                  note: "Tất cả trạng thái",
+                  icon: "📋",
+                  href: "/admin/stat",
+                  color: "text-violet-700",
+              },
+              {
+                  label: "Đang thực hiện",
+                  value: summary.activeTasks,
+                  note: "Công việc còn hạn",
+                  icon: "⏳",
+                  href: "/admin/stat",
+                  color: "text-sky-700",
+              },
+              {
+                  label: "Đã hoàn thành",
+                  value: summary.completedTasks,
+                  note: "Đã xử lý xong",
+                  icon: "✅",
+                  href: "/admin/stat",
+                  color: "text-green-700",
+              },
+              {
+                  label: "Quá hạn",
+                  value: summary.overdueTasks,
+                  note: "Cần được theo dõi",
+                  icon: "⚠️",
+                  href: "/admin/stat",
+                  color: "text-red-700",
+              },
+          ]
+        : [];
 
     return (
         <div className="-m-6 min-h-[calc(100vh-7rem)] space-y-8 bg-slate-100 p-6 text-slate-900">
@@ -156,30 +231,39 @@ export default async function AdminPage() {
                 aria-label="Thống kê tổng quan"
                 className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5"
             >
-                {summaryCards.map((card) => (
-                    <Link
-                        key={card.label}
-                        href={card.href}
-                        className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                {summaryError ? (
+                    <p
+                        role="alert"
+                        className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 sm:col-span-2 xl:col-span-3 2xl:col-span-5"
                     >
-                        <Card className="!bg-slate-50 h-full p-5 transition-shadow hover:shadow-lg">
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">
-                                        {card.label}
-                                    </p>
-                                    <p className={`mt-2 text-3xl font-bold ${card.color}`}>
-                                        {card.value}
-                                    </p>
+                        {summaryError}
+                    </p>
+                ) : (
+                    summaryCards.map((card) => (
+                        <Link
+                            key={card.label}
+                            href={card.href}
+                            className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                        >
+                            <Card className="!bg-slate-50 h-full p-5 transition-shadow hover:shadow-lg">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">
+                                            {card.label}
+                                        </p>
+                                        <p className={`mt-2 text-3xl font-bold ${card.color}`}>
+                                            {card.value}
+                                        </p>
+                                    </div>
+                                    <span aria-hidden="true" className="text-2xl">
+                                        {card.icon}
+                                    </span>
                                 </div>
-                                <span aria-hidden="true" className="text-2xl">
-                                    {card.icon}
-                                </span>
-                            </div>
-                            <p className="mt-3 text-sm text-gray-500">{card.note}</p>
-                        </Card>
-                    </Link>
-                ))}
+                                <p className="mt-3 text-sm text-gray-500">{card.note}</p>
+                            </Card>
+                        </Link>
+                    ))
+                )}
             </section>
 
             <section aria-labelledby="recent-tasks-heading">
@@ -215,23 +299,30 @@ export default async function AdminPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {recentTasks.map((task) => (
-                                    <tr key={task.ID} className="text-gray-700">
-                                        <td className="px-5 py-4 font-medium text-gray-900">
-                                            {task.Ten}
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            {task.HoTen ?? "Chưa phân công"}
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            {dateFormatter.format(new Date(task.HetHan))}
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            <Badge config={STATUS_CONFIG[task.TrangThai]} />
+                                {tasksError ? (
+                                    <tr>
+                                        <td colSpan={4} role="alert" className="px-5 py-8 text-center text-red-700">
+                                            {tasksError}
                                         </td>
                                     </tr>
-                                ))}
-                                {recentTasks.length === 0 && (
+                                ) : recentTasks?.length ? (
+                                    recentTasks.map((task) => (
+                                        <tr key={task.ID} className="text-gray-700">
+                                            <td className="px-5 py-4 font-medium text-gray-900">
+                                                {task.Ten}
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                {task.HoTen ?? "Chưa phân công"}
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                {dateFormatter.format(new Date(task.HetHan))}
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <Badge config={STATUS_CONFIG[task.TrangThai]} />
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
                                     <tr>
                                         <td colSpan={4} className="px-5 py-8 text-center text-gray-500">
                                             Chưa có công việc nào.

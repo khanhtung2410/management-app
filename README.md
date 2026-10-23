@@ -116,6 +116,14 @@ JWT_SECRET=thay-bang-chuoi-bi-mat-ngau-nhien
 | `DB_PASSWORD` | Có | Mật khẩu của SQL login |
 | `JWT_SECRET` | Có | Khóa bí mật để ký và xác minh JWT |
 
+Để demo dữ liệu giả cho danh sách người dùng và dashboard admin, có thể thêm vào `.env.local`:
+
+```dotenv
+NEXT_PUBLIC_USE_MOCK_API=true
+```
+
+Fetcher mock chờ 500 ms trước khi trả kết quả để có thể quan sát trạng thái tải. Để demo trạng thái lỗi, đặt `NEXT_PUBLIC_MOCK_API_MODE=error`; chế độ này ưu tiên hơn `NEXT_PUBLIC_USE_MOCK_API` và luôn từ chối request mock sau 500 ms. Xóa hai biến trên hoặc đặt `NEXT_PUBLIC_USE_MOCK_API=false` để dùng API/SQL Server thật. Khởi động lại dev server sau khi đổi biến môi trường.
+
 Tạo giá trị ngẫu nhiên cho `JWT_SECRET` bằng Node.js:
 
 ```bash

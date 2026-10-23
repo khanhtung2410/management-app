@@ -1,6 +1,12 @@
-import { mockFetcher } from "@/lib/mock/mockFetcher";
+import {
+    failingMockFetcher,
+    mockFetcher,
+} from "@/lib/mock/mockFetcher";
 
-export const fetcher: typeof fetch =
-    process.env.NEXT_PUBLIC_USE_MOCK_API === "true"
+const mockMode = process.env.NEXT_PUBLIC_MOCK_API_MODE;
+
+export const fetcher: typeof fetch = mockMode === "error"
+    ? failingMockFetcher
+    : process.env.NEXT_PUBLIC_USE_MOCK_API === "true"
         ? mockFetcher
         : fetch;
