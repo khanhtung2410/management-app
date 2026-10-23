@@ -1,12 +1,22 @@
 import { userRole } from "@/constants/roles";
-import { userStatus, type UserStatusType } from "@/constants/statuses";
+import {
+    taskStatus,
+    userStatus,
+    type UserStatusType,
+} from "@/constants/statuses";
 import type { User as AdminUser } from "@/app/(admin)/admin/users/api";
-import { mockUser } from "./data";
+import { mockTasks, mockUser } from "./data";
 
 type MockUser = Pick<
     AdminUser,
     "ID" | "HoTen" | "Email" | "SDT" | "TrangThai"
 >;
+
+const MOCK_RESPONSE_DELAY_MS = 500;
+
+function waitForMockResponse(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, MOCK_RESPONSE_DELAY_MS));
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), {
@@ -42,6 +52,8 @@ function parseBody(init?: RequestInit): Record<string, unknown> | null {
 }
 
 export const mockFetcher: typeof fetch = async (input, init) => {
+    await waitForMockResponse();
+
     const url =
         typeof input === "string"
             ? input
@@ -51,6 +63,51 @@ export const mockFetcher: typeof fetch = async (input, init) => {
     const requestUrl = new URL(url, "http://localhost:3000");
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET"))
         .toUpperCase();
+
+    if (
+        requestUrl.pathname === "/api/admin/dashboard/summary" &&
+        method === "GET"
+    ) {
+        const regularUsers = mockUser.filter(
+            (user) => user.RoleId === userRole.USER,
+        );
+
+        return jsonResponse({
+            totalUsers: regularUsers.length,
+            activeUsers: regularUsers.filter(
+                (user) => user.TrangThai === userStatus.Active,
+            ).length,
+            totalTasks: mockTasks.length,
+            activeTasks: mockTasks.filter(
+                (task) => task.TrangThai === taskStatus.Active,
+            ).length,
+            completedTasks: mockTasks.filter(
+                (task) => task.TrangThai === taskStatus.Complete,
+            ).length,
+            overdueTasks: mockTasks.filter(
+                (task) => task.TrangThai === taskStatus.Overdue,
+            ).length,
+        });
+    }
+
+    if (
+        requestUrl.pathname === "/api/admin/dashboard/tasks" &&
+        method === "GET"
+    ) {
+        const recentTasks = [...mockTasks]
+            .sort((a, b) => b.ID - a.ID)
+            .slice(0, 5)
+            .map((task) => ({
+                ID: task.ID,
+                Ten: task.Ten,
+                HoTen:
+                    mockUser.find((user) => user.ID === task.UserID)?.HoTen ?? null,
+                HetHan: task.HetHan,
+                TrangThai: task.TrangThai,
+            }));
+
+        return jsonResponse(recentTasks);
+    }
 
     if (requestUrl.pathname === "/api/admin/users" && method === "GET") {
         const searchParams = requestUrl.searchParams;
@@ -152,4 +209,9 @@ export const mockFetcher: typeof fetch = async (input, init) => {
     }
 
     return jsonResponse({ message: "Not mocked" }, 404);
+};
+
+export const failingMockFetcher: typeof fetch = async () => {
+    await waitForMockResponse();
+    throw new Error("Lỗi giả lập từ mock API.");
 };
