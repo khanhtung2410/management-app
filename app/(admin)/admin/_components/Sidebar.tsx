@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLayout } from "@/components/LayoutProvider";
+import { useLayout } from "./LayoutProvider";
 import { Button } from "@/components/UI/Button";
 
 const menus = [

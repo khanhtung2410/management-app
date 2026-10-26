@@ -1,6 +1,6 @@
 // Hiển thị thanh tiêu đề admin trên màn hình nhỏ và nút mở menu; không dùng làm header công khai hoặc điều hướng desktop.
 "use client"
-import { useLayout } from "@/components/LayoutProvider";
+import { useLayout } from "./LayoutProvider";
 import { Button } from "@/components/UI/Button";
 
 export default function AdminHeader() {

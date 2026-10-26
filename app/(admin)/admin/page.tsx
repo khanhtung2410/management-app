@@ -16,6 +16,7 @@ import {
     type DashboardSummary,
     type DashboardTask,
 } from "@/lib/mock/dashboard";
+import AdminDashboardEmptyState from "./empty";
 
 interface DashboardData {
     summary: DashboardSummary | null;
@@ -299,11 +300,7 @@ export default async function AdminPage() {
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr>
-                                        <td colSpan={4} className="px-5 py-8 text-center text-gray-500">
-                                            Chưa có công việc nào.
-                                        </td>
-                                    </tr>
+                                    <AdminDashboardEmptyState />
                                 )}
                             </tbody>
                         </table>

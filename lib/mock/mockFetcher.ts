@@ -3,7 +3,7 @@ import {
     userStatus,
     type UserStatusType,
 } from "@/constants/statuses";
-import type { User as AdminUser } from "@/app/(admin)/admin/users/api";
+import type { User as AdminUser } from "@/app/(admin)/admin/users/_lib/api";
 import {
     getMockDashboardSummary,
     getMockRecentDashboardTasks,

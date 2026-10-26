@@ -1,7 +1,7 @@
 // Bọc các route admin bằng điều hướng và state dùng chung; không dùng cho route công khai hoặc trang cần shell độc lập.
-import Sidebar from "@/components/Admin/Sidebar";
-import { LayoutProvider } from "@/components/LayoutProvider";
-import AdminHeader from "@/components/Admin/AdminHeader"
+import Sidebar from "./_components/Sidebar";
+import { LayoutProvider } from "./_components/LayoutProvider";
+import AdminHeader from "./_components/AdminHeader"
 import Navbar from "@/components/Navbar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

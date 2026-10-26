@@ -9,7 +9,7 @@ import { STATUS_CONFIG, type TaskStatusType } from "@/constants/statuses";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { TaskStatusButton } from "./TaskStatusButton";
-import { formatTaskDate, getTaskDisplayStatus } from "../taskUtils";
+import { formatTaskDate, getTaskDisplayStatus } from "../_lib/taskUtils";
 import { Badge } from "@/components/UI/Badge";
 import { Card } from "@/components/UI/Card";
 

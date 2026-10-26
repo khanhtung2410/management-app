@@ -14,7 +14,7 @@ import {
 import { STATUS_CONFIG } from "@/constants/statuses";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { TaskSector } from "./TaskSector";
-import type { TaskStat } from "./types";
+import type { TaskStat } from "../_lib/types";
 
 type TooltipFormatter = NonNullable<DefaultTooltipContentProps["formatter"]>;
 

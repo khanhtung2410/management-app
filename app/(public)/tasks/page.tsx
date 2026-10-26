@@ -5,8 +5,8 @@ import sql from "mssql";
 import type { TaskStatusType } from "@/constants/statuses";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import type { CongViec } from "./taskRow";
-import { TasksClient } from "./TasksClient";
+import type { CongViec } from "./_components/taskRow";
+import { TasksClient } from "./_components/TasksClient";
 
 interface TaskRecord {
     ID: number;

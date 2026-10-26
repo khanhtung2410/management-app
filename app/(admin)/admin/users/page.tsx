@@ -2,17 +2,18 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { User } from "./api";
-import { useUsers } from "./useUser";
-import { UserTableRow, UserCard } from "./UserRow";
-import { Pagination } from "./Pagination";
-import { EditUserModal } from "./EditUserModal";
+import type { User } from "./_lib/api";
+import { useUsers } from "./_lib/useUser";
+import { UserTableRow, UserCard } from "./_components/UserRow";
+import { Pagination } from "./_components/Pagination";
+import { EditUserModal } from "./_components/EditUserModal";
 import { useDeferredValue } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { renderByState } from "./renderByState";
+import { renderByState } from "./_lib/renderByState";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 import { Card } from "@/components/UI/Card";
+import UsersEmptyState from "./empty";
 
 export default function UserList() {
 
@@ -112,7 +113,11 @@ export default function UserList() {
 
                     }>
                         {placeholder ? (
-                            <Placeholder>{placeholder}</Placeholder>
+                            state.status === "success" ? (
+                                <UsersEmptyState message={placeholder} />
+                            ) : (
+                                <Placeholder>{placeholder}</Placeholder>
+                            )
                         ) : (
                             <UsersLayout
                                 isDesktop={isDesktop}
@@ -140,20 +145,11 @@ export default function UserList() {
                                 }
                             >
                                 {isSearchEmpty ? (
-                                    isDesktop ? (
-                                        <tr>
-                                            <td
-                                                colSpan={6}
-                                                className="px-6 py-12 text-center text-[#64748B]"
-                                            >
-                                                Không tìm thấy người dùng phù hợp
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        <p className="px-6 py-12 text-center text-[#64748B]">
-                                            Không tìm thấy người dùng phù hợp
-                                        </p>
-                                    )
+                                    <UsersEmptyState
+                                        isDesktop={isDesktop}
+                                        message="Không tìm thấy người dùng phù hợp"
+                                        mode="search"
+                                    />
                                 ) : (
                                     users.map((item) =>
                                         isDesktop ? (

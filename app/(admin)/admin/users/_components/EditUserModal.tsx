@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import type { User, UserUpdatePayload } from "./api";
+import type { User, UserUpdatePayload } from "../_lib/api";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 
