@@ -62,9 +62,9 @@ export async function updateUserProfileAction(
 ) {
     await requireAdmin();
     const { userId, HoTen, Email, SDT } = payload;
-    const name = HoTen?.trim ?? "";
+    const name = HoTen?.trim() ?? "";
     const email = Email?.trim().toLocaleLowerCase() ?? "";
-    const sdt = SDT?.trim ?? "";
+    const sdt = SDT?.trim() ?? "";
 
     if (!Number.isInteger(userId) || userId <= 0) {
         return { ok: false, error: "ID người dùng không hợp lệ" }
@@ -72,12 +72,15 @@ export async function updateUserProfileAction(
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return { ok: false, error: "Email không hợp lệ" };
     }
+    if (!/^0\d{9}$/.test(sdt)) {
+        return { ok: false, error: "Sai định dạng số điện thoại" };
+    }
 
     const pool = await getDb();
 
     const exists = await pool.request()
         .input("ID", sql.Int, userId)
-        .query("SELECT 1 FROM [dbo].[NguoiDung] WHERE ID = @ID");
+        .query("SELECT 1 FROM [dbo].[User] WHERE ID = @ID");
 
     if (exists.recordset.length === 0) {
         return { ok: false, error: "Không tìm thấy người dùng" };
@@ -86,7 +89,7 @@ export async function updateUserProfileAction(
     const dup = await pool.request()
         .input("Email", sql.NVarChar, email)
         .input("UserID", sql.Int, userId)
-        .query("SELECT 1 FROM [dbo].[NguoiDung] WHERE Email = @Email AND ID <> @UserID");
+        .query("SELECT 1 FROM [dbo].[User] WHERE Email = @Email AND ID <> @UserID");
 
     if (dup.recordset.length > 0) {
         return { ok: false, error: "Email đã được sử dụng" };
@@ -98,7 +101,7 @@ export async function updateUserProfileAction(
         .input("Email", sql.NVarChar, email)
         .input("SDT", sql.NVarChar, sdt)
         .query(`
-            UPDATE [dbo].[NguoiDung]
+            UPDATE [dbo].[User]
             SET HoTen = @HoTen, Email = @Email, SDT = @SDT
             WHERE ID = @ID
         `);
