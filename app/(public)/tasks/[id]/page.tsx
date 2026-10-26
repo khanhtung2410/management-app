@@ -24,10 +24,6 @@ interface TaskDetail {
 const getTask = cache(async (id: string): Promise<TaskDetail> => {
     const taskId = Number(id);
 
-    if (!Number.isInteger(taskId) || taskId <= 0) {
-        notFound();
-    }
-
     const token = (await cookies()).get("token")?.value;
     if (!token) {
         redirect("/login");
@@ -41,6 +37,10 @@ const getTask = cache(async (id: string): Promise<TaskDetail> => {
             redirect("/login");
         }
         throw error;
+    }
+
+    if (!Number.isInteger(taskId) || taskId <= 0) {
+        notFound();
     }
 
     const pool = await getDb();
