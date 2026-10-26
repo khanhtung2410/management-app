@@ -9,8 +9,8 @@ import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getMockDashboardSummary } from "@/lib/mock/dashboard";
 import { getPercent } from "@/lib/percent";
-import TaskStatsChart from "./TaskStatsChart";
-import type { TaskStat } from "./types";
+import TaskStatsChart from "./_components/TaskStatsChart";
+import type { TaskStat } from "./_lib/types";
 
 export default async function DashboardPage() {
     const token = (await cookies()).get("token")?.value;

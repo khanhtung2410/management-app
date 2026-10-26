@@ -13,7 +13,7 @@ const { setCurrentPage, mockState, mockViewport } = vi.hoisted(() => ({
     mockViewport: { isDesktop: false },
 }));
 
-vi.mock("./useUser", () => ({
+vi.mock("./_lib/useUser", () => ({
     useUsers: () => ({
         state: mockState,
         processingIds: new Set<number>(),
@@ -76,5 +76,18 @@ describe("UserList search pagination", () => {
         );
         expect(emptyMessage.closest("tr")).toBeTruthy();
         expect(emptyMessage.closest("td")?.getAttribute("colspan")).toBe("6");
+    });
+
+    it("shows an empty state when there are no users and no search term", () => {
+        Object.assign(mockState, {
+            status: "success",
+            data: [],
+            total: 0,
+            totalPages: 0,
+        });
+
+        render(<UserList />);
+
+        expect(screen.getByText("Chưa có người dùng nào")).toBeTruthy();
     });
 });
