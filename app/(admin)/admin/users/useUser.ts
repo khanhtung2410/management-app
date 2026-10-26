@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
     fetchUsers,
-    updateUser,
-    updateUserStatus,
     type Fetcher,
     type UserUpdatePayload,
 } from "./api";
@@ -12,6 +10,10 @@ import { userStatus, UserStatusType } from "@/constants/statuses";
 import { fetcher as defaultFetcher } from "@/lib/fetcher";
 import { isAbortError } from "@/lib/isAbortError";
 import { UsersState } from "./renderByState";
+import {
+    updateUserStatusAction,
+    updateUserProfileAction,
+} from "./actions";
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 500;
@@ -106,7 +108,11 @@ export function useUsers({
             setActionError(null);
             setActionSuccess("");
             try {
-                await updateUserStatus(id, newStatus, fetcher);
+                const result = await updateUserStatusAction(id, newStatus);
+                if (!result.ok) {
+                    setActionError(result.error);
+                    return;
+                }
                 setState((prev) =>
                     prev.status === "success"
                         ? {
@@ -127,12 +133,16 @@ export function useUsers({
                 });
             }
         },
-        [fetcher],
+        [],
     );
 
     const saveUser = useCallback(
         async (payload: UserUpdatePayload) => {
-            await updateUser(payload, fetcher);
+            const result = await updateUserProfileAction(payload);
+
+            if (!result.ok) {
+                throw new Error(result.error);
+            }
             setState((prev) =>
                 prev.status === "success" ? {
                     ...prev, data: prev.data.map((u) =>
@@ -143,7 +153,7 @@ export function useUsers({
                 } : prev
             );
         },
-        [fetcher],
+        [],
     );
 
     return {
