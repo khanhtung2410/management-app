@@ -7,52 +7,10 @@ import { Card } from "@/components/UI/Card";
 import { userRole } from "@/constants/roles";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { fetcher } from "@/lib/fetcher";
+import { getMockDashboardSummary } from "@/lib/mock/dashboard";
 import { getPercent } from "@/lib/percent";
 import TaskStatsChart from "./TaskStatsChart";
 import type { TaskStat } from "./types";
-
-interface DashboardSummary {
-    totalUsers: number;
-    totalTasks: number;
-    activeTasks: number;
-    completedTasks: number;
-    overdueTasks: number;
-}
-
-function isDashboardSummary(value: unknown): value is DashboardSummary {
-    if (typeof value !== "object" || value === null) return false;
-
-    return [
-        "totalUsers",
-        "totalTasks",
-        "activeTasks",
-        "completedTasks",
-        "overdueTasks",
-    ].every((key) => key in value && typeof value[key as keyof typeof value] === "number");
-}
-
-async function getMockDashboardSummary(): Promise<DashboardSummary> {
-    const response = await fetcher("/api/admin/dashboard/summary");
-    const body: unknown = await response.json();
-
-    if (!response.ok) {
-        const message =
-            typeof body === "object" &&
-            body !== null &&
-            "message" in body &&
-            typeof body.message === "string"
-                ? body.message
-                : "Không thể lấy dữ liệu thống kê.";
-        throw new Error(message);
-    }
-
-    if (!isDashboardSummary(body)) {
-        throw new Error("Dữ liệu thống kê không hợp lệ.");
-    }
-
-    return body;
-}
 
 export default async function DashboardPage() {
     const token = (await cookies()).get("token")?.value;
@@ -85,7 +43,10 @@ export default async function DashboardPage() {
     let overdueTasks: number;
 
     if (isMockMode) {
-        const summary = await getMockDashboardSummary();
+        if (process.env.NEXT_PUBLIC_MOCK_API_MODE === "error") {
+            throw new Error("Lỗi giả lập từ mock API.");
+        }
+        const summary = getMockDashboardSummary();
         totalUsers = summary.totalUsers;
         totalTasks = summary.totalTasks;
         activeTasks = summary.activeTasks;
