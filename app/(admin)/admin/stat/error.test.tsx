@@ -8,13 +8,13 @@ afterEach(() => {
 
 describe("DashboardError", () => {
     it("shows an error message and retries when requested", () => {
-        const retry = vi.fn();
+        const reset = vi.fn();
         vi.spyOn(console, "error").mockImplementation(() => {});
 
         render(
             <DashboardError
                 error={new Error("Mock fetch failed")}
-                retry={retry}
+                reset={reset}
             />,
         );
 
@@ -23,6 +23,6 @@ describe("DashboardError", () => {
         );
         fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
 
-        expect(retry).toHaveBeenCalledOnce();
+        expect(reset).toHaveBeenCalledOnce();
     });
 });

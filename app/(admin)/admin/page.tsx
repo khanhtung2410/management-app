@@ -3,42 +3,25 @@ import { connection } from "next/server";
 import sql from "mssql";
 import { Badge } from "@/components/UI/Badge";
 import { Card } from "@/components/UI/Card";
-import { fetcher } from "@/lib/fetcher";
 import { userRole } from "@/constants/roles";
 import {
     STATUS_CONFIG,
     taskStatus,
     userStatus,
-    type TaskStatusType,
 } from "@/constants/statuses";
 import { getDb } from "@/lib/db";
-
-interface DashboardSummary {
-    totalUsers: number;
-    activeUsers: number;
-    totalTasks: number;
-    activeTasks: number;
-    completedTasks: number;
-    overdueTasks: number;
-}
-
-interface DashboardTask {
-    ID: number;
-    Ten: string;
-    HoTen: string | null;
-    HetHan: string | Date;
-    TrangThai: TaskStatusType;
-}
+import {
+    getMockDashboardSummary,
+    getMockRecentDashboardTasks,
+    type DashboardSummary,
+    type DashboardTask,
+} from "@/lib/mock/dashboard";
 
 interface DashboardData {
     summary: DashboardSummary | null;
     summaryError: string | null;
     recentTasks: DashboardTask[] | null;
     tasksError: string | null;
-}
-
-interface ApiError {
-    message: string;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
@@ -52,31 +35,19 @@ function getErrorMessage(reason: unknown, fallback: string): string {
     return reason instanceof Error ? reason.message : fallback;
 }
 
-async function getMockData<T>(path: string): Promise<T> {
-    const response = await fetcher(path);
-    const body: unknown = await response.json();
-
-    if (!response.ok) {
-        const message =
-            typeof body === "object" &&
-            body !== null &&
-            "message" in body &&
-            typeof (body as ApiError).message === "string"
-                ? (body as ApiError).message
-                : "Không thể lấy dữ liệu mock dashboard.";
-        throw new Error(message);
-    }
-
-    return body as T;
-}
-
 async function getDashboardData(): Promise<DashboardData> {
     const isMockMode =
         process.env.NEXT_PUBLIC_MOCK_API_MODE === "error" ||
         process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+    const isMockErrorMode = process.env.NEXT_PUBLIC_MOCK_API_MODE === "error";
 
     const summaryRequest: Promise<DashboardSummary> = isMockMode
-        ? getMockData("/api/admin/dashboard/summary")
+        ? Promise.resolve().then(() => {
+              if (isMockErrorMode) {
+                  throw new Error("Lỗi giả lập từ mock API.");
+              }
+              return getMockDashboardSummary();
+          })
         : (async () => {
               const pool = await getDb();
               const result = await pool
@@ -114,7 +85,12 @@ async function getDashboardData(): Promise<DashboardData> {
           })();
 
     const tasksRequest: Promise<DashboardTask[]> = isMockMode
-        ? getMockData("/api/admin/dashboard/tasks")
+        ? Promise.resolve().then(() => {
+              if (isMockErrorMode) {
+                  throw new Error("Lỗi giả lập từ mock API.");
+              }
+              return getMockRecentDashboardTasks();
+          })
         : (async () => {
               const pool = await getDb();
               const result = await pool

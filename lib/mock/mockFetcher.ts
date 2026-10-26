@@ -1,11 +1,14 @@
 import { userRole } from "@/constants/roles";
 import {
-    taskStatus,
     userStatus,
     type UserStatusType,
 } from "@/constants/statuses";
 import type { User as AdminUser } from "@/app/(admin)/admin/users/api";
-import { mockTasks, mockUser } from "./data";
+import {
+    getMockDashboardSummary,
+    getMockRecentDashboardTasks,
+} from "./dashboard";
+import { mockUser } from "./data";
 
 type MockUser = Pick<
     AdminUser,
@@ -68,45 +71,14 @@ export const mockFetcher: typeof fetch = async (input, init) => {
         requestUrl.pathname === "/api/admin/dashboard/summary" &&
         method === "GET"
     ) {
-        const regularUsers = mockUser.filter(
-            (user) => user.RoleId === userRole.USER,
-        );
-
-        return jsonResponse({
-            totalUsers: regularUsers.length,
-            activeUsers: regularUsers.filter(
-                (user) => user.TrangThai === userStatus.Active,
-            ).length,
-            totalTasks: mockTasks.length,
-            activeTasks: mockTasks.filter(
-                (task) => task.TrangThai === taskStatus.Active,
-            ).length,
-            completedTasks: mockTasks.filter(
-                (task) => task.TrangThai === taskStatus.Complete,
-            ).length,
-            overdueTasks: mockTasks.filter(
-                (task) => task.TrangThai === taskStatus.Overdue,
-            ).length,
-        });
+        return jsonResponse(getMockDashboardSummary());
     }
 
     if (
         requestUrl.pathname === "/api/admin/dashboard/tasks" &&
         method === "GET"
     ) {
-        const recentTasks = [...mockTasks]
-            .sort((a, b) => b.ID - a.ID)
-            .slice(0, 5)
-            .map((task) => ({
-                ID: task.ID,
-                Ten: task.Ten,
-                HoTen:
-                    mockUser.find((user) => user.ID === task.UserID)?.HoTen ?? null,
-                HetHan: task.HetHan,
-                TrangThai: task.TrangThai,
-            }));
-
-        return jsonResponse(recentTasks);
+        return jsonResponse(getMockRecentDashboardTasks());
     }
 
     if (requestUrl.pathname === "/api/admin/users" && method === "GET") {
