@@ -148,6 +148,7 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                                     <TaskList
                                         items={filtered}
                                         variant="table"
+                                        isFiltered={deferredSearch.trim().length > 0}
                                         errorForItem={errorForItem}
                                         onToggle={handleToggleStatus}
                                     />
@@ -160,6 +161,7 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                         <TaskList
                             items={filtered}
                             variant="card"
+                            isFiltered={deferredSearch.trim().length > 0}
                             errorForItem={errorForItem}
                             onToggle={handleToggleStatus}
                         />

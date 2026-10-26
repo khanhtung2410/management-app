@@ -1,5 +1,5 @@
 // Cung cấp hàng bảng và thẻ responsive cho người dùng admin; không dùng để tải dữ liệu hoặc điều phối trạng thái trang.
-import type { User } from "./api";
+import type { User } from "../_lib/api";
 import { memo } from "react";
 import { UNKNOWN_STATUS_CONFIG, USER_STATUS_CONFIG, userStatus, type UserStatusType } from "@/constants/statuses"
 import { Button } from "@/components/UI/Button";

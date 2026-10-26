@@ -1,10 +1,11 @@
 // Cung cấp TaskRow và TaskList để hiển thị danh sách công việc dạng bảng/thẻ; không dùng để tải dữ liệu hay quản lý state trang.
 import { taskStatus, type TaskStatusType, STATUS_CONFIG } from "@/constants/statuses";
 import Link from "next/link";
-import { formatTaskDate, getTaskDisplayStatus } from "./taskUtils";
+import { formatTaskDate, getTaskDisplayStatus } from "../_lib/taskUtils";
 import { Button } from "@/components/UI/Button";
 import { Badge } from "@/components/UI/Badge";
 import { Card } from "@/components/UI/Card";
+import TaskListEmptyState from "../empty";
 
 export interface CongViec {
     ID: number;
@@ -111,6 +112,7 @@ export function TaskRow({ item, variant, errorMessage, onToggle }: TaskRowProps)
 interface TaskListProps {
     items: CongViec[];
     variant: "table" | "card";
+    isFiltered: boolean;
     errorForItem: (item: CongViec) => string | null;
     onToggle: (item: CongViec) => void;
 }
@@ -118,22 +120,12 @@ interface TaskListProps {
 export function TaskList({
     items,
     variant,
+    isFiltered,
     errorForItem,
     onToggle,
 }: TaskListProps) {
-    // Trạng thái rỗng
     if (items.length === 0) {
-        return variant === "table" ? (
-            <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                    Chưa có công việc nào
-                </td>
-            </tr>
-        ) : (
-            <Card className="p-10 text-center text-gray-500">
-                Chưa có công việc nào
-            </Card>
-        );
+        return <TaskListEmptyState isFiltered={isFiltered} variant={variant} />;
     }
 
     // MỘT chỗ duyệt duy nhất

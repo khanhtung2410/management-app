@@ -13,6 +13,11 @@ vi.mock("./api", () => ({
     updateUserStatus: vi.fn(),
 }));
 
+vi.mock("./actions", () => ({
+    updateUserStatusAction: vi.fn(),
+    updateUserProfileAction: vi.fn(),
+}));
+
 import { useUsers } from "./useUser";
 
 const ascendingPage: UsersPage = {
