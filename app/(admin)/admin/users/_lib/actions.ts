@@ -36,12 +36,15 @@ export async function updateUserStatusAction(
     userId: number,
     status: UserStatusType
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-    await requireAdmin();
+    const currentUserId = await requireAdmin();
     if (!Number.isInteger(userId) || userId <= 0) {
         return { ok: false, error: "ID người dùng không hợp lệ" }
     }
     if (status !== userStatus.Active && status !== userStatus.Inactive) {
         return { ok: false, error: "Trạng thái không hợp lệ" };
+    }
+    if (userId === currentUserId) {
+        return { ok: false, error: "Không thể đổi trạng thái của chính mình" };
     }
 
     const pool = await getDb();
@@ -59,18 +62,26 @@ export async function updateUserStatusAction(
 //change user profile
 export async function updateUserProfileAction(
     payload: { userId: number; HoTen: string; Email: string; SDT: string }
-) {
+): Promise<{ ok: true } | {
+    ok: false; error: string
+}> {
     await requireAdmin();
     const { userId, HoTen, Email, SDT } = payload;
     const name = HoTen?.trim() ?? "";
-    const email = Email?.trim().toLocaleLowerCase() ?? "";
+    const email = Email?.trim().toLowerCase() ?? "";
     const sdt = SDT?.trim() ?? "";
 
     if (!Number.isInteger(userId) || userId <= 0) {
         return { ok: false, error: "ID người dùng không hợp lệ" }
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (email.length > 255 || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
         return { ok: false, error: "Email không hợp lệ" };
+    }
+    if (!name) return {
+        ok: false, error: "Họ tên không được để trống"
+    };
+    if (name.length > 255) {
+        return { ok: false, error: "Tên không hợp lệ" };
     }
     if (!/^0\d{9}$/.test(sdt)) {
         return { ok: false, error: "Sai định dạng số điện thoại" };
@@ -87,7 +98,7 @@ export async function updateUserProfileAction(
     }
 
     const dup = await pool.request()
-        .input("Email", sql.NVarChar, email)
+        .input("Email", sql.VarChar(255), email)
         .input("UserID", sql.Int, userId)
         .query("SELECT 1 FROM [dbo].[User] WHERE Email = @Email AND ID <> @UserID");
 
@@ -97,9 +108,9 @@ export async function updateUserProfileAction(
 
     const result = await pool.request()
         .input("ID", sql.Int, userId)
-        .input("HoTen", sql.NVarChar, name)
-        .input("Email", sql.NVarChar, email)
-        .input("SDT", sql.NVarChar, sdt)
+        .input("HoTen", sql.NVarChar(255), name)
+        .input("Email", sql.VarChar(255), email)
+        .input("SDT", sql.VarChar(10), sdt)
         .query(`
             UPDATE [dbo].[User]
             SET HoTen = @HoTen, Email = @Email, SDT = @SDT
