@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { UnauthorizedError, ForbiddenError } from "@/lib/auth/errors";
 import { taskStatus } from "@/constants/statuses";
+import { revalidatePath } from "next/cache";
 
 function handleError(error: unknown, fallbackMessage: string) {
     if (error instanceof UnauthorizedError) {
@@ -125,6 +126,8 @@ export async function PATCH(
             );
         }
 
+        revalidatePath("/tasks");
+        revalidatePath(`/tasks/${taskId}`);
         return NextResponse.json(result.recordset[0]);
     } catch (error) {
         return handleError(error, "Lỗi khi cập nhật trạng thái");
