@@ -48,7 +48,6 @@ describe("mock dashboard data", () => {
 
     // ─── Bất biến: mọi task đều được đếm trong summary ──────────────
     it("has no tasks that would be missed by the summary calculation", () => {
-        const now = new Date();
         const counted = mockTasks.filter(
             (t) =>
                 t.TrangThai === taskStatus.Active ||
