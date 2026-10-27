@@ -4,6 +4,7 @@ import { userRole } from "@/constants/roles";
 import { userStatus, UserStatusType } from "@/constants/statuses";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { currentMockMode, mockMode, mockDelay } from "@/lib/mock/config";
 import sql from "mssql";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
@@ -47,6 +48,14 @@ export async function updateUserStatusAction(
         return { ok: false, error: "Không thể đổi trạng thái của chính mình" };
     }
 
+    if (currentMockMode === mockMode.error) {
+        return { ok: false, error: "Lỗi giả lập từ mock API." };
+    }
+    if (currentMockMode === mockMode.on) {
+        await mockDelay();
+        return { ok: true };
+    }
+
     const pool = await getDb();
     const result = await pool.request()
         .input("ID", sql.Int, userId)
@@ -88,6 +97,14 @@ export async function updateUserProfileAction(
     }
     if (!/^0\d{9}$/.test(sdt)) {
         return { ok: false, error: "Sai định dạng số điện thoại" };
+    }
+
+    if (currentMockMode === mockMode.error) {
+        return { ok: false, error: "Lỗi giả lập từ mock API." };
+    }
+    if (currentMockMode === mockMode.on) {
+        await mockDelay();
+        return { ok: true };
     }
 
     const pool = await getDb();
