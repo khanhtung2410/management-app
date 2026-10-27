@@ -17,6 +17,7 @@ import {
     type DashboardTask,
 } from "@/lib/mock/dashboard";
 import AdminDashboardEmptyState from "./empty";
+import { Suspense } from "react";
 
 interface DashboardData {
     summary: DashboardSummary | null;
@@ -145,7 +146,22 @@ async function getDashboardData(): Promise<DashboardData> {
     };
 }
 
-export default async function AdminPage() {
+export default function AdminPage() {
+    return (
+        <div className="-m-6 min-h-[calc(100vh-7rem)] space-y-8 bg-slate-100 p-6 text-slate-900">
+            <header>
+                <h1 className="text-2xl font-bold">Tổng quan</h1>
+                <p className="mt-1 text-sm text-slate-600">
+                    Theo dõi tình hình người dùng và công việc trong hệ thống.
+                </p>
+            </header>
+            <Suspense fallback={<DashboardSkeleton />}>
+                <DashboardContent />
+            </Suspense>
+        </div>
+    );
+}
+export async function DashboardContent() {
     await connection();
     const { summary, summaryError, recentTasks, tasksError } =
         await getDashboardData();
@@ -197,12 +213,6 @@ export default async function AdminPage() {
 
     return (
         <div className="-m-6 min-h-[calc(100vh-7rem)] space-y-8 bg-slate-100 p-6 text-slate-900">
-            <header>
-                <h1 className="text-2xl font-bold">Tổng quan</h1>
-                <p className="mt-1 text-sm text-slate-600">
-                    Theo dõi tình hình người dùng và công việc trong hệ thống.
-                </p>
-            </header>
 
             <section
                 aria-label="Thống kê tổng quan"
@@ -307,6 +317,22 @@ export default async function AdminPage() {
                     </div>
                 </Card>
             </section>
+        </div>
+    );
+}
+
+function DashboardSkeleton() {
+    return (
+        <div className="space-y-8" aria-busy="true" aria-label="Đang tải dữ liệu tổng quan">
+            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <div
+                        key={i}
+                        className="h-32 rounded-xl bg-slate-200 animate-pulse"
+                    />
+                ))}
+            </section>
+            <div className="h-64 rounded-xl bg-slate-200 animate-pulse" />
         </div>
     );
 }
