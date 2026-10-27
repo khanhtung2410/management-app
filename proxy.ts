@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'; 
+import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { requireAuth, ForbiddenError, AuthError } from '@/lib/auth';
 import { userRole } from './constants/roles';
@@ -49,5 +49,5 @@ export async function proxy(request: NextRequest) {
     }
 }
 export const config = {
-    matcher: ['/admin/:path*', '/tasks/:path*','/login'],
+    matcher: ['/admin/:path*', '/tasks/:path*', '/login'],
 };
