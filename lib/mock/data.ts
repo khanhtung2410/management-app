@@ -260,7 +260,7 @@ export const mockTasks: CongViec[] = [
         Ten: "Kiểm tra luồng đăng nhập",
         Mota: "Kiểm tra xác thực và xử lý các trường hợp nhập dữ liệu không hợp lệ.",
         HetHan: "2026-10-20T17:00:00.000Z",
-        TrangThai: taskStatus.Overdue,
+        TrangThai: taskStatus.Active,
     },
     {
         ID: 5,
@@ -284,7 +284,7 @@ export const mockTasks: CongViec[] = [
         Ten: "Chuẩn bị nội dung bàn giao",
         Mota: "Tổng hợp các thay đổi và ghi chú những phần cần theo dõi.",
         HetHan: "2026-10-18T17:00:00.000Z",
-        TrangThai: taskStatus.Overdue,
+        TrangThai: taskStatus.Active,
     },
     {
         ID: 8,
@@ -316,7 +316,7 @@ export const mockTasks: CongViec[] = [
         Ten: "Kiểm tra hiển thị trên trình duyệt",
         Mota: "Rà soát các trang chính trên những trình duyệt phổ biến.",
         HetHan: "2026-10-19T17:00:00.000Z",
-        TrangThai: taskStatus.Overdue,
+        TrangThai: taskStatus.Active,
     },
     {
         ID: 12,
@@ -348,7 +348,7 @@ export const mockTasks: CongViec[] = [
         Ten: "Kiểm tra trải nghiệm tìm kiếm",
         Mota: "Đánh giá khả năng tìm theo tên và email người dùng.",
         HetHan: "2026-10-15T17:00:00.000Z",
-        TrangThai: taskStatus.Overdue,
+        TrangThai: taskStatus.Active,
     },
     {
         ID: 16,
@@ -364,7 +364,7 @@ export const mockTasks: CongViec[] = [
         Ten: "Chuẩn hóa dữ liệu báo cáo",
         Mota: "Đối chiếu định dạng và quy tắc tổng hợp số liệu.",
         HetHan: "2026-10-14T17:00:00.000Z",
-        TrangThai: taskStatus.Overdue,
+        TrangThai: taskStatus.Active,
     },
     {
         ID: 18,
@@ -388,7 +388,7 @@ export const mockTasks: CongViec[] = [
         Ten: "Cập nhật cấu hình môi trường",
         Mota: "Kiểm tra các biến môi trường bắt buộc cho triển khai.",
         HetHan: "2026-10-17T17:00:00.000Z",
-        TrangThai: taskStatus.Overdue,
+        TrangThai: taskStatus.Active,
     },
     {
         ID: 21,
@@ -412,7 +412,7 @@ export const mockTasks: CongViec[] = [
         Ten: "Rà soát hiệu năng danh sách",
         Mota: "Đánh giá tốc độ tải khi danh sách có nhiều bản ghi.",
         HetHan: "2026-10-16T17:00:00.000Z",
-        TrangThai: taskStatus.Overdue,
+        TrangThai: taskStatus.Active,
     },
     {
         ID: 24,

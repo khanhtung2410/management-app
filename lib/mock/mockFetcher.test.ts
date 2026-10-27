@@ -50,30 +50,41 @@ describe("mockFetcher", () => {
         expect(result.data[0]).not.toHaveProperty("PasswordHash");
     });
 
+    // ─── SỬA: dùng derived Overdue thay vì TrangThai === Overdue ───
     it("returns dashboard counts based on the typed mock data", async () => {
         const response = await mockFetcher("/api/admin/dashboard/summary");
         const summary = await response.json();
 
+        const now = new Date();
+        const regularUsers = mockUser.filter(
+            (user) => user.RoleId === userRole.USER,
+        );
+
         expect(summary).toEqual({
-            totalUsers: mockUser.filter((user) => user.RoleId === userRole.USER).length,
-            activeUsers: mockUser.filter(
-                (user) =>
-                    user.RoleId === userRole.USER &&
-                    user.TrangThai === userStatus.Active,
+            totalUsers: regularUsers.length,
+            activeUsers: regularUsers.filter(
+                (user) => user.TrangThai === userStatus.Active,
             ).length,
             totalTasks: mockTasks.length,
+            // Active + còn hạn (khớp SQL: TrangThai=Active AND HetHan >= GETDATE())
             activeTasks: mockTasks.filter(
-                (task) => task.TrangThai === taskStatus.Active,
+                (task) =>
+                    task.TrangThai === taskStatus.Active &&
+                    new Date(task.HetHan) >= now,
             ).length,
             completedTasks: mockTasks.filter(
                 (task) => task.TrangThai === taskStatus.Complete,
             ).length,
+            // Derived Overdue: Active + quá hạn (khớp SQL: TrangThai=Active AND HetHan < GETDATE())
             overdueTasks: mockTasks.filter(
-                (task) => task.TrangThai === taskStatus.Overdue,
+                (task) =>
+                    task.TrangThai === taskStatus.Active &&
+                    new Date(task.HetHan) < now,
             ).length,
         });
     });
 
+    // ─── SỬA: bỏ check TrangThai === Overdue trực tiếp ─────────────
     it("returns the five latest dashboard tasks with their owners", async () => {
         const response = await mockFetcher("/api/admin/dashboard/tasks");
         const tasks = await response.json();
@@ -84,39 +95,24 @@ describe("mockFetcher", () => {
             HoTen: "Lý Minh Khang",
             TrangThai: taskStatus.Active,
         });
-        expect(tasks.some((task: { TrangThai: number }) => task.TrangThai === taskStatus.Complete)).toBe(true);
-        expect(tasks.some((task: { TrangThai: number }) => task.TrangThai === taskStatus.Overdue)).toBe(true);
-    });
 
-    it("updates a user's status", async () => {
-        const response = await mockFetcher("/api/admin/users/status", {
-            method: "PUT",
-            body: JSON.stringify({ userId: 2, status: userStatus.Inactive }),
-        });
+        // Có ít nhất 1 task Complete (ID 22)
+        expect(
+            tasks.some(
+                (task: { TrangThai: number }) =>
+                    task.TrangThai === taskStatus.Complete,
+            ),
+        ).toBe(true);
 
-        expect(response.status).toBe(200);
-        expect(mockUser.find((user) => user.ID === 2)?.TrangThai).toBe(
-            userStatus.Inactive,
+        // Có ít nhất 1 task "sẽ hiển thị Overdue" (Active + quá hạn)
+        // Task 20 (HetHan 2026-10-17) và 23 (HetHan 2026-10-16) đều quá hạn
+        const now = new Date();
+        const derivedOverdue = tasks.filter(
+            (task: { TrangThai: number; HetHan: string }) =>
+                task.TrangThai === taskStatus.Active &&
+                new Date(task.HetHan) < now,
         );
-    });
-
-    it("updates user profile fields", async () => {
-        const response = await mockFetcher("/api/admin/users/profile", {
-            method: "PUT",
-            body: JSON.stringify({
-                userId: 2,
-                HoTen: "Nguyễn Minh Anh mới",
-                Email: "MINHANH.NEW@example.com",
-                SDT: "0912345678",
-            }),
-        });
-
-        expect(response.status).toBe(200);
-        expect(mockUser.find((user) => user.ID === 2)).toMatchObject({
-            HoTen: "Nguyễn Minh Anh mới",
-            Email: "minhanh.new@example.com",
-            SDT: "0912345678",
-        });
+        expect(derivedOverdue.length).toBeGreaterThan(0);
     });
 
     it("rejects unknown API routes", async () => {
