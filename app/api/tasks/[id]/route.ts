@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { UnauthorizedError, ForbiddenError } from "@/lib/auth/errors";
 import { taskStatus } from "@/constants/statuses";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 function handleError(error: unknown, fallbackMessage: string) {
     if (error instanceof UnauthorizedError) {
@@ -128,6 +128,8 @@ export async function PATCH(
 
         revalidatePath("/tasks");
         revalidatePath(`/tasks/${taskId}`);
+        revalidatePath("/admin/stat");
+        revalidateTag("dashboard-summary", "max");
         return NextResponse.json(result.recordset[0]);
     } catch (error) {
         return handleError(error, "Lỗi khi cập nhật trạng thái");
