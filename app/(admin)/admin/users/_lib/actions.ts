@@ -51,7 +51,8 @@ export async function updateUserStatusAction(
     const result = await pool.request()
         .input("ID", sql.Int, userId)
         .input("TrangThai", sql.Int, status)
-        .query("UPDATE [dbo].[User] SET TrangThai = @TrangThai WHERE ID = @ID")
+        .input("userRole", sql.Int, userRole.USER)
+        .query("UPDATE [dbo].[User] SET TrangThai = @TrangThai WHERE ID = @ID AND RoleId = @userRole")
 
     if (result.rowsAffected[0] === 0) return { ok: false, error: "Không tìm thấy người dùng" }
 
@@ -93,7 +94,8 @@ export async function updateUserProfileAction(
 
     const exists = await pool.request()
         .input("ID", sql.Int, userId)
-        .query("SELECT 1 FROM [dbo].[User] WHERE ID = @ID");
+        .input("userRole", sql.Int, userRole.USER)
+        .query("SELECT 1 FROM [dbo].[User] WHERE ID = @ID AND RoleId = @userRole");
 
     if (exists.recordset.length === 0) {
         return { ok: false, error: "Không tìm thấy người dùng" };
@@ -110,13 +112,14 @@ export async function updateUserProfileAction(
 
     const result = await pool.request()
         .input("ID", sql.Int, userId)
+        .input("userRole", sql.Int, userRole.USER)
         .input("HoTen", sql.NVarChar(255), name)
         .input("Email", sql.VarChar(255), email)
         .input("SDT", sql.VarChar(10), sdt)
         .query(`
             UPDATE [dbo].[User]
             SET HoTen = @HoTen, Email = @Email, SDT = @SDT
-            WHERE ID = @ID
+            WHERE ID = @ID AND RoleId = @userRole
         `);
 
     if (result.rowsAffected[0] === 0) {
@@ -124,7 +127,5 @@ export async function updateUserProfileAction(
     }
 
     revalidatePath("/admin/users");
-    revalidatePath("/admin/stat");
-    revalidateTag("dashboard-summary", "max");
     return { ok: true };
 }
