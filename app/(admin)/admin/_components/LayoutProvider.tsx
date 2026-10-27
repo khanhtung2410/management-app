@@ -18,7 +18,7 @@ export function LayoutProvider({ children }: LayoutProviderProps) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
 
-       const toggleSidebar = useCallback(() => {
+    const toggleSidebar = useCallback(() => {
         setSidebarOpen((prev) => !prev);
     }, []);
 

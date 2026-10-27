@@ -73,8 +73,8 @@ export function TaskStatusButton({
                 {saving
                     ? "Đang cập nhật..."
                     : isComplete
-                      ? "Mở lại công việc"
-                      : "Đánh dấu hoàn thành"}
+                        ? "Mở lại công việc"
+                        : "Đánh dấu hoàn thành"}
             </Button>
             <p role="status" aria-live="polite" className="sr-only">
                 {success}

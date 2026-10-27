@@ -44,20 +44,20 @@ async function getDashboardData(): Promise<DashboardData> {
 
     const summaryRequest: Promise<DashboardSummary> = isMockMode
         ? Promise.resolve().then(() => {
-              if (isMockErrorMode) {
-                  throw new Error("Lỗi giả lập từ mock API.");
-              }
-              return getMockDashboardSummary();
-          })
+            if (isMockErrorMode) {
+                throw new Error("Lỗi giả lập từ mock API.");
+            }
+            return getMockDashboardSummary();
+        })
         : (async () => {
-              const pool = await getDb();
-              const result = await pool
-                  .request()
-                  .input("userRole", sql.Int, userRole.USER)
-                  .input("activeUserStatus", sql.Int, userStatus.Active)
-                  .input("activeTaskStatus", sql.Int, taskStatus.Active)
-                  .input("completedTaskStatus", sql.Int, taskStatus.Complete)
-                  .query<DashboardSummary>(`
+            const pool = await getDb();
+            const result = await pool
+                .request()
+                .input("userRole", sql.Int, userRole.USER)
+                .input("activeUserStatus", sql.Int, userStatus.Active)
+                .input("activeTaskStatus", sql.Int, taskStatus.Active)
+                .input("completedTaskStatus", sql.Int, taskStatus.Complete)
+                .query<DashboardSummary>(`
                       SELECT
                           (SELECT COUNT(*) FROM [dbo].[User] WHERE RoleId = @userRole) AS totalUsers,
                           (SELECT COUNT(*) FROM [dbo].[User]
@@ -78,27 +78,27 @@ async function getDashboardData(): Promise<DashboardData> {
                       FROM [dbo].[CongViec]
                   `);
 
-              const summary = result.recordset[0];
-              if (!summary) {
-                  throw new Error("Không thể lấy dữ liệu tổng quan từ cơ sở dữ liệu.");
-              }
-              return summary;
-          })();
+            const summary = result.recordset[0];
+            if (!summary) {
+                throw new Error("Không thể lấy dữ liệu tổng quan từ cơ sở dữ liệu.");
+            }
+            return summary;
+        })();
 
     const tasksRequest: Promise<DashboardTask[]> = isMockMode
         ? Promise.resolve().then(() => {
-              if (isMockErrorMode) {
-                  throw new Error("Lỗi giả lập từ mock API.");
-              }
-              return getMockRecentDashboardTasks();
-          })
+            if (isMockErrorMode) {
+                throw new Error("Lỗi giả lập từ mock API.");
+            }
+            return getMockRecentDashboardTasks();
+        })
         : (async () => {
-              const pool = await getDb();
-              const result = await pool
-                  .request()
-                  .input("activeTaskStatus", sql.Int, taskStatus.Active)
-                  .input("completedTaskStatus", sql.Int, taskStatus.Complete)
-                  .query<DashboardTask>(`
+            const pool = await getDb();
+            const result = await pool
+                .request()
+                .input("activeTaskStatus", sql.Int, taskStatus.Active)
+                .input("completedTaskStatus", sql.Int, taskStatus.Complete)
+                .query<DashboardTask>(`
                       SELECT TOP (5)
                           task.ID,
                           task.Ten,
@@ -115,8 +115,8 @@ async function getDashboardData(): Promise<DashboardData> {
                       ORDER BY task.ID DESC
                   `);
 
-              return result.recordset;
-          })();
+            return result.recordset;
+        })();
 
     const [summaryResult, tasksResult] = await Promise.allSettled([
         summaryRequest,
@@ -129,18 +129,18 @@ async function getDashboardData(): Promise<DashboardData> {
         summaryError:
             summaryResult.status === "rejected"
                 ? getErrorMessage(
-                      summaryResult.reason,
-                      "Không thể tải thống kê dashboard.",
-                  )
+                    summaryResult.reason,
+                    "Không thể tải thống kê dashboard.",
+                )
                 : null,
         recentTasks:
             tasksResult.status === "fulfilled" ? tasksResult.value : null,
         tasksError:
             tasksResult.status === "rejected"
                 ? getErrorMessage(
-                      tasksResult.reason,
-                      "Không thể tải danh sách công việc gần đây.",
-                  )
+                    tasksResult.reason,
+                    "Không thể tải danh sách công việc gần đây.",
+                )
                 : null,
     };
 }
@@ -152,47 +152,47 @@ export default async function AdminPage() {
 
     const summaryCards = summary
         ? [
-              {
-                  label: "Người dùng",
-                  value: summary.totalUsers,
-                  note: `${summary.activeUsers} đang hoạt động`,
-                  icon: "👥",
-                  href: "/admin/users",
-                  color: "text-blue-700",
-              },
-              {
-                  label: "Tổng công việc",
-                  value: summary.totalTasks,
-                  note: "Tất cả trạng thái",
-                  icon: "📋",
-                  href: "/admin/stat",
-                  color: "text-violet-700",
-              },
-              {
-                  label: "Đang thực hiện",
-                  value: summary.activeTasks,
-                  note: "Công việc còn hạn",
-                  icon: "⏳",
-                  href: "/admin/stat",
-                  color: "text-sky-700",
-              },
-              {
-                  label: "Đã hoàn thành",
-                  value: summary.completedTasks,
-                  note: "Đã xử lý xong",
-                  icon: "✅",
-                  href: "/admin/stat",
-                  color: "text-green-700",
-              },
-              {
-                  label: "Quá hạn",
-                  value: summary.overdueTasks,
-                  note: "Cần được theo dõi",
-                  icon: "⚠️",
-                  href: "/admin/stat",
-                  color: "text-red-700",
-              },
-          ]
+            {
+                label: "Người dùng",
+                value: summary.totalUsers,
+                note: `${summary.activeUsers} đang hoạt động`,
+                icon: "👥",
+                href: "/admin/users",
+                color: "text-blue-700",
+            },
+            {
+                label: "Tổng công việc",
+                value: summary.totalTasks,
+                note: "Tất cả trạng thái",
+                icon: "📋",
+                href: "/admin/stat",
+                color: "text-violet-700",
+            },
+            {
+                label: "Đang thực hiện",
+                value: summary.activeTasks,
+                note: "Công việc còn hạn",
+                icon: "⏳",
+                href: "/admin/stat",
+                color: "text-sky-700",
+            },
+            {
+                label: "Đã hoàn thành",
+                value: summary.completedTasks,
+                note: "Đã xử lý xong",
+                icon: "✅",
+                href: "/admin/stat",
+                color: "text-green-700",
+            },
+            {
+                label: "Quá hạn",
+                value: summary.overdueTasks,
+                note: "Cần được theo dõi",
+                icon: "⚠️",
+                href: "/admin/stat",
+                color: "text-red-700",
+            },
+        ]
         : [];
 
     return (

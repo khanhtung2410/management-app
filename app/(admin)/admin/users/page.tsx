@@ -100,8 +100,8 @@ export default function UserList() {
                 </p>
                 <p role="status" aria-live="polite" className="sr-only">
                     {state.status === "success" &&
-                    deferredSearch.trim() &&
-                    state.total === 0
+                        deferredSearch.trim() &&
+                        state.total === 0
                         ? "Không tìm thấy người dùng phù hợp."
                         : ""}
                 </p>

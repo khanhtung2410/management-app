@@ -20,7 +20,7 @@ export function HandleLogout() {
             if (!response.ok) {
                 throw new Error("Không thể đăng xuất");
             }
-           
+
             window.location.replace("/");
         } catch (err) {
             console.error("Lỗi đăng xuất:", err);
