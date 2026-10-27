@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import sql from "mssql";
+import { Suspense } from "react";
 import { Badge } from "@/components/UI/Badge";
 import { Card } from "@/components/UI/Card";
 import { userRole } from "@/constants/roles";
@@ -10,6 +11,7 @@ import {
     userStatus,
 } from "@/constants/statuses";
 import { getDb } from "@/lib/db";
+import { currentMockMode, mockMode, mockDelay } from "@/lib/mock/config";
 import {
     getMockDashboardSummary,
     getMockRecentDashboardTasks,
@@ -17,7 +19,6 @@ import {
     type DashboardTask,
 } from "@/lib/mock/dashboard";
 import AdminDashboardEmptyState from "./empty";
-import { Suspense } from "react";
 
 interface DashboardData {
     summary: DashboardSummary | null;
@@ -33,23 +34,25 @@ const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
 });
 
 function getErrorMessage(reason: unknown, fallback: string): string {
-    console.error(fallback, reason);
+    const digest = (reason as { digest?: string })?.digest;
+    if (digest !== "NEXT_PRERENDER_INTERRUPTED") {
+        console.error(fallback, reason);
+    }
     return reason instanceof Error ? reason.message : fallback;
 }
 
 async function getDashboardData(): Promise<DashboardData> {
-    const isMockMode =
-        process.env.NEXT_PUBLIC_MOCK_API_MODE === "error" ||
-        process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
-    const isMockErrorMode = process.env.NEXT_PUBLIC_MOCK_API_MODE === "error";
+    const isMockMode = currentMockMode !== mockMode.off;
+    const isMockErrorMode = currentMockMode === mockMode.error;
 
     const summaryRequest: Promise<DashboardSummary> = isMockMode
-        ? Promise.resolve().then(() => {
+        ? (async () => {
             if (isMockErrorMode) {
                 throw new Error("Lỗi giả lập từ mock API.");
             }
+            await mockDelay();
             return getMockDashboardSummary();
-        })
+        })()
         : (async () => {
             const pool = await getDb();
             const result = await pool
@@ -59,25 +62,25 @@ async function getDashboardData(): Promise<DashboardData> {
                 .input("activeTaskStatus", sql.Int, taskStatus.Active)
                 .input("completedTaskStatus", sql.Int, taskStatus.Complete)
                 .query<DashboardSummary>(`
-                      SELECT
-                          (SELECT COUNT(*) FROM [dbo].[User] WHERE RoleId = @userRole) AS totalUsers,
-                          (SELECT COUNT(*) FROM [dbo].[User]
-                              WHERE RoleId = @userRole AND TrangThai = @activeUserStatus) AS activeUsers,
-                          COUNT(*) AS totalTasks,
-                          ISNULL(SUM(CASE
-                              WHEN TrangThai = @activeTaskStatus AND HetHan >= GETDATE()
-                              THEN 1 ELSE 0
-                          END), 0) AS activeTasks,
-                          ISNULL(SUM(CASE
-                              WHEN TrangThai = @completedTaskStatus
-                              THEN 1 ELSE 0
-                          END), 0) AS completedTasks,
-                          ISNULL(SUM(CASE
-                              WHEN TrangThai = @activeTaskStatus AND HetHan < GETDATE()
-                              THEN 1 ELSE 0
-                          END), 0) AS overdueTasks
-                      FROM [dbo].[CongViec]
-                  `);
+                    SELECT
+                        (SELECT COUNT(*) FROM [dbo].[User] WHERE RoleId = @userRole) AS totalUsers,
+                        (SELECT COUNT(*) FROM [dbo].[User]
+                            WHERE RoleId = @userRole AND TrangThai = @activeUserStatus) AS activeUsers,
+                        COUNT(*) AS totalTasks,
+                        ISNULL(SUM(CASE
+                            WHEN TrangThai = @activeTaskStatus AND HetHan >= GETDATE()
+                            THEN 1 ELSE 0
+                        END), 0) AS activeTasks,
+                        ISNULL(SUM(CASE
+                            WHEN TrangThai = @completedTaskStatus
+                            THEN 1 ELSE 0
+                        END), 0) AS completedTasks,
+                        ISNULL(SUM(CASE
+                            WHEN TrangThai = @activeTaskStatus AND HetHan < GETDATE()
+                            THEN 1 ELSE 0
+                        END), 0) AS overdueTasks
+                    FROM [dbo].[CongViec]
+                `);
 
             const summary = result.recordset[0];
             if (!summary) {
@@ -87,12 +90,13 @@ async function getDashboardData(): Promise<DashboardData> {
         })();
 
     const tasksRequest: Promise<DashboardTask[]> = isMockMode
-        ? Promise.resolve().then(() => {
+        ? (async () => {
             if (isMockErrorMode) {
                 throw new Error("Lỗi giả lập từ mock API.");
             }
+            await mockDelay();
             return getMockRecentDashboardTasks();
-        })
+        })()
         : (async () => {
             const pool = await getDb();
             const result = await pool
@@ -100,21 +104,21 @@ async function getDashboardData(): Promise<DashboardData> {
                 .input("activeTaskStatus", sql.Int, taskStatus.Active)
                 .input("completedTaskStatus", sql.Int, taskStatus.Complete)
                 .query<DashboardTask>(`
-                      SELECT TOP (5)
-                          task.ID,
-                          task.Ten,
-                          assignedUser.HoTen,
-                          task.HetHan,
-                          CASE
-                              WHEN task.TrangThai = @completedTaskStatus THEN @completedTaskStatus
-                              WHEN task.TrangThai = @activeTaskStatus AND task.HetHan < GETDATE()
-                              THEN ${taskStatus.Overdue}
-                              ELSE task.TrangThai
-                          END AS TrangThai
-                      FROM [dbo].[CongViec] AS task
-                      LEFT JOIN [dbo].[User] AS assignedUser ON assignedUser.ID = task.UserID
-                      ORDER BY task.ID DESC
-                  `);
+                    SELECT TOP (5)
+                        task.ID,
+                        task.Ten,
+                        assignedUser.HoTen,
+                        task.HetHan,
+                        CASE
+                            WHEN task.TrangThai = @completedTaskStatus THEN @completedTaskStatus
+                            WHEN task.TrangThai = @activeTaskStatus AND task.HetHan < GETDATE()
+                            THEN ${taskStatus.Overdue}
+                            ELSE task.TrangThai
+                        END AS TrangThai
+                    FROM [dbo].[CongViec] AS task
+                    LEFT JOIN [dbo].[User] AS assignedUser ON assignedUser.ID = task.UserID
+                    ORDER BY task.ID DESC
+                `);
 
             return result.recordset;
         })();
@@ -161,7 +165,8 @@ export default function AdminPage() {
         </div>
     );
 }
-export async function DashboardContent() {
+
+async function DashboardContent() {
     await connection();
     const { summary, summaryError, recentTasks, tasksError } =
         await getDashboardData();
@@ -212,8 +217,7 @@ export async function DashboardContent() {
         : [];
 
     return (
-        <div className="-m-6 min-h-[calc(100vh-7rem)] space-y-8 bg-slate-100 p-6 text-slate-900">
-
+        <>
             <section
                 aria-label="Thống kê tổng quan"
                 className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5"
@@ -317,7 +321,7 @@ export async function DashboardContent() {
                     </div>
                 </Card>
             </section>
-        </div>
+        </>
     );
 }
 

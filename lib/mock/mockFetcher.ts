@@ -1,25 +1,17 @@
 import { userRole } from "@/constants/roles";
-import {
-    userStatus,
-    type UserStatusType,
-} from "@/constants/statuses";
 import type { User as AdminUser } from "@/app/(admin)/admin/users/_lib/api";
 import {
     getMockDashboardSummary,
     getMockRecentDashboardTasks,
 } from "./dashboard";
 import { mockUser } from "./data";
+import { mockDelay } from "./config";
 
 type MockUser = Pick<
     AdminUser,
     "ID" | "HoTen" | "Email" | "SDT" | "TrangThai"
 >;
 
-const MOCK_RESPONSE_DELAY_MS = 500;
-
-function waitForMockResponse(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, MOCK_RESPONSE_DELAY_MS));
-}
 
 function jsonResponse(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), {
@@ -40,22 +32,8 @@ function getMockUsers(): MockUser[] {
         }));
 }
 
-function parseBody(init?: RequestInit): Record<string, unknown> | null {
-    if (typeof init?.body !== "string") return null;
-
-    try {
-        const body: unknown = JSON.parse(init.body);
-        if (typeof body !== "object" || body === null || Array.isArray(body)) {
-            return null;
-        }
-        return body as Record<string, unknown>;
-    } catch {
-        return null;
-    }
-}
-
 export const mockFetcher: typeof fetch = async (input, init) => {
-    await waitForMockResponse();
+    await mockDelay();
 
     const url =
         typeof input === "string"
@@ -115,75 +93,10 @@ export const mockFetcher: typeof fetch = async (input, init) => {
         });
     }
 
-    if (requestUrl.pathname === "/api/admin/users/status" && method === "PUT") {
-        const body = parseBody(init);
-        const userId = Number(body?.userId);
-        const status = body?.status;
-        const user = mockUser.find(
-            (candidate) =>
-                candidate.ID === userId && candidate.RoleId === userRole.USER,
-        );
-
-        if (
-            !body ||
-            !Number.isInteger(userId) ||
-            (status !== userStatus.Active && status !== userStatus.Inactive)
-        ) {
-            return jsonResponse({ message: "Dữ liệu không hợp lệ" }, 400);
-        }
-        if (!user) {
-            return jsonResponse({ message: "Không tìm thấy người dùng" }, 404);
-        }
-
-        user.TrangThai = status as UserStatusType;
-        return jsonResponse({ message: "Cập nhật trạng thái thành công" });
-    }
-
-    if (requestUrl.pathname === "/api/admin/users/profile" && method === "PUT") {
-        const body = parseBody(init);
-        const userId = Number(body?.userId);
-        const { HoTen, Email, SDT } = body ?? {};
-        const normalizedEmail =
-            typeof Email === "string" ? Email.trim().toLowerCase() : "";
-        const user = mockUser.find(
-            (candidate) =>
-                candidate.ID === userId && candidate.RoleId === userRole.USER,
-        );
-
-        if (
-            !body ||
-            !Number.isInteger(userId) ||
-            typeof HoTen !== "string" ||
-            HoTen.trim().length < 2 ||
-            typeof Email !== "string" ||
-            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) ||
-            typeof SDT !== "string"
-        ) {
-            return jsonResponse({ message: "Dữ liệu không hợp lệ" }, 400);
-        }
-        if (!user) {
-            return jsonResponse({ message: "Không tìm thấy người dùng" }, 404);
-        }
-        if (
-            mockUser.some(
-                (candidate) =>
-                    candidate.ID !== userId &&
-                    candidate.Email.toLowerCase() === normalizedEmail,
-            )
-        ) {
-            return jsonResponse({ message: "Email đã được sử dụng" }, 409);
-        }
-
-        user.HoTen = HoTen.trim();
-        user.Email = normalizedEmail;
-        user.SDT = SDT.trim();
-        return jsonResponse({ message: "Cập nhật người dùng thành công" });
-    }
-
     return jsonResponse({ message: "Not mocked" }, 404);
 };
 
 export const failingMockFetcher: typeof fetch = async () => {
-    await waitForMockResponse();
+    await mockDelay();
     throw new Error("Lỗi giả lập từ mock API.");
 };

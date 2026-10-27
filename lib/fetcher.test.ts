@@ -1,10 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { mockFetcher } from "@/lib/mock/mockFetcher";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+beforeEach(() => {
+    // Reset trước mỗi test — config.ts phải đọc lại env sau stub
+    vi.resetModules();
+});
 
 afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllEnvs();
-    vi.resetModules();
 });
 
 describe("fetcher", () => {
@@ -12,7 +15,9 @@ describe("fetcher", () => {
         vi.stubEnv("NEXT_PUBLIC_MOCK_API_MODE", "");
         vi.stubEnv("NEXT_PUBLIC_USE_MOCK_API", "true");
 
+        // Import CẢ HAI trong cùng module graph fresh → cùng instance
         const { fetcher } = await import("./fetcher");
+        const { mockFetcher } = await import("@/lib/mock/mockFetcher");
 
         expect(fetcher).toBe(mockFetcher);
     });

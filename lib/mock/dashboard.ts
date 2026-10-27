@@ -5,15 +5,10 @@ import {
     type TaskStatusType,
 } from "@/constants/statuses";
 import { mockTasks, mockUser } from "./data";
+import type { DashboardSummary } from "@/lib/dashboard/types";
 
-export interface DashboardSummary {
-    totalUsers: number;
-    activeUsers: number;
-    totalTasks: number;
-    activeTasks: number;
-    completedTasks: number;
-    overdueTasks: number;
-}
+export type { DashboardSummary };
+
 
 export interface DashboardTask {
     ID: number;
@@ -28,21 +23,33 @@ export function getMockDashboardSummary(): DashboardSummary {
         (user) => user.RoleId === userRole.USER,
     );
 
+    const now = new Date();
+
+    // Active + còn hạn  (SQL: TrangThai=Active AND HetHan >= GETDATE())
+    const activeTasks = mockTasks.filter(
+        (t) =>
+            t.TrangThai === taskStatus.Active &&
+            new Date(t.HetHan) >= now,
+    ).length;
+
+    // Active + quá hạn  (SQL: TrangThai=Active AND HetHan < GETDATE())
+    const overdueTasks = mockTasks.filter(
+        (t) =>
+            t.TrangThai === taskStatus.Active &&
+            new Date(t.HetHan) < now,
+    ).length;
+
     return {
         totalUsers: regularUsers.length,
         activeUsers: regularUsers.filter(
-            (user) => user.TrangThai === userStatus.Active,
+            (u) => u.TrangThai === userStatus.Active,
         ).length,
         totalTasks: mockTasks.length,
-        activeTasks: mockTasks.filter(
-            (task) => task.TrangThai === taskStatus.Active,
-        ).length,
+        activeTasks,
         completedTasks: mockTasks.filter(
-            (task) => task.TrangThai === taskStatus.Complete,
+            (t) => t.TrangThai === taskStatus.Complete,
         ).length,
-        overdueTasks: mockTasks.filter(
-            (task) => task.TrangThai === taskStatus.Overdue,
-        ).length,
+        overdueTasks,
     };
 }
 
