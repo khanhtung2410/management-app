@@ -3,6 +3,7 @@ import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { requireRole, ForbiddenError } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function PUT(request: NextRequest) {
     try {
@@ -80,6 +81,9 @@ export async function PUT(request: NextRequest) {
             );
         }
 
+        revalidatePath("/admin/users");
+        revalidatePath("/admin/stat");
+        revalidateTag("dashboard-summary", "max");
         return NextResponse.json({
             message: "Cập nhật người dùng thành công",
         });

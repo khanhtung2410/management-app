@@ -1,18 +1,17 @@
 // Tổng hợp số liệu người dùng và công việc cho dashboard admin; không dùng cho người dùng thường hoặc danh sách chi tiết.
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import sql from "mssql";
 import { STATUS_CONFIG, taskStatus } from "@/constants/statuses";
-import { Card } from "@/components/UI/Card";
 import { userRole } from "@/constants/roles";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
-import { getDb } from "@/lib/db";
-import { getMockDashboardSummary } from "@/lib/mock/dashboard";
 import { getPercent } from "@/lib/percent";
-import TaskStatsChart from "./_components/TaskStatsChart";
+import { getDashboardSummary } from "./_lib/get-summary";
 import type { TaskStat } from "./_lib/types";
+import TaskStatsChart from "./_components/TaskStatsChart";
+import { Card } from "@/components/UI/Card";
 
 export default async function DashboardPage() {
+    // --- Auth (dynamic, phải chạy mỗi request) ---
     const token = (await cookies()).get("token")?.value;
     if (!token) {
         redirect("/login");
@@ -32,72 +31,14 @@ export default async function DashboardPage() {
         redirect("/403");
     }
 
-    const isMockMode =
-        process.env.NEXT_PUBLIC_MOCK_API_MODE === "error" ||
-        process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
-
-    let totalUsers: number;
-    let totalTasks: number;
-    let activeTasks: number;
-    let completedTasks: number;
-    let overdueTasks: number;
-
-    if (isMockMode) {
-        if (process.env.NEXT_PUBLIC_MOCK_API_MODE === "error") {
-            throw new Error("Lỗi giả lập từ mock API.");
-        }
-        const summary = getMockDashboardSummary();
-        totalUsers = summary.totalUsers;
-        totalTasks = summary.totalTasks;
-        activeTasks = summary.activeTasks;
-        completedTasks = summary.completedTasks;
-        overdueTasks = summary.overdueTasks;
-    } else {
-        const pool = await getDb();
-        const [userResult, taskResult] = await Promise.all([
-            pool
-                .request()
-                .input("userRole", sql.Int, userRole.USER)
-                .query<{ totalUsers: number }>(`
-                    SELECT COUNT(*) AS totalUsers
-                    FROM [dbo].[User]
-                    WHERE RoleId = @userRole
-                `),
-            pool
-                .request()
-                .input("statusActive", sql.Int, taskStatus.Active)
-                .input("statusComplete", sql.Int, taskStatus.Complete)
-                .query<{
-                    totalTasks: number;
-                    DangThucHien: number;
-                    HoanThanh: number;
-                    QuaHan: number;
-                }>(`
-                    SELECT
-                        COUNT(*) AS totalTasks,
-                        SUM(CASE
-                            WHEN TrangThai = @statusActive AND HetHan >= GETDATE()
-                            THEN 1 ELSE 0
-                        END) AS DangThucHien,
-                        SUM(CASE
-                            WHEN TrangThai = @statusComplete
-                            THEN 1 ELSE 0
-                        END) AS HoanThanh,
-                        SUM(CASE
-                            WHEN TrangThai = @statusActive AND HetHan < GETDATE()
-                            THEN 1 ELSE 0
-                        END) AS QuaHan
-                    FROM [dbo].[CongViec]
-                `),
-        ]);
-
-        const taskRow = taskResult.recordset[0];
-        totalUsers = Number(userResult.recordset[0]?.totalUsers ?? 0);
-        totalTasks = Number(taskRow?.totalTasks ?? 0);
-        activeTasks = Number(taskRow?.DangThucHien ?? 0);
-        completedTasks = Number(taskRow?.HoanThanh ?? 0);
-        overdueTasks = Number(taskRow?.QuaHan ?? 0);
-    }
+    // --- Data (cached, không phụ thuộc user) ---
+    const {
+        totalUsers,
+        totalTasks,
+        activeTasks,
+        completedTasks,
+        overdueTasks,
+    } = await getDashboardSummary();
 
     const taskStats: TaskStat[] = [
         { status: taskStatus.Active, total: activeTasks },

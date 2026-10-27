@@ -5,7 +5,7 @@ import { userStatus, UserStatusType } from "@/constants/statuses";
 import { UnauthorizedError, verifyToken } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import sql from "mssql";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -56,6 +56,8 @@ export async function updateUserStatusAction(
     if (result.rowsAffected[0] === 0) return { ok: false, error: "Không tìm thấy người dùng" }
 
     revalidatePath("/admin/users");
+    revalidatePath("/admin/stat");
+    revalidateTag("dashboard-summary", "max");
     return { ok: true };
 }
 
@@ -122,5 +124,7 @@ export async function updateUserProfileAction(
     }
 
     revalidatePath("/admin/users");
+    revalidatePath("/admin/stat");
+    revalidateTag("dashboard-summary", "max");
     return { ok: true };
 }
