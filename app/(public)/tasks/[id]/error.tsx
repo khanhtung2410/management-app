@@ -6,10 +6,10 @@ import Link from "next/link";
 
 export default function TasksDetailError({
     error,
-    reset,
+    retry,
 }: {
     error: Error & { digest?: string };
-    reset: () => void;
+    retry: () => void;
 }) {
     useEffect(() => {
         console.error("loi chi tiet cong viec:", error);
@@ -31,7 +31,7 @@ export default function TasksDetailError({
                         </p>
                     )}
                     <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center"></div>
-                    <Button type="button" onClick={reset}>
+                    <Button type="button" onClick={retry}>
                         Thử lại
                     </Button>
                     <Link

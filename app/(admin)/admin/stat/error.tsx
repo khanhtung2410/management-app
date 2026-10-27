@@ -5,10 +5,10 @@ import { Button } from "@/components/UI/Button";
 
 export default function DashboardError({
     error,
-    reset,
+    retry,
 }: {
     error: Error & { digest?: string };
-    reset: () => void;
+    retry: () => void;
 }) {
     useEffect(() => {
         console.error("Admin statistics error:", error);
@@ -24,7 +24,7 @@ export default function DashboardError({
                     <p className="text-[#475569]">
                         Đã xảy ra lỗi khi tải dữ liệu thống kê. Vui lòng thử lại.
                     </p>
-                    <Button type="button" onClick={reset}>
+                    <Button type="button" onClick={retry}>
                         Thử lại
                     </Button>
                 </div>
