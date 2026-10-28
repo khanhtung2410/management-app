@@ -5,6 +5,7 @@ import type { TaskStat } from "./_lib/types";
 import TaskStatsChart from "./_components/TaskStatsChart";
 import { Card } from "@/components/UI/Card";
 import { getDashboardSummary } from "@/lib/dashboard/get-summary";
+import { InlineEmptyState } from "@/components/UI/InlineEmptyState";
 
 export default async function DashboardPage() {
     await requireAdminPage();
@@ -96,92 +97,102 @@ export default async function DashboardPage() {
                         </p>
                     </div>
 
-                    <div className="flex flex-col items-center gap-4 2xl:grid 2xl:grid-cols-2 2xl:gap-8">
-                        <TaskStatsChart taskStats={taskStats} />
+                    {totalTasks === 0 ? (
+                        <InlineEmptyState
+                            variant="plain"
+                            size="lg"
+                            message="Chưa có công việc để thống kê."
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center gap-4 2xl:grid 2xl:grid-cols-2 2xl:gap-8">
+                            <TaskStatsChart taskStats={taskStats} />
 
-                        <div className="w-full min-w-0 space-y-3 sm:space-y-4">
-                            {taskStats.map(item => (
-                                <div
-                                    key={item.status}
-                                    className="rounded-xl border border-[#E2E8F0] p-3 sm:p-5"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 sm:gap-3">
-                                            <span
-                                                className="h-3 w-3 rounded-full sm:h-4 sm:w-4"
+                            <div className="w-full min-w-0 space-y-3 sm:space-y-4">
+                                {taskStats.map(item => (
+                                    <div
+                                        key={item.status}
+                                        className="rounded-xl border border-[#E2E8F0] p-3 sm:p-5"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2 sm:gap-3">
+                                                <span
+                                                    className="h-3 w-3 rounded-full sm:h-4 sm:w-4"
+                                                    style={{
+                                                        backgroundColor:
+                                                            STATUS_CONFIG[item.status].color,
+                                                    }}
+                                                />
+                                                <span className="text-sm font-medium text-[#334155] sm:text-base">
+                                                    {item.name}
+                                                </span>
+                                            </div>
+                                            <span className="text-base font-bold text-[#0F172A] sm:text-lg">
+                                                {item.total}
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-2 flex items-center justify-between sm:mt-3">
+                                            <span className="text-xs text-[#475569] sm:text-sm">
+                                                Tỷ lệ
+                                            </span>
+                                            <span className="text-xs font-semibold text-[#334155] sm:text-sm">
+                                                {item.percent}%
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#E2E8F0] sm:h-2">
+                                            <div
+                                                className="h-full rounded-full transition-all"
                                                 style={{
+                                                    width: `${item.percent}%`,
                                                     backgroundColor:
                                                         STATUS_CONFIG[item.status].color,
                                                 }}
                                             />
-                                            <span className="text-sm font-medium text-[#334155] sm:text-base">
-                                                {item.name}
-                                            </span>
                                         </div>
-                                        <span className="text-base font-bold text-[#0F172A] sm:text-lg">
-                                            {item.total}
-                                        </span>
                                     </div>
-
-                                    <div className="mt-2 flex items-center justify-between sm:mt-3">
-                                        <span className="text-xs text-[#475569] sm:text-sm">
-                                            Tỷ lệ
-                                        </span>
-                                        <span className="text-xs font-semibold text-[#334155] sm:text-sm">
-                                            {item.percent}%
-                                        </span>
-                                    </div>
-
-                                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#E2E8F0] sm:h-2">
-                                        <div
-                                            className="h-full rounded-full transition-all"
-                                            style={{
-                                                width: `${item.percent}%`,
-                                                backgroundColor:
-                                                    STATUS_CONFIG[item.status].color,
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </Card>
 
-                <div className="mt-6 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
-                    {taskStats.map(item => (
-                        <Card
-                            key={item.status}
-                            shadow="sm"
-                            className="p-4 ring-1 ring-[#E2E8F0] sm:p-5"
-                        >
-                            <div className="flex items-center gap-2 sm:gap-3">
-                                <span
-                                    className="h-3 w-3 rounded-full"
-                                    style={{
-                                        backgroundColor: STATUS_CONFIG[item.status].color,
-                                    }}
-                                />
-                                <span className="text-xs text-[#475569] sm:text-sm">
-                                    {item.name}
-                                </span>
-                            </div>
+                {totalTasks > 0 && (
+                    <div className="mt-6 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
+                        {taskStats.map(item => (
+                            <Card
+                                key={item.status}
+                                shadow="sm"
+                                className="p-4 ring-1 ring-[#E2E8F0] sm:p-5"
+                            >
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <span
+                                        className="h-3 w-3 rounded-full"
+                                        style={{
+                                            backgroundColor: STATUS_CONFIG[item.status].color,
+                                        }}
+                                    />
+                                    <span className="text-xs text-[#475569] sm:text-sm">
+                                        {item.name}
+                                    </span>
+                                </div>
 
-                            <div className="mt-2 flex items-end gap-2 sm:mt-3">
-                                <span className="text-2xl font-bold text-[#0F172A] sm:text-3xl">
-                                    {item.total}
-                                </span>
-                                <span className="mb-1 text-xs text-[#475569] sm:text-sm">
-                                    công việc
-                                </span>
-                            </div>
+                                <div className="mt-2 flex items-end gap-2 sm:mt-3">
+                                    <span className="text-2xl font-bold text-[#0F172A] sm:text-3xl">
+                                        {item.total}
+                                    </span>
+                                    <span className="mb-1 text-xs text-[#475569] sm:text-sm">
+                                        công việc
+                                    </span>
+                                </div>
 
-                            <p className="mt-1 text-xs text-[#475569] sm:text-sm">
-                                Chiếm {item.percent}% tổng số
-                            </p>
-                        </Card>
-                    ))}
-                </div>
+                                <p className="mt-1 text-xs text-[#475569] sm:text-sm">
+                                    Chiếm {item.percent}% tổng số
+                                </p>
+                            </Card>
+                        ))}
+                    </div>
+                )}
             </div>
         </main>
     );
