@@ -1,9 +1,5 @@
 import { userRole } from "@/constants/roles";
 import type { User as AdminUser } from "@/app/(admin)/admin/users/_lib/api";
-import {
-    getMockDashboardSummary,
-    getMockRecentDashboardTasks,
-} from "./dashboard";
 import { mockUser } from "./data";
 import { mockDelay } from "./config";
 
@@ -44,20 +40,6 @@ export const mockFetcher: typeof fetch = async (input, init) => {
     const requestUrl = new URL(url, "http://localhost:3000");
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET"))
         .toUpperCase();
-
-    if (
-        requestUrl.pathname === "/api/admin/dashboard/summary" &&
-        method === "GET"
-    ) {
-        return jsonResponse(getMockDashboardSummary());
-    }
-
-    if (
-        requestUrl.pathname === "/api/admin/dashboard/tasks" &&
-        method === "GET"
-    ) {
-        return jsonResponse(getMockRecentDashboardTasks());
-    }
 
     if (requestUrl.pathname === "/api/admin/users" && method === "GET") {
         const searchParams = requestUrl.searchParams;
