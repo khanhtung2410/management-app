@@ -1,12 +1,11 @@
 // Tải và hiển thị chi tiết một công việc thuộc người dùng hiện tại; không dùng cho danh sách hoặc trang quản trị công việc.
 import Link from "next/link";
-import { cookies } from "next/headers";
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import sql from "mssql";
 import { cache } from "react";
 import { STATUS_CONFIG, type TaskStatusType } from "@/constants/statuses";
-import { UnauthorizedError, verifyToken } from "@/lib/auth";
+import { requireUserPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
 import { TaskStatusButton } from "./TaskStatusButton";
 import { formatTaskDate, getTaskDisplayStatus } from "../_lib/taskUtils";
@@ -23,21 +22,7 @@ interface TaskDetail {
 
 const getTask = cache(async (id: string): Promise<TaskDetail> => {
     const taskId = Number(id);
-
-    const token = (await cookies()).get("token")?.value;
-    if (!token) {
-        redirect("/login");
-    }
-
-    let userId: number;
-    try {
-        ({ userId } = await verifyToken(token));
-    } catch (error) {
-        if (error instanceof UnauthorizedError) {
-            redirect("/login");
-        }
-        throw error;
-    }
+    const { userId } = await requireUserPage();
 
     if (!Number.isInteger(taskId) || taskId <= 0) {
         notFound();
