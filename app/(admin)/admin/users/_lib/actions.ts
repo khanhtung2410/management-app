@@ -6,7 +6,7 @@ import { requireAdminPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
 import { currentMockMode, mockMode, mockDelay } from "@/lib/mock/config";
 import sql from "mssql";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 //change user status
 export async function updateUserStatusAction(
@@ -41,35 +41,58 @@ export async function updateUserStatusAction(
 
     if (result.rowsAffected[0] === 0) return { ok: false, error: "Không tìm thấy người dùng" }
 
-    revalidatePath("/admin/users");
     revalidatePath("/admin/stat");
-    revalidateTag("dashboard-summary", "max");
+    updateTag("dashboard-summary");
     return { ok: true };
 }
 
 //change user profile
-export async function updateUserProfileAction(
-    payload: { userId: number; HoTen: string; Email: string; SDT: string }
-): Promise<{ ok: true } | {
-    ok: false; error: string
-}> {
-    await requireAdminPage();
-    const { userId, HoTen, Email, SDT } = payload;
-    const name = HoTen?.trim() ?? "";
-    const email = Email?.trim().toLowerCase() ?? "";
-    const sdt = SDT?.trim() ?? "";
+export type UserProfileData = {
+    userId: number;
+    HoTen: string;
+    Email: string;
+    SDT: string;
+};
 
-    if (!Number.isInteger(userId) || userId <= 0) {
-        return { ok: false, error: "ID người dùng không hợp lệ" }
+export type UpdateUserProfileResult =
+    | { ok: true; data: UserProfileData }
+    | { ok: false; error: string };
+
+export async function updateUserProfileAction(
+    payload: unknown,
+): Promise<UpdateUserProfileResult> {
+    await requireAdminPage();
+
+    if (typeof payload !== "object" || payload === null) {
+        return { ok: false, error: "Payload không hợp lệ" };
+    }
+    const { userId, HoTen, Email, SDT } = payload as Record<string, unknown>;
+
+    if (typeof userId !== "number" || !Number.isInteger(userId) || userId <= 0) {
+        return { ok: false, error: "ID người dùng không hợp lệ" };
+    }
+    if (typeof HoTen !== "string") {
+        return { ok: false, error: "Họ tên không hợp lệ" };
+    }
+    if (typeof Email !== "string") {
+        return { ok: false, error: "Email không hợp lệ" };
+    }
+    if (typeof SDT !== "string") {
+        return { ok: false, error: "Số điện thoại không hợp lệ" };
+    }
+
+    const name = HoTen.trim();
+    const email = Email.trim().toLowerCase();
+    const sdt = SDT.trim();
+
+    if (!name) {
+        return { ok: false, error: "Họ tên không được để trống" };
+    }
+    if (name.length > 255) {
+        return { ok: false, error: "Tên không hợp lệ" };
     }
     if (email.length > 255 || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
         return { ok: false, error: "Email không hợp lệ" };
-    }
-    if (!name) return {
-        ok: false, error: "Họ tên không được để trống"
-    };
-    if (name.length > 255) {
-        return { ok: false, error: "Tên không hợp lệ" };
     }
     if (!/^0\d{9}$/.test(sdt)) {
         return { ok: false, error: "Sai định dạng số điện thoại" };
@@ -80,7 +103,7 @@ export async function updateUserProfileAction(
     }
     if (currentMockMode === mockMode.on) {
         await mockDelay();
-        return { ok: true };
+        return { ok: true, data: { userId, HoTen: name, Email: email, SDT: sdt } };
     }
 
     const pool = await getDb();
@@ -119,6 +142,5 @@ export async function updateUserProfileAction(
         return { ok: false, error: "Không thể cập nhật — người dùng có thể đã bị xóa" };
     }
 
-    revalidatePath("/admin/users");
-    return { ok: true };
+    return { ok: true, data: { userId, HoTen: name, Email: email, SDT: sdt } };
 }
