@@ -5,7 +5,7 @@ import { formatTaskDate, getTaskDisplayStatus } from "../_lib/taskUtils";
 import { Button } from "@/components/UI/Button";
 import { Badge } from "@/components/UI/Badge";
 import { Card } from "@/components/UI/Card";
-import TaskListEmptyState from "./EmptyState";
+import { InlineEmptyState } from "@/components/UI/InlineEmptyState";
 
 export interface CongViec {
     ID: number;
@@ -125,7 +125,21 @@ export function TaskList({
     onToggle,
 }: TaskListProps) {
     if (items.length === 0) {
-        return <TaskListEmptyState isFiltered={isFiltered} variant={variant} />;
+        const message = isFiltered
+            ? "Không tìm thấy công việc phù hợp"
+            : "Chưa có công việc nào";
+
+        if (variant === "table") {
+            return (
+                <InlineEmptyState
+                    variant="table"
+                    colSpan={6}
+                    message={message}
+                />
+            );
+        }
+
+        return <InlineEmptyState variant="card" message={message} />;
     }
 
     // MỘT chỗ duyệt duy nhất

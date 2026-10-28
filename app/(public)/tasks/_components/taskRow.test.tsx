@@ -18,7 +18,8 @@ describe("TaskList empty state", () => {
             </table>,
         );
 
-        expect(screen.getByText("Chưa có công việc nào")).toBeTruthy();
+        const emptyMessage = screen.getByText("Chưa có công việc nào");
+        expect(emptyMessage.closest("td")?.getAttribute("colspan")).toBe("6");
     });
 
     it("shows a no-results message after filtering", () => {
