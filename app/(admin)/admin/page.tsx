@@ -18,7 +18,7 @@ import {
     type DashboardSummary,
     type DashboardTask,
 } from "@/lib/mock/dashboard";
-import AdminDashboardEmptyState from "./empty";
+import AdminDashboardEmptyState from "./_components/EmptyState";
 import { requireAdminPage } from "@/lib/auth/server";
 
 interface DashboardData {
@@ -39,7 +39,7 @@ function getErrorMessage(reason: unknown, fallback: string): string {
     if (digest !== "NEXT_PRERENDER_INTERRUPTED") {
         console.error(fallback, reason);
     }
-    return reason instanceof Error ? reason.message : fallback;
+    return fallback;
 }
 
 async function getDashboardData(): Promise<DashboardData> {
@@ -104,6 +104,7 @@ async function getDashboardData(): Promise<DashboardData> {
                 .request()
                 .input("activeTaskStatus", sql.Int, taskStatus.Active)
                 .input("completedTaskStatus", sql.Int, taskStatus.Complete)
+                .input("overdueTaskStatus", sql.Int, taskStatus.Overdue)
                 .query<DashboardTask>(`
                     SELECT TOP (5)
                         task.ID,
@@ -113,7 +114,7 @@ async function getDashboardData(): Promise<DashboardData> {
                         CASE
                             WHEN task.TrangThai = @completedTaskStatus THEN @completedTaskStatus
                             WHEN task.TrangThai = @activeTaskStatus AND task.HetHan < GETDATE()
-                            THEN ${taskStatus.Overdue}
+                            THEN @overdueTaskStatus
                             ELSE task.TrangThai
                         END AS TrangThai
                     FROM [dbo].[CongViec] AS task

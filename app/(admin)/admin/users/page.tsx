@@ -13,7 +13,7 @@ import { renderByState } from "./_lib/renderByState";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 import { Card } from "@/components/UI/Card";
-import UsersEmptyState from "./empty";
+import UsersEmptyState from "./_components/EmptyState";
 
 export default function UserList() {
 
