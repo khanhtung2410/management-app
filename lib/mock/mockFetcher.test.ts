@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { userRole } from "@/constants/roles";
-import { taskStatus, userStatus } from "@/constants/statuses";
-import { mockTasks, mockUser } from "./data";
+import { mockUser } from "./data";
 import { failingMockFetcher, mockFetcher } from "./mockFetcher";
 
 const originalUsers = mockUser.map((user) => ({ ...user }));
@@ -50,74 +48,19 @@ describe("mockFetcher", () => {
         expect(result.data[0]).not.toHaveProperty("PasswordHash");
     });
 
-    // ─── SỬA: dùng derived Overdue thay vì TrangThai === Overdue ───
-    it("returns dashboard counts based on the typed mock data", async () => {
-        const response = await mockFetcher("/api/admin/dashboard/summary");
-        const summary = await response.json();
-
-        const now = new Date();
-        const regularUsers = mockUser.filter(
-            (user) => user.RoleId === userRole.USER,
-        );
-
-        expect(summary).toEqual({
-            totalUsers: regularUsers.length,
-            activeUsers: regularUsers.filter(
-                (user) => user.TrangThai === userStatus.Active,
-            ).length,
-            totalTasks: mockTasks.length,
-            // Active + còn hạn (khớp SQL: TrangThai=Active AND HetHan >= GETDATE())
-            activeTasks: mockTasks.filter(
-                (task) =>
-                    task.TrangThai === taskStatus.Active &&
-                    new Date(task.HetHan) >= now,
-            ).length,
-            completedTasks: mockTasks.filter(
-                (task) => task.TrangThai === taskStatus.Complete,
-            ).length,
-            // Derived Overdue: Active + quá hạn (khớp SQL: TrangThai=Active AND HetHan < GETDATE())
-            overdueTasks: mockTasks.filter(
-                (task) =>
-                    task.TrangThai === taskStatus.Active &&
-                    new Date(task.HetHan) < now,
-            ).length,
-        });
-    });
-
-    // ─── SỬA: bỏ check TrangThai === Overdue trực tiếp ─────────────
-    it("returns the five latest dashboard tasks with their owners", async () => {
-        const response = await mockFetcher("/api/admin/dashboard/tasks");
-        const tasks = await response.json();
-
-        expect(tasks).toHaveLength(5);
-        expect(tasks[0]).toMatchObject({
-            ID: 24,
-            HoTen: "Lý Minh Khang",
-            TrangThai: taskStatus.Active,
-        });
-
-        // Có ít nhất 1 task Complete (ID 22)
-        expect(
-            tasks.some(
-                (task: { TrangThai: number }) =>
-                    task.TrangThai === taskStatus.Complete,
-            ),
-        ).toBe(true);
-
-        // Có ít nhất 1 task "sẽ hiển thị Overdue" (Active + quá hạn)
-        // Task 20 (HetHan 2026-10-17) và 23 (HetHan 2026-10-16) đều quá hạn
-        const now = new Date();
-        const derivedOverdue = tasks.filter(
-            (task: { TrangThai: number; HetHan: string }) =>
-                task.TrangThai === taskStatus.Active &&
-                new Date(task.HetHan) < now,
-        );
-        expect(derivedOverdue.length).toBeGreaterThan(0);
-    });
-
     it("rejects unknown API routes", async () => {
         const response = await mockFetcher("/api/unknown");
 
+        expect(response.status).toBe(404);
+        await expect(response.json()).resolves.toEqual({ message: "Not mocked" });
+    });
+
+    // ─── Thêm: xác nhận 2 endpoint dashboard đã bị gỡ khỏi mockFetcher ───
+    it.each([
+        "/api/admin/dashboard/summary",
+        "/api/admin/dashboard/tasks",
+    ])("no longer mocks %s (404 as unknown route)", async (path) => {
+        const response = await mockFetcher(path);
         expect(response.status).toBe(404);
         await expect(response.json()).resolves.toEqual({ message: "Not mocked" });
     });
