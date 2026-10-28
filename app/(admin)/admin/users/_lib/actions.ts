@@ -2,42 +2,18 @@
 
 import { userRole } from "@/constants/roles";
 import { userStatus, UserStatusType } from "@/constants/statuses";
-import { UnauthorizedError, verifyToken } from "@/lib/auth";
+import { requireAdminPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
 import { currentMockMode, mockMode, mockDelay } from "@/lib/mock/config";
 import sql from "mssql";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-
-async function requireAdmin(): Promise<number> {
-    const token = (await cookies()).get("token")?.value;
-    if (!token) {
-        redirect("/login");
-    }
-    let userId: number
-    let roleId: number;
-    try {
-        ({ roleId, userId } = await verifyToken(token));
-    } catch (error) {
-        if (error instanceof UnauthorizedError) {
-            redirect("/login");
-        }
-        throw error;
-    }
-
-    if (roleId !== userRole.ADMIN) {
-        redirect("/403");
-    }
-    return userId;
-}
 
 //change user status
 export async function updateUserStatusAction(
     userId: number,
     status: UserStatusType
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-    const currentUserId = await requireAdmin();
+    const { userId: currentUserId } = await requireAdminPage();
     if (!Number.isInteger(userId) || userId <= 0) {
         return { ok: false, error: "ID người dùng không hợp lệ" }
     }
@@ -77,7 +53,7 @@ export async function updateUserProfileAction(
 ): Promise<{ ok: true } | {
     ok: false; error: string
 }> {
-    await requireAdmin();
+    await requireAdminPage();
     const { userId, HoTen, Email, SDT } = payload;
     const name = HoTen?.trim() ?? "";
     const email = Email?.trim().toLowerCase() ?? "";

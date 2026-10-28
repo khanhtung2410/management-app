@@ -1,9 +1,7 @@
 // Tải danh sách công việc của người dùng đã xác thực ở server; không dùng cho danh sách admin hoặc chi tiết một công việc.
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import sql from "mssql";
 import type { TaskStatusType } from "@/constants/statuses";
-import { UnauthorizedError, verifyToken } from "@/lib/auth";
+import { requireUserPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
 import type { CongViec } from "./_components/taskRow";
 import { TasksClient } from "./_components/TasksClient";
@@ -33,20 +31,7 @@ export default function TasksPage() {
 }
 
 async function TasksContent() {
-    const token = (await cookies()).get("token")?.value;
-    if (!token) {
-        redirect("/login");
-    }
-
-    let userId: number;
-    try {
-        ({ userId } = await verifyToken(token));
-    } catch (error) {
-        if (error instanceof UnauthorizedError) {
-            redirect("/login");
-        }
-        throw error;
-    }
+    const { userId } = await requireUserPage();
 
     const pool = await getDb();
     const result = await pool

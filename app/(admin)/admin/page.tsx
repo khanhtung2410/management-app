@@ -19,6 +19,7 @@ import {
     type DashboardTask,
 } from "@/lib/mock/dashboard";
 import AdminDashboardEmptyState from "./empty";
+import { requireAdminPage } from "@/lib/auth/server";
 
 interface DashboardData {
     summary: DashboardSummary | null;
@@ -168,6 +169,7 @@ export default function AdminPage() {
 
 async function DashboardContent() {
     await connection();
+    await requireAdminPage();
     const { summary, summaryError, recentTasks, tasksError } =
         await getDashboardData();
 

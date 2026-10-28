@@ -1,35 +1,13 @@
-// Tổng hợp số liệu người dùng và công việc cho dashboard admin; không dùng cho người dùng thường hoặc danh sách chi tiết.
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { STATUS_CONFIG, taskStatus } from "@/constants/statuses";
-import { userRole } from "@/constants/roles";
-import { UnauthorizedError, verifyToken } from "@/lib/auth";
+import { requireAdminPage } from "@/lib/auth/server";
 import { getPercent } from "@/lib/percent";
-import { getDashboardSummary } from "./_lib/get-summary";
 import type { TaskStat } from "./_lib/types";
 import TaskStatsChart from "./_components/TaskStatsChart";
 import { Card } from "@/components/UI/Card";
+import { getDashboardSummary } from "@/lib/dashboard/get-summary";
 
 export default async function DashboardPage() {
-    // --- Auth (dynamic, phải chạy mỗi request) ---
-    const token = (await cookies()).get("token")?.value;
-    if (!token) {
-        redirect("/login");
-    }
-
-    let roleId: number;
-    try {
-        ({ roleId } = await verifyToken(token));
-    } catch (error) {
-        if (error instanceof UnauthorizedError) {
-            redirect("/login");
-        }
-        throw error;
-    }
-
-    if (roleId !== userRole.ADMIN) {
-        redirect("/403");
-    }
+    await requireAdminPage();
 
     // --- Data (cached, không phụ thuộc user) ---
     const {

@@ -1,3 +1,8 @@
+/**
+ * Guard cho API Route Handler.
+ * Nhận req, throw error — caller phải có try/catch để trả JSON status đúng.
+ * KHÔNG dùng trong page.tsx / Server Action.
+ */
 import { getAuthFromRequest, type RequestLike } from "./session";
 import { ForbiddenError } from "./errors";
 import type { AuthPayload } from "./payload";
