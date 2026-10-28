@@ -72,7 +72,7 @@ describe("UserList search pagination", () => {
         });
 
         const emptyMessage = screen.getByText(
-            "Không tìm thấy người dùng phù hợp",
+            'Không tìm thấy người dùng phù hợp với "missing-user"',
         );
         expect(emptyMessage.closest("tr")).toBeTruthy();
         expect(emptyMessage.closest("td")?.getAttribute("colspan")).toBe("6");

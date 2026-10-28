@@ -1,27 +1,25 @@
 // Quản lý danh sách người dùng admin gồm tìm kiếm, sửa, phân trang và đổi trạng thái; không dùng cho hồ sơ cá nhân.
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useDeferredValue, useState } from "react";
 import type { User } from "./_lib/api";
 import { useUsers } from "./_lib/useUser";
 import { UserTableRow, UserCard } from "./_components/UserRow";
 import { Pagination } from "./_components/Pagination";
 import { EditUserModal } from "./_components/EditUserModal";
-import { useDeferredValue } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { renderByState } from "./_lib/renderByState";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 import { Card } from "@/components/UI/Card";
-import UsersEmptyState from "./_components/EmptyState";
+import { InlineEmptyState } from "@/components/UI/InlineEmptyState";
 
 export default function UserList() {
-
     const [inputValue, setInputValue] = useState("");
     const deferredSearch = useDeferredValue(inputValue);
 
     const isStale = inputValue !== deferredSearch;
-    const isDesktop = useMediaQuery("(min-width: 760px)")
+    const isDesktop = useMediaQuery("(min-width: 760px)");
 
     const {
         state,
@@ -38,12 +36,17 @@ export default function UserList() {
     } = useUsers({ searchTerm: deferredSearch });
 
     const [editingUser, setEditingUser] = useState<User | null>(null);
-    const closeEditModal = useCallback(() => { setEditingUser(null); }, [])
+    const closeEditModal = useCallback(() => { setEditingUser(null); }, []);
 
     const isSearchEmpty =
         state.status === "success" &&
         deferredSearch.trim().length > 0 &&
         state.total === 0;
+
+    const message = isSearchEmpty
+        ? `Không tìm thấy người dùng phù hợp với "${deferredSearch}"`
+        : "Chưa có người dùng nào";
+
     const placeholder = isSearchEmpty ? null : renderByState(state);
     const users = state.status === "success" ? state.data : [];
 
@@ -65,7 +68,6 @@ export default function UserList() {
                                 value: inputValue,
                                 onChange: (e) => {
                                     setInputValue(e.target.value);
-                                    // Reset in the input event; the fetch effect observes page changes but never resets them.
                                     setCurrentPage(1);
                                 },
                                 className: "rounded-md bg-white text-sm text-[#334155]",
@@ -76,6 +78,7 @@ export default function UserList() {
                         {state.status === "success" ? `${state.total} người dùng` : "-"}
                     </span>
                 </div>
+
                 {actionError && (
                     <div role="alert"
                         className="mb-4 flex items-start justify-between gap-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -95,26 +98,30 @@ export default function UserList() {
                         </Button>
                     </div>
                 )}
+
                 <p role="status" aria-live="polite" className="sr-only">
                     {actionSuccess}
                 </p>
-                <p role="status" aria-live="polite" className="sr-only">
-                    {state.status === "success" &&
-                        deferredSearch.trim() &&
-                        state.total === 0
-                        ? "Không tìm thấy người dùng phù hợp."
-                        : ""}
-                </p>
+                {!actionSuccess && (
+                    <p role="status" aria-live="polite" className="sr-only">
+                        {isSearchEmpty ? "Không tìm thấy người dùng phù hợp." : ""}
+                    </p>
+                )}
+
                 <Card className="overflow-hidden ring-1 ring-[#E2E8F0]">
                     <div className={
                         isStale
                             ? "opacity-60 transition-opacity duration-150"
                             : "opacity-100 transition-opacity duration-150"
-
                     }>
                         {placeholder ? (
                             state.status === "success" ? (
-                                <UsersEmptyState message={placeholder} />
+                                // DB-empty (không search): render ngoài table → variant plain
+                                <InlineEmptyState
+                                    variant="plain"
+                                    size="lg"
+                                    message={message}
+                                />
                             ) : (
                                 <Placeholder>{placeholder}</Placeholder>
                             )
@@ -145,11 +152,21 @@ export default function UserList() {
                                 }
                             >
                                 {isSearchEmpty ? (
-                                    <UsersEmptyState
-                                        isDesktop={isDesktop}
-                                        message="Không tìm thấy người dùng phù hợp"
-                                        mode="search"
-                                    />
+                                    // Search-empty: đang ở trong tbody (desktop) hoặc div (mobile)
+                                    isDesktop ? (
+                                        <InlineEmptyState
+                                            variant="table"
+                                            colSpan={6}
+                                            size="lg"
+                                            message={message}
+                                        />
+                                    ) : (
+                                        <InlineEmptyState
+                                            variant="plain"
+                                            size="lg"
+                                            message={message}
+                                        />
+                                    )
                                 ) : (
                                     users.map((item) =>
                                         isDesktop ? (
@@ -181,7 +198,7 @@ export default function UserList() {
                         onPageChange={setCurrentPage}
                     />
                 </Card>
-            </div >
+            </div>
 
             {editingUser && (
                 <EditUserModal
@@ -189,11 +206,11 @@ export default function UserList() {
                     onClose={closeEditModal}
                     onSave={saveUser}
                 />
-            )
-            }
-        </main >
+            )}
+        </main>
     );
 }
+
 function UsersLayout({
     isDesktop,
     headers,
@@ -217,7 +234,7 @@ function UsersLayout({
             </div>
         );
     }
-    return <div className="divide-y divide-[#E2E8F0]">{children}</div>
+    return <div className="divide-y divide-[#E2E8F0]">{children}</div>;
 }
 
 function Th({ children }: { children: React.ReactNode }) {

@@ -18,8 +18,8 @@ import {
     type DashboardSummary,
     type DashboardTask,
 } from "@/lib/mock/dashboard";
-import AdminDashboardEmptyState from "./_components/EmptyState";
 import { requireAdminPage } from "@/lib/auth/server";
+import { InlineEmptyState } from "@/components/UI/InlineEmptyState";
 
 interface DashboardData {
     summary: DashboardSummary | null;
@@ -317,7 +317,12 @@ async function DashboardContent() {
                                         </tr>
                                     ))
                                 ) : (
-                                    <AdminDashboardEmptyState />
+                                    <InlineEmptyState
+                                        variant="table"
+                                        colSpan={4}
+                                        size="sm"
+                                        message="Chưa có công việc nào."
+                                    />
                                 )}
                             </tbody>
                         </table>
