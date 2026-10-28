@@ -26,6 +26,13 @@ export interface FetchUsersParams {
 
 export type Fetcher = typeof fetch;
 
+export interface UserUpdatePayload {
+    userId: number;
+    HoTen: string;
+    Email: string;
+    SDT: string;
+}
+
 export class UnauthorizedError extends Error {
     constructor() {
         super("Unauthorized");
@@ -71,41 +78,4 @@ export async function fetchUsers(
         totalPages: body.totalPages ?? 1,
         total: body.total ?? 0,
     };
-}
-
-export async function updateUserStatus(
-    userId: number,
-    status: UserStatusType,
-    fetchImpl: Fetcher = fetch,
-): Promise<void> {
-    const res = await fetchImpl("/api/admin/users/status", withTimeout
-        ({
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, status }),
-        }),
-    );
-    if (!res.ok) throw await toError(res, "Không thể cập nhật trạng thái");
-}
-
-export interface UserUpdatePayload {
-    userId: number;
-    HoTen: string;
-    Email: string;
-    SDT: string;
-}
-
-export async function updateUser(
-    payload: UserUpdatePayload,
-    fetchImpl: Fetcher = fetch,
-): Promise<void> {
-    const res = await fetchImpl("/api/admin/users/profile", withTimeout({
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-    },
-    ));
-    if (!res.ok) throw await toError(res, "Không thể lưu người dùng");
 }
