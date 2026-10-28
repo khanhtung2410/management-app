@@ -5,7 +5,7 @@ import { formatTaskDate, getTaskDisplayStatus } from "../_lib/taskUtils";
 import { Button } from "@/components/UI/Button";
 import { Badge } from "@/components/UI/Badge";
 import { Card } from "@/components/UI/Card";
-import TaskListEmptyState from "../empty";
+import TaskListEmptyState from "./EmptyState";
 
 export interface CongViec {
     ID: number;
