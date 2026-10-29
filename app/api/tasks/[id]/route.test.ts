@@ -32,7 +32,7 @@ describe("GET /api/tasks/[id]", () => {
   it("trả 400 khi id không hợp lệ", async () => {
     const res = await GET(req("GET", "/api/tasks/x"), params("x"));
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -80,7 +80,7 @@ describe("PATCH /api/tasks/[id]", () => {
       params("x"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -105,9 +105,29 @@ describe("PATCH /api/tasks/[id]", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
+  });
+
+  it("trả details[0].field = TrangThai khi TrangThai sai", async () => {
+    const res = await PATCH(
+      jsonReq({ TrangThai: 99 }, "PATCH", "/api/tasks/1"),
+      params("1"),
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.details[0].field).toBe("TrangThai");
+  });
+
+  it("trả details[0].field = id khi id path sai", async () => {
+    const res = await PATCH(
+      jsonReq({ TrangThai: taskStatus.Complete }, "PATCH", "/api/tasks/x"),
+      params("x"),
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.details[0].field).toBe("id");
   });
 
   it("trả 404 khi không tìm thấy task", async () => {

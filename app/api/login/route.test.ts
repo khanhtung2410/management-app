@@ -30,9 +30,17 @@ describe("POST /api/auth/login", () => {
   it("trả 400 khi thiếu email/password", async () => {
     const res = await POST(jsonReq({ email: "a@b.com" }));
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
+  });
+
+  it("trả details cho từng field thiếu", async () => {
+    const res = await POST(jsonReq({ email: "a@b.com" }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.details).toHaveLength(1);
+    expect(body.error.details[0].field).toBe("password");
   });
 
   it("trả 401 khi email không tồn tại", async () => {

@@ -22,7 +22,9 @@ export async function GET(
     const taskId = Number(id);
 
     if (!Number.isInteger(taskId) || taskId <= 0) {
-      throw badRequest("ID công việc không hợp lệ");
+      throw badRequest("ID công việc không hợp lệ", [
+        { field: "id", message: "ID công việc không hợp lệ" },
+      ]);
     }
 
     const pool = await getDb();
@@ -56,7 +58,9 @@ export async function PATCH(
     const taskId = Number(id);
 
     if (!Number.isInteger(taskId) || taskId <= 0) {
-      throw badRequest("ID công việc không hợp lệ");
+      throw badRequest("ID công việc không hợp lệ", [
+        { field: "id", message: "ID công việc không hợp lệ" },
+      ]);
     }
 
     const body = await readJson(req);
@@ -66,7 +70,9 @@ export async function PATCH(
       TrangThai !== taskStatus.Active &&
       TrangThai !== taskStatus.Complete
     ) {
-      throw badRequest("Trạng thái không hợp lệ");
+      throw badRequest("Trạng thái không hợp lệ", [
+        { field: "TrangThai", message: "Trạng thái không hợp lệ" },
+      ]);
     }
 
     const pool = await getDb();

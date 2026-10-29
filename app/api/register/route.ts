@@ -10,7 +10,6 @@ import {
   conflict,
   created,
   handleApiError,
-  ApiError,
 } from "@/lib/api";
 
 const SALT_ROUNDS = 10;
@@ -31,18 +30,15 @@ export async function POST(req: Request) {
     // Validator dùng chung (BT13.2). Full mode: cả 3 trường đều bắt buộc.
     const v = validateUserFields({ HoTen, Email, SDT }, { partial: false });
     if (!v.ok) {
-      throw new ApiError(
-        400,
-        "VALIDATION_ERROR",
-        "Dữ liệu không hợp lệ",
-        v.details,
-      );
+      throw badRequest("Dữ liệu không hợp lệ", v.details);
     }
     const { HoTen: hoTen, Email: email, SDT: sdt } = v.data;
 
     // Password không thuộc validateUserFields — validate riêng.
     if (typeof password !== "string" || password.length < 6) {
-      throw badRequest("Mật khẩu phải có ít nhất 6 ký tự");
+      throw badRequest("Mật khẩu phải có ít nhất 6 ký tự", [
+        { field: "password", message: "Mật khẩu phải có ít nhất 6 ký tự" },
+      ]);
     }
 
     const pool = await getDb();

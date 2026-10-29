@@ -22,7 +22,9 @@ export async function GET(req: NextRequest) {
 
     const sortByKey = (searchParams.get("sortBy") ?? "id") as SortKey;
     if (!(sortByKey in sortableColumn)) {
-      throw badRequest("sortBy không hợp lệ");
+      throw badRequest("sortBy không hợp lệ", [
+        { field: "sortBy", message: "sortBy không hợp lệ" },
+      ]);
     }
     const sortBy = sortableColumn[sortByKey];
     const sortDir = searchParams.get("order") === "desc" ? "DESC" : "ASC";
@@ -75,12 +77,20 @@ export async function POST(req: NextRequest) {
     const Mota = String(body.Mota ?? "").trim();
     const HetHan = body.HetHan;
 
-    if (!Ten) throw badRequest("Vui lòng nhập tên công việc");
+    if (!Ten) {
+      throw badRequest("Vui lòng nhập tên công việc", [
+        { field: "Ten", message: "Vui lòng nhập tên công việc" },
+      ]);
+    }
     if (Ten.length > 255) {
-      throw badRequest("Tên công việc không được vượt quá 255 ký tự");
+      throw badRequest("Tên công việc không được vượt quá 255 ký tự", [
+        { field: "Ten", message: "Tên công việc không được vượt quá 255 ký tự" },
+      ]);
     }
     if (typeof HetHan !== "string" || isNaN(Date.parse(HetHan))) {
-      throw badRequest("Ngày hết hạn không hợp lệ");
+      throw badRequest("Ngày hết hạn không hợp lệ", [
+        { field: "HetHan", message: "Ngày hết hạn không hợp lệ" },
+      ]);
     }
 
     const pool = await getDb();

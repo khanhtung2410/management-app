@@ -117,10 +117,20 @@ describe("POST /api/auth/register", () => {
   it("trả 400 khi password < 6 (sau khi user fields hợp lệ)", async () => {
     const res = await POST(jsonReq({ ...valid, password: "123" }));
     expect(res.status).toBe(400);
-    expect(await res.json()).toMatchObject({
+    const body = await res.json();
+    expect(body).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
+    expect(body.error.details[0].field).toBe("password");
     expect(getDbMock).not.toHaveBeenCalled();
+  });
+
+  it("trả details[0].field khi validator thất bại", async () => {
+    const res = await POST(jsonReq({ ...valid, Email: "bad" }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.details[0].field).toBe("Email");
   });
 
   // ─── Conflict từ pre-check ───
