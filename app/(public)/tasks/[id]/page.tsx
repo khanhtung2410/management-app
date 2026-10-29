@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import sql from "mssql";
 import { cache } from "react";
 import { STATUS_CONFIG, type TaskStatusType } from "@/constants/statuses";
-import { requireUserPage } from "@/lib/auth/server";
+import { requireAuthPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
 import { TaskStatusButton } from "./TaskStatusButton";
 import { formatTaskDate, getTaskDisplayStatus } from "../_lib/taskUtils";
@@ -22,7 +22,7 @@ interface TaskDetail {
 
 const getTask = cache(async (id: string): Promise<TaskDetail> => {
     const taskId = Number(id);
-    const { userId } = await requireUserPage();
+    const { userId } = await requireAuthPage();
 
     if (!Number.isInteger(taskId) || taskId <= 0) {
         notFound();

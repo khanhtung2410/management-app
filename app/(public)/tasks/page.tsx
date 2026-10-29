@@ -1,7 +1,7 @@
 // Tải danh sách công việc của người dùng đã xác thực ở server; không dùng cho danh sách admin hoặc chi tiết một công việc.
 import sql from "mssql";
 import type { TaskStatusType } from "@/constants/statuses";
-import { requireUserPage } from "@/lib/auth/server";
+import { requireAuthPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
 import type { CongViec } from "./_components/taskRow";
 import { TasksClient } from "./_components/TasksClient";
@@ -31,7 +31,7 @@ export default function TasksPage() {
 }
 
 async function TasksContent() {
-    const { userId } = await requireUserPage();
+    const { userId } = await requireAuthPage();
 
     const pool = await getDb();
     const result = await pool
