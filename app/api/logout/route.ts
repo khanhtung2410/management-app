@@ -1,11 +1,7 @@
-import { NextResponse } from "next/server";
+import { ok } from "@/lib/api";
 
 export async function POST() {
-    const response = NextResponse.json({
-        message: "Đăng xuất thành công",
-    });
-
-    response.cookies.delete("token");
-
-    return response;
+  const response = ok({ message: "Đăng xuất thành công" });
+  response.cookies.delete("token");
+  return response;
 }

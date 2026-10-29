@@ -1,137 +1,100 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
-import { UnauthorizedError, ForbiddenError } from "@/lib/auth/errors";
 import { taskStatus } from "@/constants/statuses";
 import { revalidatePath, revalidateTag } from "next/cache";
-
-function handleError(error: unknown, fallbackMessage: string) {
-    if (error instanceof UnauthorizedError) {
-        return NextResponse.json(
-            { message: "Chưa đăng nhập" },
-            { status: 401 }
-        );
-    }
-    if (error instanceof ForbiddenError) {
-        return NextResponse.json(
-            { message: "Không có quyền truy cập" },
-            { status: 403 }
-        );
-    }
-
-    console.error(fallbackMessage, error);
-    return NextResponse.json(
-        { message: fallbackMessage },
-        { status: 500 }
-    );
-}
+import {
+  readJson,
+  badRequest,
+  notFound,
+  ok,
+  handleApiError,
+} from "@/lib/api";
 
 export async function GET(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
-    try {
-        const { userId } = await requireAuth(req);
+  try {
+    const { userId } = await requireAuth(req);
+    const { id } = await params;
+    const taskId = Number(id);
 
-        const { id } = await params;
-        const taskId = Number(id);
-
-        if (!Number.isInteger(taskId) || taskId <= 0) {
-            return NextResponse.json(
-                { message: "ID công việc không hợp lệ" },
-                { status: 400 }
-            );
-        }
-
-        const pool = await getDb();
-        const result = await pool
-            .request()
-            .input("ID", sql.Int, taskId)
-            .input("UserID", sql.Int, Number(userId))
-            .query(`
-                SELECT ID, Ten, Mota, TrangThai, HetHan
-                FROM [dbo].[CongViec]
-                WHERE ID = @ID AND UserID = @UserID
-            `);
-
-        if (result.recordset.length === 0) {
-            return NextResponse.json(
-                { message: "Không tìm thấy công việc" },
-                { status: 404 }
-            );
-        }
-
-        return NextResponse.json(result.recordset[0]);
-    } catch (error) {
-        return handleError(error, "Lỗi khi lấy chi tiết công việc");
+    if (!Number.isInteger(taskId) || taskId <= 0) {
+      throw badRequest("ID công việc không hợp lệ");
     }
+
+    const pool = await getDb();
+    const result = await pool
+      .request()
+      .input("ID", sql.Int, taskId)
+      .input("UserID", sql.Int, Number(userId))
+      .query(`
+        SELECT ID, Ten, Mota, TrangThai, HetHan
+        FROM [dbo].[CongViec]
+        WHERE ID = @ID AND UserID = @UserID
+      `);
+
+    if (result.recordset.length === 0) {
+      throw notFound("Không tìm thấy công việc");
+    }
+
+    return ok(result.recordset[0]);
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
 
 export async function PATCH(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
-    try {
-        const { userId } = await requireAuth(req);
+  try {
+    const { userId } = await requireAuth(req);
+    const { id } = await params;
+    const taskId = Number(id);
 
-        const { id } = await params;
-        const taskId = Number(id);
-
-        if (!Number.isInteger(taskId) || taskId <= 0) {
-            return NextResponse.json(
-                { message: "ID công việc không hợp lệ" },
-                { status: 400 }
-            );
-        }
-
-        const body = await req.json().catch(() => null);
-        if (!body) {
-            return NextResponse.json(
-                { message: "Dữ liệu không hợp lệ" },
-                { status: 400 }
-            );
-        }
-
-        const TrangThai = Number(body.TrangThai);
-
-        // Chỉ cho phép 2 giá trị hợp lệ
-        if (TrangThai !== taskStatus.Active && TrangThai !== taskStatus.Complete) {
-            return NextResponse.json(
-                { message: "Trạng thái không hợp lệ" },
-                { status: 400 }
-            );
-        }
-
-        const pool = await getDb();
-        const result = await pool
-            .request()
-            .input("ID", sql.Int, taskId)
-            .input("UserID", sql.Int, Number(userId))
-            .input("TrangThai", sql.Int, TrangThai)
-            .query(`
-                UPDATE [dbo].[CongViec]
-                SET TrangThai = @TrangThai
-                OUTPUT
-                    INSERTED.ID, INSERTED.Ten, INSERTED.Mota,
-                    INSERTED.TrangThai, INSERTED.HetHan
-                WHERE ID = @ID AND UserID = @UserID
-            `);
-
-        // Không tìm thấy hoặc không phải task của user này
-        if (result.recordset.length === 0) {
-            return NextResponse.json(
-                { message: "Không tìm thấy công việc" },
-                { status: 404 }
-            );
-        }
-
-        revalidatePath("/tasks");
-        revalidatePath(`/tasks/${taskId}`);
-        revalidatePath("/admin/stat");
-        revalidateTag("dashboard-summary", "max");
-        return NextResponse.json(result.recordset[0]);
-    } catch (error) {
-        return handleError(error, "Lỗi khi cập nhật trạng thái");
+    if (!Number.isInteger(taskId) || taskId <= 0) {
+      throw badRequest("ID công việc không hợp lệ");
     }
+
+    const body = await readJson(req);
+    const TrangThai = Number(body.TrangThai);
+
+    if (
+      TrangThai !== taskStatus.Active &&
+      TrangThai !== taskStatus.Complete
+    ) {
+      throw badRequest("Trạng thái không hợp lệ");
+    }
+
+    const pool = await getDb();
+    const result = await pool
+      .request()
+      .input("ID", sql.Int, taskId)
+      .input("UserID", sql.Int, Number(userId))
+      .input("TrangThai", sql.Int, TrangThai)
+      .query(`
+        UPDATE [dbo].[CongViec]
+        SET TrangThai = @TrangThai
+        OUTPUT
+          INSERTED.ID, INSERTED.Ten, INSERTED.Mota,
+          INSERTED.TrangThai, INSERTED.HetHan
+        WHERE ID = @ID AND UserID = @UserID
+      `);
+
+    if (result.recordset.length === 0) {
+      throw notFound("Không tìm thấy công việc");
+    }
+
+    revalidatePath("/tasks");
+    revalidatePath(`/tasks/${taskId}`);
+    revalidatePath("/admin/stat");
+    revalidateTag("dashboard-summary", "max");
+
+    return ok(result.recordset[0]);
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

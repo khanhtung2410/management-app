@@ -25,8 +25,7 @@ const ascendingPage: UsersPage = {
         { ID: 1, HoTen: "Người dùng 1", Email: "one@example.com", SDT: "0900000001", TrangThai: 1 },
         { ID: 2, HoTen: "Người dùng 2", Email: "two@example.com", SDT: "0900000002", TrangThai: 1 },
     ],
-    totalPages: 1,
-    total: 2,
+    meta: { page: 1, pageSize: 10, total: 2, totalPages: 1 },
 };
 
 describe("useUsers sorting", () => {

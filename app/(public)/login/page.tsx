@@ -4,6 +4,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { userRole } from "@/constants/roles";
+import { readApiError } from "@/lib/api/client";
 import { withTimeout } from "@/lib/withTimeout";
 import { isAbortError } from "@/lib/isAbortError";
 import { Button } from "@/components/UI/Button";
@@ -24,7 +25,7 @@ function LoginForm() {
     useEffect(() => {
         if (showRegisterSuccess) {
             window.history.replaceState(null, "", "/login");
-        };
+        }
     }, [showRegisterSuccess]);
 
     const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -33,17 +34,17 @@ function LoginForm() {
         setLoading(true);
 
         try {
-            const response = await fetch("/api/login", withTimeout({
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
-            }),
+            const response = await fetch(
+                "/api/login",
+                withTimeout({
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password }),
+                }),
             );
 
-            const data = await response.json();
-
             if (!response.ok) {
-                setError(data.message || "Đăng nhập thất bại");
+                setError(await readApiError(response));
                 return;
             }
 
@@ -62,9 +63,10 @@ function LoginForm() {
             window.location.replace(destination);
         } catch (error) {
             console.error(error);
-            setError(isAbortError(error)
-                ? "Yêu cầu quá lâu, vui lòng thử lại"
-                : "Có lỗi xảy ra khi đăng nhập"
+            setError(
+                isAbortError(error)
+                    ? "Yêu cầu quá lâu, vui lòng thử lại"
+                    : "Có lỗi xảy ra khi đăng nhập",
             );
         } finally {
             setLoading(false);
@@ -75,9 +77,7 @@ function LoginForm() {
         <div className="font-sans">
             <div className="flex min-h-screen flex-col items-center justify-center">
                 <main className="flex w-full flex-col items-center justify-center px-20 text-center">
-                    <h1 className="text-[54px] font-bold">
-                        Đăng nhập
-                    </h1>
+                    <h1 className="text-[54px] font-bold">Đăng nhập</h1>
 
                     {showRegisterSuccess && (
                         <p className="mt-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -114,9 +114,7 @@ function LoginForm() {
                         />
 
                         {error && (
-                            <p className="text-sm text-red-500">
-                                {error}
-                            </p>
+                            <p className="text-sm text-red-500">{error}</p>
                         )}
 
                         <Button
