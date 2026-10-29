@@ -1,3 +1,11 @@
+// app/(admin)/admin/users/_lib/actions.test.ts
+//
+// Lý do tồn tại của file này:
+// Điều kiện `RoleId = @userRole` trong câu UPDATE đã từng bị mất khi luồng
+// được viết lại từ route handler sang Server Action. Không có test thì lần
+// viết lại tiếp theo (ví dụ khi chuyển sang validator dùng chung ở BT13.2)
+// có thể làm mất lần nữa mà không ai phát hiện.
+//
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // -----------------------------------------------------------------------------
@@ -34,18 +42,27 @@ import { requireAdminPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
 import { userStatus } from "@/constants/statuses";
 
+// Kiểu trả về thật của các hàm phụ thuộc — dùng để cast mock cho sạch.
+type AuthResult = Awaited<ReturnType<typeof requireAdminPage>>;
+type DbConnection = Awaited<ReturnType<typeof getDb>>;
+
 const requireAdminPageMock = vi.mocked(requireAdminPage);
 const getDbMock = vi.mocked(getDb);
 
 // -----------------------------------------------------------------------------
 // Helper: mock pool có GHI LẠI câu SQL để assert
 // -----------------------------------------------------------------------------
-type QueryResponse = { rowsAffected?: number[]; recordset?: any[] };
+type QueryResponse = { rowsAffected?: number[]; recordset?: unknown[] };
+
+type MockChain = {
+    input: ReturnType<typeof vi.fn>;
+    query: ReturnType<typeof vi.fn>;
+};
 
 function createMockPool(responses: QueryResponse[] = []) {
     let i = 0;
     const queries: string[] = [];
-    const chain: any = { input: vi.fn(), query: vi.fn() };
+    const chain: MockChain = { input: vi.fn(), query: vi.fn() };
     chain.input.mockReturnValue(chain);
     chain.query.mockImplementation((q: string) => {
         queries.push(q);
@@ -56,7 +73,14 @@ function createMockPool(responses: QueryResponse[] = []) {
         });
     });
     const request = vi.fn().mockReturnValue(chain);
-    return { pool: { request }, chain, request, queries };
+    const pool = { request };
+    return {
+        // Duy nhất một cast cần thiết: shape giả lập → shape thật của mssql.
+        pool: pool as unknown as DbConnection,
+        chain,
+        request,
+        queries,
+    };
 }
 
 const AUTH_USER_ID = 999;
@@ -69,7 +93,9 @@ const validProfilePayload = {
 
 beforeEach(() => {
     vi.clearAllMocks();
-    requireAdminPageMock.mockResolvedValue({ userId: AUTH_USER_ID } as any);
+    requireAdminPageMock.mockResolvedValue(
+        { userId: AUTH_USER_ID } as unknown as AuthResult
+    );
 });
 
 // =============================================================================
@@ -78,7 +104,7 @@ beforeEach(() => {
 describe("updateUserStatusAction – bảo vệ điều kiện RoleId", () => {
     it("câu UPDATE chứa RoleId = @userRole (và ID = @ID)", async () => {
         const { pool, queries } = createMockPool([{ rowsAffected: [1] }]);
-        getDbMock.mockResolvedValue(pool as any);
+        getDbMock.mockResolvedValue(pool);
 
         await updateUserStatusAction(5, userStatus.Active);
 
@@ -92,7 +118,7 @@ describe("updateUserStatusAction – bảo vệ điều kiện RoleId", () => {
 
     it("câu UPDATE vẫn còn RoleId khi trạng thái là Inactive", async () => {
         const { pool, queries } = createMockPool([{ rowsAffected: [1] }]);
-        getDbMock.mockResolvedValue(pool as any);
+        getDbMock.mockResolvedValue(pool);
 
         await updateUserStatusAction(5, userStatus.Inactive);
 
@@ -105,9 +131,8 @@ describe("updateUserStatusAction – bảo vệ điều kiện RoleId", () => {
 // =============================================================================
 describe("updateUserStatusAction – chặn tự đổi trạng thái", () => {
     it("trả { ok: false } và không truy vấn DB", async () => {
-        // Dù có sẵn pool, getDb vẫn không được gọi.
         const { pool, chain } = createMockPool([{ rowsAffected: [1] }]);
-        getDbMock.mockResolvedValue(pool as any);
+        getDbMock.mockResolvedValue(pool);
 
         const r = await updateUserStatusAction(
             AUTH_USER_ID,
@@ -128,7 +153,6 @@ describe("updateUserStatusAction – chặn tự đổi trạng thái", () => {
 // =============================================================================
 describe("updateUserProfileAction – validate không ném exception", () => {
     it("HoTen: 123 trả { ok: false } và không chạm DB", async () => {
-        // Gọi trực tiếp: nếu hàm ném, await sẽ propagate và test đỏ.
         const r = await updateUserProfileAction({
             ...validProfilePayload,
             HoTen: 123,
@@ -148,12 +172,11 @@ describe("updateUserProfileAction – email trùng", () => {
             { recordset: [{ ok: 1 }] }, // exists  → có user
             { recordset: [{ ok: 1 }] }, // dup     → email đã bị chiếm
         ]);
-        getDbMock.mockResolvedValue(pool as any);
+        getDbMock.mockResolvedValue(pool);
 
         const r = await updateUserProfileAction(validProfilePayload);
 
         expect(r).toEqual({ ok: false, error: "Email đã được sử dụng" });
-        // Không được chạm tới câu UPDATE thứ 3:
         expect(chain.query).toHaveBeenCalledTimes(2);
     });
 });
@@ -168,7 +191,7 @@ describe("updateUserProfileAction – bảo vệ điều kiện RoleId", () => {
             { recordset: [] },          // no dup
             { rowsAffected: [1] },      // update ok
         ]);
-        getDbMock.mockResolvedValue(pool as any);
+        getDbMock.mockResolvedValue(pool);
 
         await updateUserProfileAction(validProfilePayload);
 
@@ -176,7 +199,7 @@ describe("updateUserProfileAction – bảo vệ điều kiện RoleId", () => {
             /UPDATE\s+\[dbo\]\.\[User\]/i.test(q)
         );
         expect(updateQuery).toBeDefined();
-        expect(updateQuery!).toMatch(/ID\s*=\s*@ID/i);
-        expect(updateQuery!).toMatch(/RoleId\s*=\s*@userRole/i);
+        expect(updateQuery ?? "").toMatch(/ID\s*=\s*@ID/i);
+        expect(updateQuery ?? "").toMatch(/RoleId\s*=\s*@userRole/i);
     });
 });
