@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { ApiError, type ErrorCode, type ErrorDetail } from "./errors";
 
 export interface ListMeta {
@@ -38,6 +39,8 @@ function errorResponse(
 
 /**
  * Chuẩn hoá MỌI lỗi thành response lỗi theo mục 4:
+ *   - lỗi nội bộ của Next.js         → unstable_rethrow NÉM LẠI (redirect,
+ *                                       notFound, NEXT_PRERENDER_INTERRUPTED, …)
  *   - ApiError                         → đúng status/code/message/details
  *   - UnauthorizedError                → 401 UNAUTHENTICATED
  *   - UnauthorizedError + reason=locked → 403 ACCOUNT_LOCKED (dự phòng)
@@ -46,6 +49,13 @@ function errorResponse(
  *   - còn lại                          → 500 INTERNAL_ERROR + console.error
  */
 export function handleApiError(error: unknown): NextResponse {
+  // Cho Next.js xử lý lại các lỗi nội bộ của nó.
+  // `unstable_rethrow` NÉM nếu là lỗi nội bộ (redirect/notFound/prerender
+  // abort/…), và trả về bình thường nếu không phải. Không có bước này, các
+  // lỗi như NEXT_PRERENDER_INTERRUPTED sẽ rơi vào nhánh 500 bên dưới và bị
+  // log thành "[api] unhandled error" trong lúc build.
+  unstable_rethrow(error);
+
   if (error instanceof ApiError) {
     return errorResponse(error.status, error.code, error.message, error.details);
   }
