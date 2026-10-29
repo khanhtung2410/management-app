@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { readApiError } from "@/lib/api/client";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 
@@ -54,10 +55,8 @@ export default function RegisterPage() {
                 }),
             });
 
-            const result = await res.json();
-
             if (!res.ok) {
-                throw new Error(result.message || "Đăng ký thất bại");
+                throw new Error(await readApiError(res));
             }
 
             // Đăng ký thành công → chuyển sang trang login
