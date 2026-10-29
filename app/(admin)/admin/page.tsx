@@ -20,6 +20,7 @@ import {
 } from "@/lib/mock/dashboard";
 import { requireAdminPage } from "@/lib/auth/server";
 import { InlineEmptyState } from "@/components/UI/InlineEmptyState";
+import { unstable_rethrow } from "next/navigation";
 
 interface DashboardData {
     summary: DashboardSummary | null;
@@ -35,10 +36,12 @@ const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
 });
 
 function getErrorMessage(reason: unknown, fallback: string): string {
-    const digest = (reason as { digest?: string })?.digest;
-    if (digest !== "NEXT_PRERENDER_INTERRUPTED") {
-        console.error(fallback, reason);
-    }
+    // Ném lại lỗi nội bộ của Next.js (NEXT_PRERENDER_INTERRUPTED, redirect,
+    // notFound, …) để runtime xử lý đúng: dừng prerender và đánh dấu route
+    // là dynamic. Chỉ lỗi thường mới rơi xuống log + fallback bên dưới.
+    unstable_rethrow(reason);
+
+    console.error(fallback, reason);
     return fallback;
 }
 
