@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import type { CongViec } from "./taskRow";
+import { readApiError } from "@/lib/api/client";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 
@@ -51,14 +52,14 @@ export function TaskFormModal({ onClose, onCreated }: TaskFormModalProps) {
                 }),
             });
 
-            const result = await res.json();
-
             if (!res.ok) {
-                throw new Error(result.message || "Không thể thêm công việc");
+                throw new Error(await readApiError(res));
             }
 
+            const task = (await res.json()) as CongViec;
+
             // Báo cho page biết đã tạo thành công — page cập nhật danh sách
-            onCreated(result);
+            onCreated(task);
             // Đóng modal → unmount → state tự reset
             onClose();
         } catch (error) {

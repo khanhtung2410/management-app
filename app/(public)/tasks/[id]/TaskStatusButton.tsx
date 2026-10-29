@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { taskStatus, TaskStatusType } from "@/constants/statuses";
+import { readApiError } from "@/lib/api/client";
 import { Button } from "@/components/UI/Button";
 
 interface TaskStatusButtonProps {
@@ -37,12 +38,9 @@ export function TaskStatusButton({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ TrangThai: nextStatus }),
             });
-            const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(
-                    result.message || "Không thể cập nhật trạng thái"
-                );
+                throw new Error(await readApiError(response));
             }
 
             router.refresh();

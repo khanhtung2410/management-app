@@ -7,6 +7,7 @@ import {
     useState,
 } from "react";
 import { taskStatus } from "@/constants/statuses";
+import { readApiError } from "@/lib/api/client";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { TaskList, type CongViec } from "./taskRow";
 import { TaskFormModal } from "./TaskFormModal";
@@ -54,12 +55,8 @@ export function TasksClient({ initialTasks }: { initialTasks: CongViec[] }) {
                 body: JSON.stringify({ TrangThai: newStatus }),
             });
 
-            const result = await res.json();
-
             if (!res.ok) {
-                throw new Error(
-                    result.message || "Không thể cập nhật trạng thái"
-                );
+                throw new Error(await readApiError(res));
             }
 
             setData(prev =>
