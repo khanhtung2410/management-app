@@ -70,9 +70,9 @@ export function useUsers({
                 setState({
                     status: "success",
                     data: page.data,
-                    totalPages: page.totalPages,
-                    total: page.total
-                })
+                    totalPages: page.meta.totalPages,
+                    total: page.meta.total,
+                });
             } catch (err) {
                 if (cancelled) return
                 console.error("Lỗi:", err);
