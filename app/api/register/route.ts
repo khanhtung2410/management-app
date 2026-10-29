@@ -3,41 +3,45 @@ import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/db";
 import { userStatus } from "@/constants/statuses";
 import { userRole } from "@/constants/roles";
+import { validateUserFields } from "@/lib/validation/user";
 import {
   readJson,
   badRequest,
   conflict,
   created,
   handleApiError,
+  ApiError,
 } from "@/lib/api";
 
 const SALT_ROUNDS = 10;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Vi phạm UNIQUE constraint / index (UQ_User_Email) — phải bắt vì giữa
+// SELECT exists và INSERT vẫn có race condition (hai request cùng email).
+function isUniqueViolation(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const n = (error as { number?: unknown }).number;
+  return n === 2627 || n === 2601;
+}
 
 export async function POST(req: Request) {
   try {
     const body = await readJson(req);
     const { HoTen, Email, SDT, password } = body;
 
-    if (
-      typeof HoTen !== "string" ||
-      typeof Email !== "string" ||
-      typeof password !== "string"
-    ) {
-      throw badRequest("Dữ liệu không hợp lệ");
+    // Validator dùng chung (BT13.2). Full mode: cả 3 trường đều bắt buộc.
+    const v = validateUserFields({ HoTen, Email, SDT }, { partial: false });
+    if (!v.ok) {
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Dữ liệu không hợp lệ",
+        v.details,
+      );
     }
+    const { HoTen: hoTen, Email: email, SDT: sdt } = v.data;
 
-    const hoTen = HoTen.trim();
-    const email = Email.trim().toLowerCase();
-    const sdt = typeof SDT === "string" ? SDT.trim() : "";
-
-    if (!hoTen || hoTen.length < 2) {
-      throw badRequest("Họ tên phải có ít nhất 2 ký tự");
-    }
-    if (!EMAIL_REGEX.test(email)) {
-      throw badRequest("Email không hợp lệ");
-    }
-    if (password.length < 6) {
+    // Password không thuộc validateUserFields — validate riêng.
+    if (typeof password !== "string" || password.length < 6) {
       throw badRequest("Mật khẩu phải có ít nhất 6 ký tự");
     }
 
@@ -45,7 +49,7 @@ export async function POST(req: Request) {
 
     const exists = await pool
       .request()
-      .input("Email", sql.NVarChar(255), email)
+      .input("Email", sql.VarChar(255), email)
       .query(`SELECT 1 AS found FROM [User] WHERE Email = @Email`);
 
     if (exists.recordset.length > 0) {
@@ -54,19 +58,27 @@ export async function POST(req: Request) {
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const result = await pool
-      .request()
-      .input("HoTen", sql.NVarChar(255), hoTen)
-      .input("Email", sql.NVarChar(255), email)
-      .input("SDT", sql.NVarChar(10), sdt)
-      .input("PasswordHash", sql.NVarChar(255), passwordHash)
-      .input("RoleId", sql.Int, userRole.USER)
-      .input("TrangThai", sql.Int, userStatus.Active)
-      .query(`
-        INSERT INTO [User] (HoTen, Email, SDT, PasswordHash, RoleId, TrangThai)
-        OUTPUT INSERTED.ID, INSERTED.HoTen, INSERTED.Email
-        VALUES (@HoTen, @Email, @SDT, @PasswordHash, @RoleId, @TrangThai)
-      `);
+    let result: sql.IResult<{ ID: number; HoTen: string; Email: string }>;
+    try {
+      result = await pool
+        .request()
+        .input("HoTen", sql.NVarChar(255), hoTen)
+        .input("Email", sql.VarChar(255), email)
+        .input("SDT", sql.VarChar(10), sdt)
+        .input("PasswordHash", sql.NVarChar(255), passwordHash)
+        .input("RoleId", sql.Int, userRole.USER)
+        .input("TrangThai", sql.Int, userStatus.Active)
+        .query(`
+          INSERT INTO [User] (HoTen, Email, SDT, PasswordHash, RoleId, TrangThai)
+          OUTPUT INSERTED.ID, INSERTED.HoTen, INSERTED.Email
+          VALUES (@HoTen, @Email, @SDT, @PasswordHash, @RoleId, @TrangThai)
+        `);
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw conflict("Email đã được sử dụng");
+      }
+      throw error;
+    }
 
     return created({
       message: "Đăng ký thành công",
