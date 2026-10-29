@@ -42,7 +42,7 @@ describe("GET /api/tasks", () => {
   it("trả 400 khi sortBy không hợp lệ", async () => {
     const res = await GET(req("GET", "/api/tasks?sortBy=foobar"));
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -89,7 +89,7 @@ describe("POST /api/tasks", () => {
   it("trả 400 khi thiếu Ten", async () => {
     const res = await POST(jsonReq({ HetHan: "2026-01-01" }));
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -97,9 +97,23 @@ describe("POST /api/tasks", () => {
   it("trả 400 khi HetHan không hợp lệ", async () => {
     const res = await POST(jsonReq({ Ten: "T", HetHan: "abc" }));
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
+  });
+
+  it("trả details[0].field = Ten khi thiếu Ten", async () => {
+    const res = await POST(jsonReq({ HetHan: "2026-01-01" }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.details[0].field).toBe("Ten");
+  });
+
+  it("trả details[0].field = HetHan khi HetHan sai", async () => {
+    const res = await POST(jsonReq({ Ten: "T", HetHan: "abc" }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.details[0].field).toBe("HetHan");
   });
 
   it("trả 201 khi tạo thành công", async () => {

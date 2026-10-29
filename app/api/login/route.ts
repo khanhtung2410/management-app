@@ -10,6 +10,7 @@ import {
   unauthenticated,
   accountLocked,
   handleApiError,
+  type ErrorDetail,
 } from "@/lib/api";
 
 export async function POST(req: Request) {
@@ -19,11 +20,18 @@ export async function POST(req: Request) {
 
     if (
       typeof email !== "string" ||
-      typeof password !== "string" ||
       !email ||
+      typeof password !== "string" ||
       !password
     ) {
-      throw badRequest("Vui lòng nhập email và mật khẩu");
+      const details: ErrorDetail[] = [];
+      if (typeof email !== "string" || !email) {
+        details.push({ field: "email", message: "Vui lòng nhập email" });
+      }
+      if (typeof password !== "string" || !password) {
+        details.push({ field: "password", message: "Vui lòng nhập mật khẩu" });
+      }
+      throw badRequest(details[0].message, details);
     }
 
     const pool = await getDb();

@@ -36,7 +36,9 @@ export async function PATCH(
     const { id } = await params;
     const targetId = Number(id);
     if (!Number.isInteger(targetId) || targetId <= 0) {
-      throw badRequest("ID người dùng không hợp lệ");
+      throw badRequest("ID người dùng không hợp lệ", [
+        { field: "id", message: "ID người dùng không hợp lệ" },
+      ]);
     }
 
     const body = await readJson(request);
@@ -52,7 +54,9 @@ export async function PATCH(
     // ─── Validate status ───
     if (hasStatus) {
       if (TrangThai !== userStatus.Active && TrangThai !== userStatus.Inactive) {
-        throw badRequest("Trạng thái không hợp lệ");
+        throw badRequest("Trạng thái không hợp lệ", [
+          { field: "TrangThai", message: "Trạng thái không hợp lệ" },
+        ]);
       }
       if (targetId === currentUserId) {
         throw forbidden("Không thể đổi trạng thái của chính mình");
@@ -67,7 +71,7 @@ export async function PATCH(
     if (hasProfile) {
       const v = validateUserFields({ HoTen, Email, SDT }, { partial: true });
       if (!v.ok) {
-        throw badRequest(v.details[0]?.message ?? "Dữ liệu không hợp lệ");
+        throw badRequest(v.details[0]?.message ?? "Dữ liệu không hợp lệ", v.details);
       }
       hoTen = v.data.HoTen;
       email = v.data.Email;

@@ -102,7 +102,7 @@ describe("PATCH /api/admin/users/[id] — body/id", () => {
   it("trả 400 khi id không hợp lệ", async () => {
     const res = await PATCH(jsonReq({}, "PATCH", "/api/x"), params("x"));
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -110,7 +110,7 @@ describe("PATCH /api/admin/users/[id] — body/id", () => {
   it("trả 400 khi không có trường nào", async () => {
     const res = await PATCH(jsonReq({}, "PATCH", URL_1), params("1"));
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -129,7 +129,7 @@ describe("PATCH /api/admin/users/[id] — TrangThai", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -183,7 +183,7 @@ describe("PATCH /api/admin/users/[id] — HoTen/Email", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -194,7 +194,7 @@ describe("PATCH /api/admin/users/[id] — HoTen/Email", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -205,7 +205,7 @@ describe("PATCH /api/admin/users/[id] — HoTen/Email", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
     expect(getDb).not.toHaveBeenCalled();
@@ -217,7 +217,7 @@ describe("PATCH /api/admin/users/[id] — HoTen/Email", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
   });
@@ -365,7 +365,7 @@ describe("PATCH /api/admin/users/[id] — Email format & chuẩn hoá", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
     expect(getDb).not.toHaveBeenCalled();
@@ -424,7 +424,7 @@ describe("PATCH /api/admin/users/[id] — validate SDT", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
     expect(getDb).not.toHaveBeenCalled();
@@ -442,7 +442,7 @@ describe("PATCH /api/admin/users/[id] — validate SDT", () => {
       params("1"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
     expect(getDb).not.toHaveBeenCalled();
@@ -558,9 +558,53 @@ describe("PATCH /api/admin/users/[id] — partial update", () => {
       params("2"),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: { code: "VALIDATION_ERROR", message: expect.any(String) },
     });
     expect(getDb).not.toHaveBeenCalled();
+  });
+});
+
+// ─────────────────────────── details ───────────────────────────
+describe("PATCH /api/admin/users/[id] — error.details", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(requireRole).mockResolvedValue(authAdmin);
+  });
+
+  it("trả details cho mọi field profile sai", async () => {
+    const res = await PATCH(
+      jsonReq({ Email: "bad", SDT: "abc" }, "PATCH", URL_1),
+      params("1"),
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.details).toHaveLength(2);
+    expect(body.error.details[0]).toEqual({
+      field: "Email",
+      message: expect.any(String),
+    });
+    expect(body.error.details.map((d: { field: string }) => d.field)).toEqual([
+      "Email",
+      "SDT",
+    ]);
+  });
+
+  it("trả details[0].field = TrangThai khi status sai", async () => {
+    const res = await PATCH(
+      jsonReq({ TrangThai: 99 }, "PATCH", URL_1),
+      params("1"),
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.details[0].field).toBe("TrangThai");
+  });
+
+  it("trả details[0].field = id khi id path sai", async () => {
+    const res = await PATCH(jsonReq({}, "PATCH", "/api/x"), params("x"));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.details[0].field).toBe("id");
   });
 });
