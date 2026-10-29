@@ -14,16 +14,12 @@ import {
   handleApiError,
   conflict,
 } from "@/lib/api";
+import { validateUserFields } from "@/lib/validation/user";
 
-const PHONE_REGEX = /^0\d{9}$/;
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-/**
- * Vi phạm UNIQUE constraint / UNIQUE index của SQL Server:
- *   - 2627: UNIQUE constraint (UQ_User_Email)
- *   - 2601: UNIQUE index
- * Phải bắt vì giữa SELECT kiểm tra trùng và UPDATE vẫn có race condition (P2.3c).
- */
+// Vi phạm UNIQUE constraint / index của SQL Server:
+//   - 2627: UNIQUE constraint (UQ_User_Email)
+//   - 2601: UNIQUE index (dự phòng nếu constraint được tạo bằng CREATE INDEX)
+// Phải bắt vì giữa SELECT kiểm tra trùng và UPDATE vẫn có race condition (P2.3c).
 function isUniqueViolation(error: unknown): boolean {
   if (typeof error !== "object" || error === null) return false;
   const n = (error as { number?: unknown }).number;
@@ -47,8 +43,7 @@ export async function PATCH(
     const { TrangThai, HoTen, Email, SDT } = body;
 
     const hasStatus = TrangThai !== undefined;
-    const hasProfile =
-      HoTen !== undefined || Email !== undefined || SDT !== undefined;
+    const hasProfile = HoTen !== undefined || Email !== undefined || SDT !== undefined;
 
     if (!hasStatus && !hasProfile) {
       throw badRequest("Không có trường nào để cập nhật");
@@ -56,10 +51,7 @@ export async function PATCH(
 
     // ─── Validate status ───
     if (hasStatus) {
-      if (
-        TrangThai !== userStatus.Active &&
-        TrangThai !== userStatus.Inactive
-      ) {
+      if (TrangThai !== userStatus.Active && TrangThai !== userStatus.Inactive) {
         throw badRequest("Trạng thái không hợp lệ");
       }
       if (targetId === currentUserId) {
@@ -67,47 +59,19 @@ export async function PATCH(
       }
     }
 
-    // ─── Validate profile ───
+    // ─── Validate profile (chỉ khi có ít nhất 1 trường profile) ───
     let hoTen: string | undefined;
     let email: string | undefined;
-    let sdt: string | undefined;
+    let sdt: string | null | undefined;
 
-    if (HoTen !== undefined) {
-      if (typeof HoTen !== "string" || HoTen.trim() === "") {
-        throw badRequest("Họ tên không hợp lệ");
+    if (hasProfile) {
+      const v = validateUserFields({ HoTen, Email, SDT }, { partial: true });
+      if (!v.ok) {
+        throw badRequest(v.details[0]?.message ?? "Dữ liệu không hợp lệ");
       }
-      hoTen = HoTen.trim();
-      if (hoTen.length > 255) {
-        throw badRequest("Họ tên không được vượt quá 255 ký tự");
-      }
-    }
-
-    if (Email !== undefined) {
-      if (typeof Email !== "string") {
-        throw badRequest("Email không hợp lệ");
-      }
-      // Chuẩn hoá lowercase trước khi so trùng / UPDATE để tránh
-      // hai bản ghi chỉ khác case (collation CI che giấu việc này ở WHERE).
-      const normalized = Email.trim().toLowerCase();
-      if (
-        normalized === "" ||
-        normalized.length > 255 ||
-        !EMAIL_REGEX.test(normalized)
-      ) {
-        throw badRequest("Email không hợp lệ");
-      }
-      email = normalized;
-    }
-
-    if (SDT !== undefined) {
-      if (typeof SDT !== "string") {
-        throw badRequest("Số điện thoại không hợp lệ");
-      }
-      sdt = SDT.trim();
-      // Cho phép rỗng để xoá SĐT; nếu có giá trị phải đúng định dạng
-      if (sdt !== "" && !PHONE_REGEX.test(sdt)) {
-        throw badRequest("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0");
-      }
+      hoTen = v.data.HoTen;
+      email = v.data.Email;
+      sdt = v.data.SDT;
     }
 
     const db = await getDb();
@@ -135,18 +99,9 @@ export async function PATCH(
       sets.push("TrangThai = @TrangThai");
       req.input("TrangThai", sql.Int, TrangThai as number);
     }
-    if (hoTen !== undefined) {
-      sets.push("HoTen = @HoTen");
-      req.input("HoTen", sql.NVarChar(255), hoTen);
-    }
-    if (email !== undefined) {
-      sets.push("Email = @Email");
-      req.input("Email", sql.VarChar(255), email);
-    }
-    if (sdt !== undefined) {
-      sets.push("SDT = @SDT");
-      req.input("SDT", sql.VarChar(10), sdt);
-    }
+    if (hoTen !== undefined) { sets.push("HoTen = @HoTen"); req.input("HoTen", sql.NVarChar(255), hoTen); }
+    if (email !== undefined) { sets.push("Email = @Email"); req.input("Email", sql.VarChar(255), email); }
+    if (sdt  !== undefined) { sets.push("SDT = @SDT");   req.input("SDT",  sql.VarChar(10),  sdt);   }
 
     const updateQuery = `
       UPDATE [User]
