@@ -21,20 +21,31 @@ export async function getAuth(): Promise<AuthPayload | null> {
     }
 }
 
-async function requireRolePage(requiredRole: UserRoleType): Promise<AuthPayload> {
+/**
+ * Lấy payload từ cookie "token", hoặc redirect("/login") nếu thiếu/hỏng.
+ * Dùng chung cho mọi guard "phải đăng nhập".
+ */
+async function getAuthPayloadOrRedirect(): Promise<AuthPayload> {
     const token = (await cookies()).get("token")?.value;
     if (!token) redirect("/login");
 
-    let payload: AuthPayload;
     try {
-        payload = await verifyToken(token);
+        return await verifyToken(token);
     } catch (error) {
         if (error instanceof UnauthorizedError) redirect("/login");
         throw error;
     }
+}
 
+async function requireRolePage(requiredRole: UserRoleType): Promise<AuthPayload> {
+    const payload = await getAuthPayloadOrRedirect();
     if (payload.roleId !== requiredRole) redirect("/403");
     return payload;
+}
+
+/** Chỉ cần đăng nhập — không ràng buộc role. */
+export function requireAuthPage(): Promise<AuthPayload> {
+    return getAuthPayloadOrRedirect();
 }
 
 export function requireUserPage(): Promise<AuthPayload> {
