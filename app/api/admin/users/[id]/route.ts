@@ -12,9 +12,23 @@ import {
   forbidden,
   ok,
   handleApiError,
+  conflict,
 } from "@/lib/api";
 
 const PHONE_REGEX = /^0\d{9}$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+/**
+ * Vi phạm UNIQUE constraint / UNIQUE index của SQL Server:
+ *   - 2627: UNIQUE constraint (UQ_User_Email)
+ *   - 2601: UNIQUE index
+ * Phải bắt vì giữa SELECT kiểm tra trùng và UPDATE vẫn có race condition (P2.3c).
+ */
+function isUniqueViolation(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const n = (error as { number?: unknown }).number;
+  return n === 2627 || n === 2601;
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -67,15 +81,24 @@ export async function PATCH(
         throw badRequest("Họ tên không được vượt quá 255 ký tự");
       }
     }
+
     if (Email !== undefined) {
-      if (typeof Email !== "string" || Email.trim() === "") {
+      if (typeof Email !== "string") {
         throw badRequest("Email không hợp lệ");
       }
-      email = Email.trim();
-      if (email.length > 255) {
-        throw badRequest("Email không được vượt quá 255 ký tự");
+      // Chuẩn hoá lowercase trước khi so trùng / UPDATE để tránh
+      // hai bản ghi chỉ khác case (collation CI che giấu việc này ở WHERE).
+      const normalized = Email.trim().toLowerCase();
+      if (
+        normalized === "" ||
+        normalized.length > 255 ||
+        !EMAIL_REGEX.test(normalized)
+      ) {
+        throw badRequest("Email không hợp lệ");
       }
+      email = normalized;
     }
+
     if (SDT !== undefined) {
       if (typeof SDT !== "string") {
         throw badRequest("Số điện thoại không hợp lệ");
@@ -87,9 +110,22 @@ export async function PATCH(
       }
     }
 
+    const db = await getDb();
+
+    // ─── Pre-check email trùng ───
+    if (email !== undefined) {
+      const dup = await db
+        .request()
+        .input("Email", sql.VarChar(255), email)
+        .input("ID", sql.Int, targetId)
+        .query("SELECT 1 FROM [User] WHERE Email = @Email AND ID <> @ID");
+      if (dup.recordset.length > 0) {
+        throw conflict("Email đã được sử dụng");
+      }
+    }
+
     // ─── Build SET động ───
     const sets: string[] = [];
-    const db = await getDb();
     const req = db
       .request()
       .input("userId", sql.Int, targetId)
@@ -105,19 +141,30 @@ export async function PATCH(
     }
     if (email !== undefined) {
       sets.push("Email = @Email");
-      req.input("Email", sql.NVarChar(255), email);
+      req.input("Email", sql.VarChar(255), email);
     }
     if (sdt !== undefined) {
       sets.push("SDT = @SDT");
-      req.input("SDT", sql.NVarChar(10), sdt);
+      req.input("SDT", sql.VarChar(10), sdt);
     }
 
-    const result = await req.query(`
+    const updateQuery = `
       UPDATE [User]
       SET ${sets.join(", ")}
       WHERE ID = @userId
         AND RoleId = @userRole
-    `);
+    `;
+
+    // ─── UPDATE + bắt race condition 2627/2601 ───
+    let result: sql.IResult<unknown>;
+    try {
+      result = await req.query(updateQuery);
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw conflict("Email đã được sử dụng");
+      }
+      throw error;
+    }
 
     if (result.rowsAffected[0] === 0) {
       throw notFound("Không tìm thấy người dùng");
