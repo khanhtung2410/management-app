@@ -235,6 +235,14 @@ Lý do:
 | `id` (path) | số nguyên dương | `"ID không hợp lệ"` |
 | `page` | số nguyên ≥ 1 | `"page phải là số nguyên dương"` |
 | `pageSize` | số nguyên `1..100` | `"pageSize phải nằm trong khoảng 1..100"` |
+| `HoTen` | chuỗi, trim, **không rỗng**, ≤ 255 ký tự. Không yêu cầu min 2 (đồng bộ 3 nơi). | `"Họ tên không được để trống"` |
+| `Email` | chuỗi, trim, **lowercase**, regex `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`, ≤ 255 ký tự | `"Email không hợp lệ"` |
+| `SDT` | Ở **full mode** (register): bắt buộc, `^0\d{9}$`. Ở **partial mode** (PATCH admin user, Server Action sửa profile): `""` hoặc toàn khoảng trắng = xoá (bind NULL); có giá trị phải khớp `^0\d{9}$`. | `"Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0"` |
+
+> Ba rule trên áp dụng thống nhất qua `lib/validation/user.ts:validateUserFields`.
+> Mọi endpoint ghi vào `HoTen`/`Email`/`SDT` (`POST /api/register`,
+> `PATCH /api/admin/users/[id]`, Server Action `updateUserProfileAction`)
+> **phải** dùng validator này, không validate inline.
 
 - Trùng email khi đăng ký hoặc cập nhật profile → `409 CONFLICT` (không phải `400`, không phải `500`).
 - Không dựa vào DB constraint để trả `409` bằng cách bắt lỗi driver — **kiểm tra trước khi ghi**; nếu vẫn để constraint ném (race condition), map sang `409` nếu driver báo lỗi unique, ngược lại `500`.

@@ -5,6 +5,7 @@ import { userStatus, UserStatusType } from "@/constants/statuses";
 import { requireAdminPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
 import { currentMockMode, mockMode, mockDelay } from "@/lib/mock/config";
+import { validateUserFields } from "@/lib/validation/user";
 import sql from "mssql";
 import { revalidatePath, updateTag } from "next/cache";
 
@@ -81,29 +82,30 @@ export async function updateUserProfileAction(
         return { ok: false, error: "Số điện thoại không hợp lệ" };
     }
 
-    const name = HoTen.trim();
-    const email = Email.trim().toLowerCase();
-    const sdt = SDT.trim();
-
-    if (!name) {
-        return { ok: false, error: "Họ tên không được để trống" };
+    // Validator dùng chung (BT13.2). partial mode vì form admin cho phép
+    // xoá SĐT bằng cách gửi chuỗi rỗng (→ lưu NULL, khớp cột SDT NULL).
+    const v = validateUserFields({ HoTen, Email, SDT }, { partial: true });
+    if (!v.ok) {
+        return {
+            ok: false,
+            error: v.details[0]?.message ?? "Dữ liệu không hợp lệ",
+        };
     }
-    if (name.length > 255) {
-        return { ok: false, error: "Tên không hợp lệ" };
+    // Type check ở trên đảm bảo cả 3 là string; validator đã trim + check rỗng,
+    // nên nếu v.ok thì data.HoTen/Email chắc chắn là string không rỗng.
+    if (v.data.HoTen === undefined || v.data.Email === undefined) {
+        return { ok: false, error: "Dữ liệu không hợp lệ" };
     }
-    if (email.length > 255 || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-        return { ok: false, error: "Email không hợp lệ" };
-    }
-    if (!/^0\d{9}$/.test(sdt)) {
-        return { ok: false, error: "Sai định dạng số điện thoại" };
-    }
+    const name = v.data.HoTen;
+    const email = v.data.Email;
+    const sdt = v.data.SDT ?? null; // null = xoá SĐT
 
     if (currentMockMode === mockMode.error) {
         return { ok: false, error: "Lỗi giả lập từ mock API." };
     }
     if (currentMockMode === mockMode.on) {
         await mockDelay();
-        return { ok: true, data: { userId, HoTen: name, Email: email, SDT: sdt } };
+        return { ok: true, data: { userId, HoTen: name, Email: email, SDT: sdt ?? "" } };
     }
 
     const pool = await getDb();
@@ -131,7 +133,7 @@ export async function updateUserProfileAction(
         .input("userRole", sql.Int, userRole.USER)
         .input("HoTen", sql.NVarChar(255), name)
         .input("Email", sql.VarChar(255), email)
-        .input("SDT", sql.VarChar(10), sdt)
+        .input("SDT", sql.VarChar(10), sdt) // string | null — mssql ghi NULL
         .query(`
             UPDATE [dbo].[User]
             SET HoTen = @HoTen, Email = @Email, SDT = @SDT
@@ -142,5 +144,5 @@ export async function updateUserProfileAction(
         return { ok: false, error: "Không thể cập nhật — người dùng có thể đã bị xóa" };
     }
 
-    return { ok: true, data: { userId, HoTen: name, Email: email, SDT: sdt } };
+    return { ok: true, data: { userId, HoTen: name, Email: email, SDT: sdt ?? "" } };
 }

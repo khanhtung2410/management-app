@@ -203,3 +203,73 @@ describe("updateUserProfileAction – bảo vệ điều kiện RoleId", () => {
         expect(updateQuery ?? "").toMatch(/RoleId\s*=\s*@userRole/i);
     });
 });
+
+// =============================================================================
+// (5) SDT "" → xoá SĐT (hành vi mới sau BT13.2, đồng bộ với PATCH route)
+// =============================================================================
+describe("updateUserProfileAction – SDT rỗng = xoá SĐT", () => {
+    it("SDT: '' trả ok:true và ghi NULL vào DB", async () => {
+        const capturedSdt: unknown[] = [];
+        const chain: MockChain = { input: vi.fn(), query: vi.fn() };
+        chain.input.mockImplementation(
+            (name: string, _t: unknown, value: unknown) => {
+                if (name === "SDT") capturedSdt.push(value);
+                return chain;
+            },
+        );
+        chain.query
+            .mockResolvedValueOnce({ recordset: [{ ok: 1 }] })  // exists
+            .mockResolvedValueOnce({ recordset: [] })           // no dup
+            .mockResolvedValueOnce({ rowsAffected: [1] });      // update ok
+
+        const request = vi.fn().mockReturnValue(chain);
+        getDbMock.mockResolvedValue(
+            { request } as unknown as DbConnection,
+        );
+
+        const r = await updateUserProfileAction({
+            ...validProfilePayload,
+            SDT: "",
+        });
+
+        expect(r.ok).toBe(true);
+        // Phải có đúng 1 lần set @SDT, giá trị null (không phải "").
+        expect(capturedSdt).toEqual([null]);
+    });
+});
+
+// =============================================================================
+// (6) Email được lowercase trước khi truyền vào @Email (pre-check + UPDATE)
+// =============================================================================
+describe("updateUserProfileAction – chuẩn hoá email", () => {
+    it("Email 'USER@Example.COM' → mọi @Email đều là lowercase", async () => {
+        const capturedEmails: unknown[] = [];
+        const chain: MockChain = { input: vi.fn(), query: vi.fn() };
+        chain.input.mockImplementation(
+            (name: string, _t: unknown, value: unknown) => {
+                if (name === "Email") capturedEmails.push(value);
+                return chain;
+            },
+        );
+        chain.query
+            .mockResolvedValueOnce({ recordset: [{ ok: 1 }] })  // exists
+            .mockResolvedValueOnce({ recordset: [] })           // no dup
+            .mockResolvedValueOnce({ rowsAffected: [1] });      // update ok
+
+        const request = vi.fn().mockReturnValue(chain);
+        getDbMock.mockResolvedValue(
+            { request } as unknown as DbConnection,
+        );
+
+        await updateUserProfileAction({
+            ...validProfilePayload,
+            Email: "USER@Example.COM",
+        });
+
+        // Pre-check và UPDATE đều nhận @Email = "user@example.com".
+        expect(capturedEmails.length).toBeGreaterThanOrEqual(2);
+        expect(
+            capturedEmails.every((v) => v === "user@example.com"),
+        ).toBe(true);
+    });
+});
