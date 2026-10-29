@@ -130,14 +130,19 @@ Quy ước từng khoá:
 |---|---|---|---|---|
 | `error.code` | string hằng số tiếng Anh, SCREAMING_SNAKE_CASE | ✅ | Tiếng Anh | **Client rẽ nhánh** — không bao giờ đổi giá trị đã phát hành |
 | `error.message` | string | ✅ | **Tiếng Việt** | Hiển thị trực tiếp cho người dùng |
-| `error.details` | array `{ field, message }` | tuỳ chọn | `field` tiếng Anh/khớp tên field request, `message` tiếng Việt | Chỉ dùng cho lỗi theo từng trường (`VALIDATION_ERROR`) |
+| `error.details` | array `{ field, message }` | **Bắt buộc khi `VALIDATION_ERROR` có lỗi theo trường**; không dùng cho các `code` khác | `field` khớp tên trường trong body request (`HoTen`, `Email`, `SDT`, …); `message` tiếng Việt | Liệt kê **mọi** trường sai, không chỉ trường đầu tiên |
 
 Quy tắc bắt buộc:
 
 - Mọi response lỗi (`>= 400`) **phải** có `error.code` và `error.message`. Không trả `{ message }` trần, không trả `{ isLoggedIn: false }` trần.
 - `error.code` chỉ nhận các hằng số trong bảng mục 5 — thêm code mới phải cập nhật tài liệu này trong cùng PR.
 - `error.message` **không được** chứa chi tiết hạ tầng: không lộ tên bảng, câu SQL, stack, tên driver, `constraint 'UQ_Users_Email'`. Chi tiết kỹ thuật chỉ ghi bằng `console.error` phía server.
-- `error.details` nếu có thì mỗi phần tử phải có đủ `field` và `message`; không trả mảng chuỗi.
+
+`error.details`:
+   - **Bắt buộc** khi `code = "VALIDATION_ERROR"` và lỗi gắn với ít nhất một trường của body. Không được trả `VALIDATION_ERROR` chỉ với `message` chung chung khi có thể chỉ ra field.
+   - Không dùng `details` cho `INVALID_JSON`, `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INTERNAL_ERROR`.
+   - Mỗi phần tử phải có đủ `field` (string, khớp tên trường body) và `message` (string tiếng Việt). Không trả mảng chuỗi, không trả object lồng.
+ - Khi nhiều trường cùng sai, `details` phải liệt kê **tất cả**, không chỉ trường đầu tiên.
 
 ### 4.2 Hằng số `code` được phép
 
@@ -224,9 +229,6 @@ Lý do:
 
 | Trường | Rule | Ví dụ lỗi |
 |---|---|---|
-| `HoTen` | chuỗi, trim, độ dài `2..100` | `"Họ tên phải có ít nhất 2 ký tự"` |
-| `Email` | chuỗi, trim, lowercase, regex email, ≤ 254 ký tự | `"Email không đúng định dạng"` |
-| `SDT` | tuỳ chọn; nếu có phải là chuỗi khớp regex số điện thoại VN | `"Số điện thoại không hợp lệ"` |
 | `password` | chuỗi, ≥ 6 ký tự | `"Mật khẩu phải có ít nhất 6 ký tự"` |
 | `Ten` (task) | chuỗi, không rỗng, ≤ 200 ký tự (khớp cột DB) | `"Tên công việc không được để trống"` / `"Tên công việc tối đa 200 ký tự"` |
 | `HetHan` | chuỗi parse được thành ngày hợp lệ | `"Hạn hoàn thành không hợp lệ"` |
