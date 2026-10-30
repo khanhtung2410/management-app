@@ -161,4 +161,76 @@ describe("PATCH /api/tasks/[id]", () => {
       expect.objectContaining({ ID: 1, TrangThai: taskStatus.Complete }),
     );
   });
+
+  // ─── BT13.7 — strict type validation cho TrangThai ──────────────────
+  // Regression: trước đây Number(body.TrangThai) ép kiểu ngầm
+  // → "1" → 1, true → 1, [1] → 1, " 1 " → 1 đều lọt qua
+  describe("strict type cho TrangThai", () => {
+    it.each([
+      ["string '1'", "1"],
+      ["string '2'", "2"],
+      ["string ' 1 '", " 1 "],
+      ["boolean true", true],
+      ["boolean false", false],
+      ["array [1]", [1]],
+      ["array ['1']", ["1"]],
+      ["object", { valueOf: () => 1 }],
+    ])("trả 400 (không phải 200) khi TrangThai là %s", async (_t, TrangThai) => {
+      const res = await PATCH(
+        jsonReq({ TrangThai }, "PATCH", "/api/tasks/1"),
+        params("1"),
+      );
+      expect(res.status).toBe(400);
+
+      const body = await res.json();
+      expect(body.error).toMatchObject({ code: "VALIDATION_ERROR" });
+      expect(body.error.details[0].field).toBe("TrangThai");
+      // validate phải chạy trước khi chạm DB
+      expect(getDb).not.toHaveBeenCalled();
+    });
+
+    it("trả 400 khi TrangThai là số thập phân (không nguyên)", async () => {
+      const res = await PATCH(
+        jsonReq({ TrangThai: 1.5 }, "PATCH", "/api/tasks/1"),
+        params("1"),
+      );
+      expect(res.status).toBe(400);
+      expect(getDb).not.toHaveBeenCalled();
+    });
+
+    it("trả 400 khi TrangThai = NaN-like string", async () => {
+      const res = await PATCH(
+        jsonReq({ TrangThai: "abc" }, "PATCH", "/api/tasks/1"),
+        params("1"),
+      );
+      expect(res.status).toBe(400);
+      expect(getDb).not.toHaveBeenCalled();
+    });
+
+    it("chấp nhận TrangThai = taskStatus.Active (number)", async () => {
+      vi.mocked(getDb).mockResolvedValue(
+        asDb(mockPool([
+          { recordset: [{ ID: 1, Ten: "T", TrangThai: taskStatus.Active }] },
+        ])),
+      );
+      const res = await PATCH(
+        jsonReq({ TrangThai: taskStatus.Active }, "PATCH", "/api/tasks/1"),
+        params("1"),
+      );
+      expect(res.status).toBe(200);
+    });
+
+    it("chấp nhận TrangThai = taskStatus.Complete (number)", async () => {
+      vi.mocked(getDb).mockResolvedValue(
+        asDb(mockPool([
+          { recordset: [{ ID: 1, Ten: "T", TrangThai: taskStatus.Complete }] },
+        ])),
+      );
+      const res = await PATCH(
+        jsonReq({ TrangThai: taskStatus.Complete }, "PATCH", "/api/tasks/1"),
+        params("1"),
+      );
+      expect(res.status).toBe(200);
+    });
+  });
 });

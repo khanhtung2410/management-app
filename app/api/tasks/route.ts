@@ -4,37 +4,30 @@ import { getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { taskStatus } from "@/constants/statuses";
 import { parsePage, parsePageSize, parseSort } from "@/lib/api/pagination";
-import {
-  readJson,
-  badRequest,
-  list,
-  created,
-  handleApiError,
-} from "@/lib/api";
+import { readJson, badRequest, list, created, handleApiError } from "@/lib/api";
 
 const sortableColumn = { id: "ID", hetHan: "HetHan", ten: "Ten" } as const;
 
 export async function GET(req: NextRequest) {
-  try {
-    const { userId } = await requireAuth(req);
-    const { searchParams } = new URL(req.url);
+    try {
+        const { userId } = await requireAuth(req);
+        const { searchParams } = new URL(req.url);
 
-    const sortBy = parseSort(searchParams.get("sortBy"), sortableColumn);
-    const sortDir = searchParams.get("order") === "desc" ? "DESC" : "ASC";
+        const sortBy = parseSort(searchParams.get("sortBy"), sortableColumn);
+        const sortDir = searchParams.get("order") === "desc" ? "DESC" : "ASC";
 
-    const page = parsePage(searchParams.get("page"));
-    const pageSize = parsePageSize(searchParams.get("pageSize"));
-    const offset = (page - 1) * pageSize;
+        const page = parsePage(searchParams.get("page"));
+        const pageSize = parsePageSize(searchParams.get("pageSize"));
+        const offset = (page - 1) * pageSize;
 
-    const pool = await getDb();
+        const pool = await getDb();
 
-    const [result, countResult] = await Promise.all([
-      pool
-        .request()
-        .input("UserID", sql.Int, Number(userId))
-        .input("offset", sql.Int, offset)
-        .input("pageSize", sql.Int, pageSize)
-        .query(`
+        const [result, countResult] = await Promise.all([
+            pool
+                .request()
+                .input("UserID", sql.Int, Number(userId))
+                .input("offset", sql.Int, offset)
+                .input("pageSize", sql.Int, pageSize).query(`
           SELECT ID, Ten, Mota, TrangThai, HetHan
           FROM [dbo].[CongViec]
           WHERE UserID = @UserID
@@ -42,59 +35,72 @@ export async function GET(req: NextRequest) {
           OFFSET @offset ROWS
           FETCH NEXT @pageSize ROWS ONLY
         `),
-      pool
-        .request()
-        .input("UserID", sql.Int, Number(userId))
-        .query(`
+            pool.request().input("UserID", sql.Int, Number(userId)).query(`
           SELECT COUNT(*) AS total
           FROM [dbo].[CongViec]
           WHERE UserID = @UserID
         `),
-    ]);
+        ]);
 
-    const total = countResult.recordset[0].total;
-    const totalPages = Math.ceil(total / pageSize);
+        const total = countResult.recordset[0].total;
+        const totalPages = Math.ceil(total / pageSize);
 
-    return list(result.recordset, { page, pageSize, total, totalPages });
-  } catch (error) {
-    return handleApiError(error);
-  }
+        return list(result.recordset, { page, pageSize, total, totalPages });
+    } catch (error) {
+        return handleApiError(error);
+    }
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const { userId } = await requireAuth(req);
-    const body = await readJson(req);
+    try {
+        const { userId } = await requireAuth(req);
+        const body = await readJson(req);
 
-    const Ten = String(body.Ten ?? "").trim();
-    const Mota = String(body.Mota ?? "").trim();
-    const HetHan = body.HetHan;
+        // ── Ten: required, phải là string ────────────────────────────────
+        if (typeof body.Ten !== "string") {
+            throw badRequest("Tên công việc không hợp lệ", [
+                { field: "Ten", message: "Tên công việc không hợp lệ" },
+            ]);
+        }
+        const Ten = body.Ten.trim();
+        if (!Ten) {
+            throw badRequest("Vui lòng nhập tên công việc", [
+                { field: "Ten", message: "Vui lòng nhập tên công việc" },
+            ]);
+        }
+        if (Ten.length > 255) {
+            throw badRequest("Tên công việc không được vượt quá 255 ký tự", [
+                {
+                    field: "Ten",
+                    message: "Tên công việc không được vượt quá 255 ký tự",
+                },
+            ]);
+        }
 
-    if (!Ten) {
-      throw badRequest("Vui lòng nhập tên công việc", [
-        { field: "Ten", message: "Vui lòng nhập tên công việc" },
-      ]);
-    }
-    if (Ten.length > 255) {
-      throw badRequest("Tên công việc không được vượt quá 255 ký tự", [
-        { field: "Ten", message: "Tên công việc không được vượt quá 255 ký tự" },
-      ]);
-    }
-    if (typeof HetHan !== "string" || isNaN(Date.parse(HetHan))) {
-      throw badRequest("Ngày hết hạn không hợp lệ", [
-        { field: "HetHan", message: "Ngày hết hạn không hợp lệ" },
-      ]);
-    }
+        // ── Mota: optional, nếu có thì phải là string ────────────────────
+        if (body.Mota != null && typeof body.Mota !== "string") {
+            throw badRequest("Mô tả không hợp lệ", [
+                { field: "Mota", message: "Mô tả không hợp lệ" },
+            ]);
+        }
+        const Mota = (body.Mota ?? "").trim();
 
-    const pool = await getDb();
-    const result = await pool
-      .request()
-      .input("UserID", sql.Int, Number(userId))
-      .input("Ten", sql.NVarChar(255), Ten)
-      .input("Mota", sql.NVarChar(sql.MAX), Mota)
-      .input("TrangThai", sql.Int, taskStatus.Active)
-      .input("HetHan", sql.DateTime, new Date(HetHan))
-      .query(`
+        // ── HetHan: required, phải là string parse được thành date ───────
+        const HetHan = body.HetHan;
+        if (typeof HetHan !== "string" || isNaN(Date.parse(HetHan))) {
+            throw badRequest("Ngày hết hạn không hợp lệ", [
+                { field: "HetHan", message: "Ngày hết hạn không hợp lệ" },
+            ]);
+        }
+
+        const pool = await getDb();
+        const result = await pool
+            .request()
+            .input("UserID", sql.Int, Number(userId))
+            .input("Ten", sql.NVarChar(255), Ten)
+            .input("Mota", sql.NVarChar(sql.MAX), Mota)
+            .input("TrangThai", sql.Int, taskStatus.Active)
+            .input("HetHan", sql.DateTime, new Date(HetHan)).query(`
         INSERT INTO [dbo].[CongViec]
           (UserID, Ten, Mota, TrangThai, HetHan)
         OUTPUT
@@ -104,8 +110,8 @@ export async function POST(req: NextRequest) {
           (@UserID, @Ten, @Mota, @TrangThai, @HetHan)
       `);
 
-    return created(result.recordset[0]);
-  } catch (error) {
-    return handleApiError(error);
-  }
+        return created(result.recordset[0]);
+    } catch (error) {
+        return handleApiError(error);
+    }
 }
