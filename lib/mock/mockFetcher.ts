@@ -1,5 +1,4 @@
 import { userRole } from "@/constants/roles";
-import { userStatus, UserStatusType } from "@/constants/statuses";
 import type { User as AdminUser } from "@/app/(admin)/admin/users/_lib/api";
 import { mockUser } from "./data";
 import { mockDelay } from "./config";
@@ -7,8 +6,6 @@ import { parsePage, parsePageSize } from "../api/pagination";
 
 // ─────────────────────────── Types ───────────────────────────
 type MockUser = Pick<AdminUser, "ID" | "HoTen" | "Email" | "SDT" | "TrangThai">;
-
-const PHONE_REGEX = /^0\d{9}$/;
 
 const sortableColumn = { id: "ID", hoTen: "HoTen", email: "Email" } as const;
 type SortKey = keyof typeof sortableColumn;
@@ -60,19 +57,6 @@ export function resetMockUsers(): void {
 }
 
 // ─────────────────────────── Read body ───────────────────────────
-function readJsonBody(init?: RequestInit): Record<string, unknown> | null {
-  if (!init?.body) return {};
-  if (typeof init.body !== "string") return null;
-  try {
-    const parsed: unknown = JSON.parse(init.body);
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return null;
-    }
-    return parsed as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
 
 // ─────────────────────────── Fetcher ───────────────────────────
 export const mockFetcher: typeof fetch = async (input, init) => {
