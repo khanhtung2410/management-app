@@ -13,7 +13,7 @@ import { revalidatePath, updateTag } from "next/cache";
 export async function updateUserStatusAction(
     userId: number,
     status: UserStatusType
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true, data?: { ID: number; TrangThai: UserStatusType } } | { ok: false; error: string }> {
     const { userId: currentUserId } = await requireAdminPage();
     if (!Number.isInteger(userId) || userId <= 0) {
         return { ok: false, error: "ID người dùng không hợp lệ" }
@@ -30,7 +30,7 @@ export async function updateUserStatusAction(
     }
     if (currentMockMode === mockMode.on) {
         await mockDelay();
-        return { ok: true };
+        return { ok: true, data: { ID: userId, TrangThai: status } };
     }
 
     const pool = await getDb();

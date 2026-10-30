@@ -13,6 +13,20 @@ const PHONE_REGEX = /^0\d{9}$/;
 const sortableColumn = { id: "ID", hoTen: "HoTen", email: "Email" } as const;
 type SortKey = keyof typeof sortableColumn;
 
+// ─────────────────────────── Mutable store ───────────────────────────
+
+export function updateMockUser(
+  id: number,
+  updates: Partial<MockUser>
+): MockUser | null {
+  const idx = store.findIndex((u) => u.ID === id);
+  if (idx === -1) return null;
+  const cur = store[idx];
+  const next = { ...cur, ...updates } as MockUser;
+  store[idx] = next;
+  return next;
+}
+
 // ─────────────────────────── Response helpers ───────────────────────────
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
