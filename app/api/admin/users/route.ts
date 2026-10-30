@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
 import { list, handleApiError } from "@/lib/api";
-import { parsePage, parsePageSize } from "@/lib/api/pagination";
+import { parsePage, parsePageSize, parseSort } from "@/lib/api/pagination";
 
 const sortableColumn: Record<string, string> = { id: "ID" };
 
@@ -13,8 +13,7 @@ export async function GET(request: NextRequest) {
     await requireRole(request, userRole.ADMIN);
     const { searchParams } = new URL(request.url);
 
-    const sortBy =
-      sortableColumn[searchParams.get("sortBy") ?? "id"] ?? "ID";
+    const sortBy = parseSort(searchParams.get("sortBy"), sortableColumn);
     const sortDir =
       searchParams.get("order") === "desc" ? "DESC" : "ASC";
 
