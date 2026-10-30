@@ -14,6 +14,7 @@ import {
     updateUserStatusAction,
     updateUserProfileAction,
 } from "./actions";
+import { updateMockUser } from "@/lib/mock/mockFetcher";
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 500;
@@ -119,6 +120,8 @@ export function useUsers({
                             ...prev, data: prev.data.map((u) => (u.ID === id ? { ...u, TrangThai: newStatus } : u))
                         } : prev,
                 );
+                // Đồng bộ dữ liệu vào mockFetcher store để fetch lại sau này đúng
+                updateMockUser(id, { TrangThai: newStatus });
                 setActionSuccess(
                     `Đã ${newStatus === userStatus.Active ? "kích hoạt" : "ngừng"} người dùng ${id}.`
                 );
