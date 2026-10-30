@@ -31,7 +31,8 @@ describe("GET /api/tasks", () => {
       asDb(mockPool([
         { recordset: [{ ID: 1, Ten: "T" }] },
         { recordset: [{ total: 1 }] },
-      ])),);
+      ])),
+    );
     const res = await GET(req("GET", "/api/tasks"));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -158,5 +159,108 @@ describe("POST /api/tasks", () => {
     expect(await res.json()).toEqual(
       expect.objectContaining({ ID: 1, Ten: "T" }),
     );
+  });
+
+  // ─── BT13.7 — strict type validation cho Ten ────────────────────────
+  // Regression: trước đây String(body.Ten) → "[object Object]" / "123" /
+  // "true" đều được chấp nhận → 201 với dữ liệu rác
+  describe("strict type cho Ten", () => {
+    it.each([
+      ["object", { a: 1 }],
+      ["number", 123],
+      ["boolean true", true],
+      ["boolean false", false],
+      ["array", ["a"]],
+    ])("trả 400 (không phải 201) khi Ten là %s", async (_t, Ten) => {
+      const res = await POST(jsonReq({ Ten, HetHan: "2026-12-01" }));
+      expect(res.status).toBe(400);
+
+      const body = await res.json();
+      expect(body.error).toMatchObject({ code: "VALIDATION_ERROR" });
+      expect(body.error.details[0].field).toBe("Ten");
+      // validate phải chạy trước khi chạm DB
+      expect(getDb).not.toHaveBeenCalled();
+    });
+
+    it("không tạo task với tên '[object Object]' khi Ten là object", async () => {
+      const res = await POST(jsonReq({ Ten: { a: 1 }, HetHan: "2026-12-01" }));
+      expect(res.status).toBe(400);
+      expect(getDb).not.toHaveBeenCalled();
+    });
+
+    it("chấp nhận Ten là string rỗng khoảng trắng → 400 (vẫn phải trim rồi check)", async () => {
+      const res = await POST(jsonReq({ Ten: "   ", HetHan: "2026-12-01" }));
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error.details[0].field).toBe("Ten");
+    });
+  });
+
+  // ─── BT13.7 — strict type cho Mota (optional) ───────────────────────
+  describe("strict type cho Mota", () => {
+    it.each([
+      ["object", { a: 1 }],
+      ["number", 123],
+      ["boolean", true],
+      ["array", ["a"]],
+    ])("trả 400 khi Mota là %s", async (_t, Mota) => {
+      const res = await POST(
+        jsonReq({ Ten: "T", Mota, HetHan: "2026-12-01" }),
+      );
+      expect(res.status).toBe(400);
+
+      const body = await res.json();
+      expect(body.error).toMatchObject({ code: "VALIDATION_ERROR" });
+      expect(body.error.details[0].field).toBe("Mota");
+      expect(getDb).not.toHaveBeenCalled();
+    });
+
+    it("chấp nhận Mota = null (optional)", async () => {
+      vi.mocked(getDb).mockResolvedValue(
+        asDb(mockPool([
+          {
+            recordset: [
+              { ID: 1, Ten: "T", Mota: "", TrangThai: taskStatus.Active, HetHan: "2026-12-01" },
+            ],
+          },
+        ])),
+      );
+      const res = await POST(
+        jsonReq({ Ten: "T", Mota: null, HetHan: "2026-12-01" }),
+      );
+      expect(res.status).toBe(201);
+    });
+
+    it("chấp nhận Mota không truyền (undefined)", async () => {
+      vi.mocked(getDb).mockResolvedValue(
+        asDb(mockPool([
+          {
+            recordset: [
+              { ID: 1, Ten: "T", Mota: "", TrangThai: taskStatus.Active, HetHan: "2026-12-01" },
+            ],
+          },
+        ])),
+      );
+      const res = await POST(
+        jsonReq({ Ten: "T", HetHan: "2026-12-01" }),
+      );
+      expect(res.status).toBe(201);
+    });
+
+    it("chấp nhận Mota là string", async () => {
+      vi.mocked(getDb).mockResolvedValue(
+        asDb(mockPool([
+          {
+            recordset: [
+              { ID: 1, Ten: "T", Mota: "desc", TrangThai: taskStatus.Active, HetHan: "2026-12-01" },
+            ],
+          },
+        ])),
+      );
+      const res = await POST(
+        jsonReq({ Ten: "T", Mota: "desc", HetHan: "2026-12-01" }),
+      );
+      expect(res.status).toBe(201);
+    });
   });
 });
