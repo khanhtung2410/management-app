@@ -3,7 +3,7 @@ import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { taskStatus } from "@/constants/statuses";
-import { parsePage, parsePageSize } from "@/lib/api/pagination";
+import { parsePage, parsePageSize, parseSort } from "@/lib/api/pagination";
 import {
   readJson,
   badRequest,
@@ -13,20 +13,13 @@ import {
 } from "@/lib/api";
 
 const sortableColumn = { id: "ID", hetHan: "HetHan", ten: "Ten" } as const;
-type SortKey = keyof typeof sortableColumn;
 
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req);
     const { searchParams } = new URL(req.url);
 
-    const sortByKey = (searchParams.get("sortBy") ?? "id") as SortKey;
-    if (!(sortByKey in sortableColumn)) {
-      throw badRequest("sortBy không hợp lệ", [
-        { field: "sortBy", message: "sortBy không hợp lệ" },
-      ]);
-    }
-    const sortBy = sortableColumn[sortByKey];
+    const sortBy = parseSort(searchParams.get("sortBy"), sortableColumn);
     const sortDir = searchParams.get("order") === "desc" ? "DESC" : "ASC";
 
     const page = parsePage(searchParams.get("page"));
