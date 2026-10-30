@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { requireAuth, ForbiddenError, AuthError } from '@/lib/auth';
+import { requireAuth, AccountLockedError, ForbiddenError, AuthError } from '@/lib/auth';
 import { userRole } from './constants/roles';
 
 export async function proxy(request: NextRequest) {
@@ -18,8 +18,13 @@ export async function proxy(request: NextRequest) {
         try {
             await requireAuth(request);
             return NextResponse.redirect(new URL("/", request.url));
-        } catch {
-            return NextResponse.next();
+        } catch (err) {
+            const response = NextResponse.next();
+            // Token còn hợp lệ nhưng tài khoản đã bị khoá → xoá phiên cũ.
+            if (err instanceof AccountLockedError) {
+                response.cookies.delete("token");
+            }
+            return response;
         }
     }
 
@@ -33,6 +38,13 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
 
     } catch (err) {
+        // Tài khoản bị khoá: về /login và xoá cookie, KHÔNG phải /403.
+        if (err instanceof AccountLockedError) {
+            const response = NextResponse.redirect(new URL("/login", request.url));
+            response.cookies.delete("token");
+            return response;
+        }
+
         if (err instanceof AuthError) {
             const isForbidden = err.status === 403;
             const response = NextResponse.redirect(

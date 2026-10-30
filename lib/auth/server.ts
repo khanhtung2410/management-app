@@ -3,7 +3,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { userRole } from "@/constants/roles";
 import type { UserRoleType } from "@/constants/roles";
-import { UnauthorizedError } from "./errors";
+import { AccountLockedError, UnauthorizedError } from "./errors";
 import type { AuthPayload } from "./payload";
 import { getAuthFromRequest } from "./session";
 import { verifyToken } from "./token";
@@ -16,7 +16,11 @@ export async function getAuth(): Promise<AuthPayload | null> {
             headers: headerStore,
         });
     } catch (error) {
-        if (error instanceof UnauthorizedError) return null;
+        // Tài khoản bị khoá cũng coi như không có phiên hợp lệ — tránh để
+        // Navbar (Server Component) ném lỗi 500 khi token còn hạn.
+        if (error instanceof UnauthorizedError || error instanceof AccountLockedError) {
+            return null;
+        }
         throw error;
     }
 }

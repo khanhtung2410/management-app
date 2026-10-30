@@ -1,7 +1,7 @@
 import sql from "mssql";
 import { userStatus } from "@/constants/statuses";
 import { getDb } from "@/lib/db";
-import { UnauthorizedError } from "./errors";
+import { AccountLockedError, UnauthorizedError } from "./errors";
 import { verifyToken } from "./token"
 import type { AuthPayload } from "./payload";
 
@@ -29,11 +29,12 @@ export async function getAuthFromRequest(req: RequestLike): Promise<AuthPayload>
         .input("ID", sql.Int, payload.userId)
         .query(`SELECT TrangThai FROM [dbo].[User] WHERE ID = @ID`);
 
-    if (
-        !result.recordset[0] ||
-        Number(result.recordset[0].TrangThai) !== userStatus.Active
-    ) {
-        throw new UnauthorizedError("Account is inactive");
+    const user = result.recordset[0];
+    if (!user) {
+        throw new UnauthorizedError("User not found");
+    }
+    if (Number(user.TrangThai) !== userStatus.Active) {
+        throw new AccountLockedError("Account is inactive");
     }
 
     return payload;
