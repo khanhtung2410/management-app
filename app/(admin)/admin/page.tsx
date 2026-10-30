@@ -4,16 +4,14 @@ import sql from "mssql";
 import { Suspense } from "react";
 import { Badge } from "@/components/UI/Badge";
 import { Card } from "@/components/UI/Card";
-import { userRole } from "@/constants/roles";
 import {
     STATUS_CONFIG,
     taskStatus,
-    userStatus,
 } from "@/constants/statuses";
 import { getDb } from "@/lib/db";
+import { getDashboardSummary } from "@/lib/dashboard/get-summary";
 import { currentMockMode, mockMode, mockDelay } from "@/lib/mock/config";
 import {
-    getMockDashboardSummary,
     getMockRecentDashboardTasks,
     type DashboardSummary,
     type DashboardTask,
@@ -49,49 +47,7 @@ async function getDashboardData(): Promise<DashboardData> {
     const isMockMode = currentMockMode !== mockMode.off;
     const isMockErrorMode = currentMockMode === mockMode.error;
 
-    const summaryRequest: Promise<DashboardSummary> = isMockMode
-        ? (async () => {
-            if (isMockErrorMode) {
-                throw new Error("Lỗi giả lập từ mock API.");
-            }
-            await mockDelay();
-            return getMockDashboardSummary();
-        })()
-        : (async () => {
-            const pool = await getDb();
-            const result = await pool
-                .request()
-                .input("userRole", sql.Int, userRole.USER)
-                .input("activeUserStatus", sql.Int, userStatus.Active)
-                .input("activeTaskStatus", sql.Int, taskStatus.Active)
-                .input("completedTaskStatus", sql.Int, taskStatus.Complete)
-                .query<DashboardSummary>(`
-                    SELECT
-                        (SELECT COUNT(*) FROM [dbo].[User] WHERE RoleId = @userRole) AS totalUsers,
-                        (SELECT COUNT(*) FROM [dbo].[User]
-                            WHERE RoleId = @userRole AND TrangThai = @activeUserStatus) AS activeUsers,
-                        COUNT(*) AS totalTasks,
-                        ISNULL(SUM(CASE
-                            WHEN TrangThai = @activeTaskStatus AND HetHan >= GETDATE()
-                            THEN 1 ELSE 0
-                        END), 0) AS activeTasks,
-                        ISNULL(SUM(CASE
-                            WHEN TrangThai = @completedTaskStatus
-                            THEN 1 ELSE 0
-                        END), 0) AS completedTasks,
-                        ISNULL(SUM(CASE
-                            WHEN TrangThai = @activeTaskStatus AND HetHan < GETDATE()
-                            THEN 1 ELSE 0
-                        END), 0) AS overdueTasks
-                    FROM [dbo].[CongViec]
-                `);
-
-            const summary = result.recordset[0];
-            if (!summary) {
-                throw new Error("Không thể lấy dữ liệu tổng quan từ cơ sở dữ liệu.");
-            }
-            return summary;
-        })();
+    const summaryRequest: Promise<DashboardSummary> = getDashboardSummary();
 
     const tasksRequest: Promise<DashboardTask[]> = isMockMode
         ? (async () => {
