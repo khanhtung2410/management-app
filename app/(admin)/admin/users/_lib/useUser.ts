@@ -147,7 +147,7 @@ export function useUsers({
                 prev.status === "success" ? {
                     ...prev, data: prev.data.map((u) =>
                         u.ID === payload.userId
-                            ? { ...u, HoTen: payload.HoTen, Email: payload.Email, SDT: payload.SDT }
+                            ? { ...u, ...result.data }
                             : u,
                     ),
                 } : prev
