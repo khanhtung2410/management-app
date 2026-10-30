@@ -1,5 +1,6 @@
 import { UserStatusType } from "@/constants/statuses";
 import { withTimeout } from "@/lib/withTimeout";
+import { readApiError } from "@/lib/api/client";
 
 export interface User {
     ID: number;
@@ -44,19 +45,16 @@ export type UserPatchPayload = Partial<
     Pick<User, "HoTen" | "Email" | "SDT" | "TrangThai">
 >;
 
-export class UnauthorizedError extends Error {
-    constructor() {
-        super("Unauthorized");
-        this.name = "UnauthorizedError";
+/** Đọc message lỗi từ response dạng `{ error: { code, message } }`. */
+export async function readApiErrorFromFetch(res: Response, fallback: string): Promise<string> {
+    try {
+        const body = (await res.json()) as Partial<{ error: { message?: string } }> & {
+            message?: string;
+        };
+        return body?.error?.message ?? body?.message ?? fallback;
+    } catch {
+        return fallback;
     }
-}
-
-async function toError(res: Response, fallback: string): Promise<Error> {
-    if (res.status === 401) return new UnauthorizedError();
-    const body = (await res.json().catch(() => ({}))) as {
-        error?: { message?: string };
-    };
-    return new Error(body.error?.message || fallback);
 }
 
 export async function fetchUsers(
@@ -83,7 +81,7 @@ export async function fetchUsers(
         `/api/admin/users?${qs}`,
         withTimeout({ credentials: "include" }),
     );
-    if (!res.ok) throw await toError(res, "Không thể lấy dữ liệu");
+    if (!res.ok) throw new Error(await readApiError(res) || "Không thể lấy dữ liệu");
 
     const body = (await res.json()) as Partial<UsersPage>;
     return {
@@ -95,22 +93,4 @@ export async function fetchUsers(
             totalPages: 1,
         },
     };
-}
-
-/** Cập nhật 1 user qua PATCH /api/admin/users/:id — dùng cho trang admin. */
-export async function updateUser(
-    id: number,
-    payload: UserPatchPayload,
-    fetchImpl: Fetcher = fetch,
-): Promise<void> {
-    const res = await fetchImpl(
-        `/api/admin/users/${id}`,
-        withTimeout({
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        }),
-    );
-    if (!res.ok) throw await toError(res, "Không thể cập nhật người dùng");
 }
