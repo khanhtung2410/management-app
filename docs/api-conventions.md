@@ -230,9 +230,10 @@ Lý do:
 | Trường | Rule | Ví dụ lỗi |
 |---|---|---|
 | `password` | chuỗi, ≥ 6 ký tự | `"Mật khẩu phải có ít nhất 6 ký tự"` |
-| `Ten` (task) | chuỗi, không rỗng, ≤ 200 ký tự (khớp cột DB) | `"Tên công việc không được để trống"` / `"Tên công việc tối đa 200 ký tự"` |
+| `Ten` (task) | chuỗi (typeof string bắt buộc, **không** ép từ `String()`), không rỗng, ≤ 255 ký tự (khớp cột `NVarChar(255)`) | `"Tên công việc không hợp lệ"` / `"Tên công việc không được để trống"` / `"Tên công việc không được vượt quá 255 ký tự"` |
+| `Mota` (task) | tuỳ chọn; nếu có phải là chuỗi (typeof string). `null`/`undefined` = coi như không truyền | `"Mô tả không hợp lệ"` |
 | `HetHan` | chuỗi parse được thành ngày hợp lệ | `"Hạn hoàn thành không hợp lệ"` |
-| `TrangThai` (task) | `0` hoặc `1` | `"Trạng thái không hợp lệ"` |
+| `TrangThai` (task) | **number nguyên** `0` hoặc `1`. **Không chấp nhận** `"0"`/`"1"` (string) hay `true`/`false` (boolean) — route phải reject, không ép kiểu. | `"Trạng thái không hợp lệ"` |
 | `status` (user admin) | `0` hoặc `1` | `"Trạng thái không hợp lệ"` |
 | `id` (path) | số nguyên dương | `"ID không hợp lệ"` |
 | `page` | số nguyên ≥ 1 | `"page phải là số nguyên dương"` |
@@ -245,6 +246,8 @@ Lý do:
 > Mọi endpoint ghi vào `HoTen`/`Email`/`SDT` (`POST /api/register`,
 > `PATCH /api/admin/users/[id]`, Server Action `updateUserProfileAction`)
 > **phải** dùng validator này, không validate inline.
+
+> **Nguyên tắc type-strict:** với các trường có kiểu rõ ràng (`Ten`, `Mota`, `TrangThai`), route phải `typeof` check trước khi validate nội dung. Không dùng `String(x)`, `Number(x)`, `Boolean(x)` để ép — coercion biến `{ "a": 1 }` thành `"[object Object]"` và `true` thành `1`, che giấu bug client.
 
 - Trùng email khi đăng ký hoặc cập nhật profile → `409 CONFLICT` (không phải `400`, không phải `500`).
 - Không dựa vào DB constraint để trả `409` bằng cách bắt lỗi driver — **kiểm tra trước khi ghi**; nếu vẫn để constraint ném (race condition), map sang `409` nếu driver báo lỗi unique, ngược lại `500`.
