@@ -71,6 +71,14 @@ Chỉ dùng chữ ASCII, chữ số và dấu gạch ngang trong tên nhánh. Kh
 - **Tên biến/hàm mô tả đúng ý nghĩa** — `getUserById` tốt hơn `getData`.
 - **Ưu tiên dễ đọc hơn thông minh** — code được đọc nhiều lần hơn viết.
 
+### Thụt lề
+
+- **Chuẩn duy nhất: 4 dấu cách** cho toàn bộ repo — TypeScript, TSX, JS, JSON, CSS.
+- `lib/api/` và các route API đã viết lại hiện dùng 2 dấu cách là **ngoại lệ tạm thời**. Khi sửa hoặc thêm file trong các khu vực này, chuyển về 4 dấu cách **trong cùng PR** đó (không trộn 2 và 4 trong một file).
+- Cấu hình nằm ở `.editorconfig` tại gốc repo; editor hỗ trợ (VS Code, JetBrains, Neovim) tự áp dụng.
+- Không thêm cấu hình thụt lề riêng (Prettier, ESLint `indent` rule…) cho tới khi có quyết định thống nhất — hiện repo chưa cấu hình Prettier.
+- PR đụng tới `lib/api/` phải ghi rõ trong mô tả PR rằng đã chuyển thụt lề về 4.
+
 ### Cấu trúc file
 
 ```
@@ -129,6 +137,7 @@ npm run test:run   # chạy Vitest một lần, trước khi commit
 ### Format & Lint
 
 - Repository cấu hình ESLint; hiện chưa cấu hình Prettier hoặc Husky pre-commit hook.
+- Cấu hình thụt lề chung nằm trong `.editorconfig` (4 dấu cách).
 
 ```bash
 npm run lint             # kiểm tra
@@ -214,15 +223,18 @@ chore: upgrade Next.js to 16.3.8
 - [ ] `npm run build` thành công.
 - [ ] Đã tự review diff trên GitHub.
 - [ ] Đã cập nhật README / docs nếu thay đổi hành vi hoặc cấu hình.
+- [ ] Đã chuẩn bị output thực tế cho mục "Đã chạy" trong mô tả PR.
 
 ### Tiêu đề PR
 
-Theo cùng format Conventional Commits:
+Tiêu đề PR **là dòng đầu của commit squash** khi merge và **phải theo Conventional Commits** (cùng format với commit — xem mục 3):
 
 ```
 feat(tasks): add task creation form
 fix(tasks): reset page when search changes
 ```
+
+Lý do: repo ưu tiên **Squash and merge**, GitHub dùng tiêu đề PR làm subject của commit squash trên `master`. Tiêu đề sai chuẩn sẽ làm hỏng lịch sử nhánh chính. Nếu cần sửa tiêu đề, dùng "Edit" trên GitHub **trước khi merge** — không sửa commit message sau khi merge.
 
 ### Mô tả PR
 
@@ -242,11 +254,28 @@ Cách tiếp cận chính. Điểm cần lưu ý khi review.
 Ví dụ: "Tách logic fetch ra hook useUsers để test được không cần DOM."
 
 ## Testing
-Liệt kê các kiểm tra đã chạy và kết quả.
-
 - [ ] Unit test liên quan
 - [ ] Lint, type-check và build
 - [ ] Kiểm tra thủ công (nếu cần), nêu môi trường và kết quả
+
+## Đã chạy
+Output thực tế của các lệnh bắt buộc — **dán nguyên văn, không tóm tắt, không ghi "pass hết"**:
+
+```
+$ npm run build
+<output>
+
+$ npm run lint
+<output>
+
+$ npx tsc --noEmit
+<output>
+
+$ npm run test:run
+<output>
+```
+
+Nếu một lệnh không áp dụng (ví dụ PR chỉ sửa docs), ghi rõ `N/A — lý do`.
 
 ## Screenshots (nếu là UI)
 | Trước | Sau |
@@ -259,6 +288,7 @@ Liệt kê các kiểm tra đã chạy và kết quả.
 - [ ] Type-check pass
 - [ ] Không có breaking change (hoặc đã ghi rõ ở footer commit)
 - [ ] Đã cập nhật docs nếu cần
+- [ ] Đã dán output thực tế của build/lint/tsc/test:run vào mục "Đã chạy"
 ```
 
 ### Kích thước PR
@@ -295,6 +325,7 @@ Dùng parameterized query.
 ### Merge
 
 - Dùng phương thức merge được repository cho phép; ưu tiên **Squash and merge** để lịch sử nhánh chính gọn.
+- Khi squash, giữ tiêu đề PR làm dòng đầu commit squash.
 - Xóa nhánh sau khi merge nếu không còn cần dùng.
 
 ### Sau khi merge
