@@ -270,7 +270,7 @@ Lý do:
 | `GET /api/admin/users` | Giữ | Thêm chặn `pageSize > 100`; map `UnauthorizedError` → `401` |
 | `PUT /api/admin/users/status` | `PATCH /api/admin/users/[id]` body `{ "status": 0\|1 }` | Đổi route/method, ID lên path; map `401` |
 | `PUT /api/admin/users/profile` | `PATCH /api/admin/users/[id]` body `{ HoTen?, Email?, SDT? }` | Đổi route/method; thêm validate email/SDT/tên; trùng email → `409` |
-| `GET /api/admin/stat` | Giữ (hoặc xoá nếu xác nhận không dùng) | Map lỗi xác thực → `401`/`403`; quyết định xoá route thừa trong PR riêng |
+| `GET /api/admin/stat` | **Xoá** (không có UI caller; `/admin/stat` page dùng `getDashboardSummary()` trực tiếp) | Đã xoá trong PR `refactor(api): remove unused admin stat endpoint`; `docs/api-audit.md` ghi nhận không còn route này |
 | `POST /api/login` | Giữ (ngoại lệ) | Tài khoản khoá → `403 ACCOUNT_LOCKED`; bỏ message "Lỗi kết nối database" chung |
 | `POST /api/register` | Giữ | Giữ `409` khi email trùng; `details` cho lỗi validation |
 | `POST /api/logout` | Giữ (ngoại lệ) | — |
