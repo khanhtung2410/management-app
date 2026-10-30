@@ -47,6 +47,31 @@ describe("GET /api/tasks", () => {
     });
   });
 
+  // Regression: trước đây `in` traverse prototype chain
+  // → ?sortBy=constructor/toString lọt qua check → ORDER BY <function>
+  // → SQL Server syntax error → 500
+  it.each([
+    "constructor",
+    "toString",
+    "hasOwnProperty",
+    "valueOf",
+    "__proto__",
+    "isPrototypeOf",
+  ])("trả 400 (không phải 500) với sortBy prototype chain: %s", async (sortBy) => {
+    const res = await GET(req("GET", `/api/tasks?sortBy=${sortBy}`));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({
+      error: { code: "VALIDATION_ERROR", message: expect.any(String) },
+    });
+  });
+
+  it("trả details[0].field = 'sortBy' khi sortBy prototype chain", async () => {
+    const res = await GET(req("GET", "/api/tasks?sortBy=constructor"));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.details[0].field).toBe("sortBy");
+  });
+
   it("kẹp pageSize = 0 về 1", async () => {
     vi.mocked(getDb).mockResolvedValue(
       asDb(mockPool([
