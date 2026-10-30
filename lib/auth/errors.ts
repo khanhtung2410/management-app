@@ -11,3 +11,7 @@ export class UnauthorizedError extends AuthError {
 export class ForbiddenError extends AuthError {
     constructor(msg = "Forbidden") { super(msg, 403); }
 }
+
+export class AccountLockedError extends AuthError {
+    constructor(msg = "Account is locked") { super(msg, 403); }
+}
