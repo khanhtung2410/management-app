@@ -6,7 +6,6 @@ import type { UserRoleType } from "@/constants/roles";
 import { AccountLockedError, UnauthorizedError } from "./errors";
 import type { AuthPayload } from "./payload";
 import { getAuthFromRequest } from "./session";
-import { verifyToken } from "./token";
 
 export async function getAuth(): Promise<AuthPayload | null> {
     const [cookieStore, headerStore] = await Promise.all([cookies(), headers()]);
@@ -26,30 +25,30 @@ export async function getAuth(): Promise<AuthPayload | null> {
 }
 
 /**
- * Lấy payload từ cookie "token", hoặc redirect("/login") nếu thiếu/hỏng.
- * Dùng chung cho mọi guard "phải đăng nhập".
+ * Yêu cầu có phiên hợp lệ (kể cả tài khoản phải ở trạng thái Active).
+ *
+ * Dùng `getAuth()` — đã kiểm tra TrangThai qua `getAuthFromRequest` — thay
+ * vì chỉ verifyToken. Nhờ vậy page tự bảo vệ mình, không phụ thuộc vào
+ * proxy.ts để chặn tài khoản bị khoá.
+ *
+ * - Không có token / token hỏng → redirect /login.
+ * - Tài khoản bị khoá → getAuth() trả null → redirect /login.
  */
-async function getAuthPayloadOrRedirect(): Promise<AuthPayload> {
-    const token = (await cookies()).get("token")?.value;
-    if (!token) redirect("/login");
-
-    try {
-        return await verifyToken(token);
-    } catch (error) {
-        if (error instanceof UnauthorizedError) redirect("/login");
-        throw error;
-    }
+async function getAuthOrRedirect(): Promise<AuthPayload> {
+    const payload = await getAuth();
+    if (!payload) redirect("/login");
+    return payload;
 }
 
 async function requireRolePage(requiredRole: UserRoleType): Promise<AuthPayload> {
-    const payload = await getAuthPayloadOrRedirect();
+    const payload = await getAuthOrRedirect();
     if (payload.roleId !== requiredRole) redirect("/403");
     return payload;
 }
 
-/** Chỉ cần đăng nhập — không ràng buộc role. */
+/** Chỉ cần đăng nhập (tài khoản Active) — không ràng buộc role. */
 export function requireAuthPage(): Promise<AuthPayload> {
-    return getAuthPayloadOrRedirect();
+    return getAuthOrRedirect();
 }
 
 export function requireUserPage(): Promise<AuthPayload> {

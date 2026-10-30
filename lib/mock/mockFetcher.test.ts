@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { userStatus } from "@/constants/statuses";
 import {
   failingMockFetcher,
   mockFetcher,
