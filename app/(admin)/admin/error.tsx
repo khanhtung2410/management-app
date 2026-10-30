@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 
 type AdminErrorProps = {
     error: Error & { digest?: string };
@@ -8,6 +9,11 @@ type AdminErrorProps = {
 };
 
 export default function AdminError({ error, retry }: AdminErrorProps) {
+    useEffect(() => {
+        // Log to console / your error reporter
+        console.error(error);
+    }, [error]);
+
     return (
         <section
             aria-label="Lỗi server"
@@ -21,6 +27,10 @@ export default function AdminError({ error, retry }: AdminErrorProps) {
                 <h2 className="mb-4 text-2xl font-bold text-red-800">
                     Lỗi chưa xác định
                 </h2>
+
+                <p className="mb-6 text-base text-slate-600">
+                    Vui lòng thử lại hoặc liên hệ quản trị viên.
+                </p>
 
                 <button
                     onClick={retry}
@@ -37,6 +47,12 @@ export default function AdminError({ error, retry }: AdminErrorProps) {
                         Về trang quản trị
                     </Link>
                 </p>
+
+                {error.digest && (
+                    <p className="mt-4 text-xs text-slate-500">
+                        Mã lỗi: <code>{error.digest}</code>
+                    </p>
+                )}
             </div>
         </section>
     );
