@@ -30,16 +30,17 @@ export default function TasksDetailError({
                             Mã lỗi: {error.digest}
                         </p>
                     )}
-                    <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center"></div>
-                    <Button type="button" onClick={retry}>
-                        Thử lại
-                    </Button>
-                    <Link
-                        href="/tasks"
-                        className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                        Về danh sách
-                    </Link>
+                    <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                        <Button type="button" onClick={retry}>
+                            Thử lại
+                        </Button>
+                        <Link
+                            href="/tasks"
+                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                            Về danh sách
+                        </Link>
+                    </div>
                 </div>
             </div>
         </main >
