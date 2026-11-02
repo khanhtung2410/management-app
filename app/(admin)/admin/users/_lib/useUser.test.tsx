@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetcher as defaultFetcher } from "@/lib/fetcher";
 import type { UsersPage } from "./api";
 
-const { fetchUsersMock, updateUserProfileActionMock } = vi.hoisted(() => ({
+const { fetchUsersMock, updateUserProfileActionMock, updateMockUserMock, mockConfig } = vi.hoisted(() => ({
     fetchUsersMock: vi.fn(),
     updateUserProfileActionMock: vi.fn(),
+    updateMockUserMock: vi.fn(),
+    mockConfig: { currentMockMode: "off" as string },
 }));
 
 vi.mock("./api", () => ({
@@ -19,7 +21,20 @@ vi.mock("./actions", () => ({
     updateUserProfileAction: updateUserProfileActionMock,
 }));
 
+vi.mock("@/lib/mock/config", () => ({
+    get currentMockMode() {
+        return mockConfig.currentMockMode;
+    },
+    mockMode: { off: "off", on: "on", error: "error" },
+    mockDelay: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/mock/mockFetcher", () => ({
+    updateMockUser: updateMockUserMock,
+}));
+
 import { useUsers } from "./useUser";
+import { updateUserStatusAction } from "./actions";
 
 const ascendingPage: UsersPage = {
     data: [
@@ -217,5 +232,128 @@ describe("useUsers — saveUser state update (P1.2)", () => {
         expect(caughtError?.message).toBe("Email đã tồn tại");
         // State không được đổi khi action fail
         expect(result.current.state).toBe(beforeState);
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P1.1 — Đồng bộ dữ liệu mock: guard theo mode + gọi updateMockUser trong saveUser
+// ─────────────────────────────────────────────────────────────────────────────
+const updateUserStatusActionMock = vi.mocked(updateUserStatusAction);
+
+describe("useUsers — toggleStatus mock sync (P1.1)", () => {
+    beforeEach(() => {
+        fetchUsersMock.mockReset();
+        updateUserStatusActionMock.mockReset();
+        updateMockUserMock.mockReset();
+    });
+
+    async function setupLoaded() {
+        fetchUsersMock.mockResolvedValueOnce(ascendingPage);
+        const hook = renderHook(() => useUsers());
+        await waitFor(() => {
+            expect(hook.result.current.state.status).toBe("success");
+        });
+        return hook.result;
+    }
+
+    it("mock mode: gọi updateMockUser sau khi đổi trạng thái thành công", async () => {
+        mockConfig.currentMockMode = "on";
+        const result = await setupLoaded();
+        updateUserStatusActionMock.mockResolvedValue({
+            ok: true,
+            data: { ID: 1, TrangThai: 0 },
+        });
+
+        await act(async () => {
+            await result.current.toggleStatus(1, 1);
+        });
+
+        expect(updateMockUserMock).toHaveBeenCalledWith(1, { TrangThai: 0 });
+    });
+
+    it("real mode: không gọi updateMockUser khi đổi trạng thái", async () => {
+        mockConfig.currentMockMode = "off";
+        const result = await setupLoaded();
+        updateUserStatusActionMock.mockResolvedValue({
+            ok: true,
+            data: { ID: 1, TrangThai: 0 },
+        });
+
+        await act(async () => {
+            await result.current.toggleStatus(1, 1);
+        });
+
+        expect(updateMockUserMock).not.toHaveBeenCalled();
+    });
+});
+
+describe("useUsers — saveUser mock sync (P1.1)", () => {
+    beforeEach(() => {
+        fetchUsersMock.mockReset();
+        updateUserProfileActionMock.mockReset();
+        updateMockUserMock.mockReset();
+    });
+
+    async function setupLoaded() {
+        fetchUsersMock.mockResolvedValueOnce(ascendingPage);
+        const hook = renderHook(() => useUsers());
+        await waitFor(() => {
+            expect(hook.result.current.state.status).toBe("success");
+        });
+        return hook.result;
+    }
+
+    it("mock mode: gọi updateMockUser với dữ liệu từ result.data", async () => {
+        mockConfig.currentMockMode = "on";
+        const result = await setupLoaded();
+        updateUserProfileActionMock.mockResolvedValue({
+            ok: true,
+            data: {
+                userId: 1,
+                HoTen: "Nguyễn Văn A",
+                Email: "a@b.com",
+                SDT: "0901234567",
+            },
+        });
+
+        await act(async () => {
+            await result.current.saveUser({
+                userId: 1,
+                HoTen: "  Nguyễn Văn A  ",
+                Email: " A@B.COM ",
+                SDT: " 0901234567 ",
+            });
+        });
+
+        expect(updateMockUserMock).toHaveBeenCalledWith(1, {
+            HoTen: "Nguyễn Văn A",
+            Email: "a@b.com",
+            SDT: "0901234567",
+        });
+    });
+
+    it("real mode: không gọi updateMockUser khi lưu user", async () => {
+        mockConfig.currentMockMode = "off";
+        const result = await setupLoaded();
+        updateUserProfileActionMock.mockResolvedValue({
+            ok: true,
+            data: {
+                userId: 1,
+                HoTen: "A",
+                Email: "a@b.com",
+                SDT: "0901234567",
+            },
+        });
+
+        await act(async () => {
+            await result.current.saveUser({
+                userId: 1,
+                HoTen: "A",
+                Email: "a@b.com",
+                SDT: "0901234567",
+            });
+        });
+
+        expect(updateMockUserMock).not.toHaveBeenCalled();
     });
 });

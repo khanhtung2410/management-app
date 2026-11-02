@@ -14,7 +14,7 @@ import { revalidatePath, updateTag } from "next/cache";
 export async function updateUserStatusAction(
     userId: number,
     status: UserStatusType
-): Promise<{ ok: true, data?: { ID: number; TrangThai: UserStatusType } } | { ok: false; error: string }> {
+): Promise<{ ok: true, data: { ID: number; TrangThai: UserStatusType } } | { ok: false; error: string }> {
     const { userId: currentUserId } = await requireAdminPage();
     if (!Number.isInteger(userId) || userId <= 0) {
         return { ok: false, error: "ID người dùng không hợp lệ" }
@@ -39,13 +39,14 @@ export async function updateUserStatusAction(
         .input("ID", sql.Int, userId)
         .input("TrangThai", sql.Int, status)
         .input("userRole", sql.Int, userRole.USER)
-        .query("UPDATE [dbo].[User] SET TrangThai = @TrangThai WHERE ID = @ID AND RoleId = @userRole")
-
-    if (result.rowsAffected[0] === 0) return { ok: false, error: "Không tìm thấy người dùng" }
-
+        .query("UPDATE [dbo].[User] SET TrangThai = @TrangThai OUTPUT INSERTED.ID, INSERTED.TrangThai WHERE ID = @ID AND RoleId = @userRole")
+ 
+    const updated = result.recordset[0] as { ID: number; TrangThai: UserStatusType } | undefined;
+    if (!updated) return { ok: false, error: "Không tìm thấy người dùng" }
+ 
     revalidatePath("/admin/stat");
     updateTag("dashboard-summary");
-    return { ok: true };
+    return { ok: true, data: { ID: updated.ID, TrangThai: updated.TrangThai } };
 }
 
 //change user profile
