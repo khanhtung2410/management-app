@@ -57,8 +57,6 @@ export function resetMockUsers(): void {
     store = seedUsers();
 }
 
-// ─────────────────────────── Read body ───────────────────────────
-
 // ─────────────────────────── Fetcher ───────────────────────────
 export const mockFetcher: typeof fetch = async (input, init) => {
     await mockDelay();

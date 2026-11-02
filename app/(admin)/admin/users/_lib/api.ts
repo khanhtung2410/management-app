@@ -40,23 +40,6 @@ export interface UserUpdatePayload {
     SDT: string;
 }
 
-/** Payload cho PATCH /api/admin/users/:id — field optional, không cần userId. */
-export type UserPatchPayload = Partial<
-    Pick<User, "HoTen" | "Email" | "SDT" | "TrangThai">
->;
-
-/** Đọc message lỗi từ response dạng `{ error: { code, message } }`. */
-export async function readApiErrorFromFetch(res: Response, fallback: string): Promise<string> {
-    try {
-        const body = (await res.json()) as Partial<{ error: { message?: string } }> & {
-            message?: string;
-        };
-        return body?.error?.message ?? body?.message ?? fallback;
-    } catch {
-        return fallback;
-    }
-}
-
 export async function fetchUsers(
     params: FetchUsersParams,
     fetchImpl: Fetcher = fetch,
@@ -81,7 +64,7 @@ export async function fetchUsers(
         `/api/admin/users?${qs}`,
         withTimeout({ credentials: "include" }),
     );
-    if (!res.ok) throw new Error(await readApiError(res) || "Không thể lấy dữ liệu");
+    if (!res.ok) throw new Error(await readApiError(res));
 
     const body = (await res.json()) as Partial<UsersPage>;
     return {

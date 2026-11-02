@@ -33,7 +33,6 @@ import {
     getAuth,
     requireAdminPage,
     requireAuthPage,
-    requireUserPage,
 } from "./server";
 
 const validPayload = {
@@ -117,27 +116,5 @@ describe("requireAdminPage (P1.6)", () => {
     it("trả payload khi ADMIN + Active", async () => {
         getAuthFromRequestMock.mockResolvedValue(validPayload);
         await expect(requireAdminPage()).resolves.toEqual(validPayload);
-    });
-});
-
-describe("requireUserPage (P1.6)", () => {
-    it("redirect /login khi tài khoản bị khoá", async () => {
-        getAuthFromRequestMock.mockRejectedValue(new AccountLockedError());
-        await expect(requireUserPage()).rejects.toThrow("NEXT_REDIRECT:/login");
-    });
-
-    it("redirect /403 khi role ADMIN", async () => {
-        getAuthFromRequestMock.mockResolvedValue(validPayload);
-        await expect(requireUserPage()).rejects.toThrow("NEXT_REDIRECT:/403");
-    });
-
-    it("trả payload khi USER + Active", async () => {
-        getAuthFromRequestMock.mockResolvedValue({
-            ...validPayload,
-            roleId: userRole.USER,
-        });
-        await expect(requireUserPage()).resolves.toMatchObject({
-            roleId: userRole.USER,
-        });
     });
 });

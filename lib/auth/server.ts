@@ -51,10 +51,6 @@ export function requireAuthPage(): Promise<AuthPayload> {
     return getAuthOrRedirect();
 }
 
-export function requireUserPage(): Promise<AuthPayload> {
-    return requireRolePage(userRole.USER);
-}
-
 export function requireAdminPage(): Promise<AuthPayload> {
     return requireRolePage(userRole.ADMIN);
 }
