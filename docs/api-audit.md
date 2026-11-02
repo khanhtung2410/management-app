@@ -12,7 +12,7 @@ handler không được tính.
 | `GET /api/admin/users` | Admin | Query: `page` (mặc định 1), `pageSize` (mặc định 10), `sortBy` (chỉ ánh xạ `id`), `order` (`desc` hoặc mặc định `asc`), `search` (mặc định rỗng). Không có body. | `200 { data: User[], total, page, pageSize, totalPages }`; chỉ liệt kê user thường. | `200`, `403` (không phải admin), `500` (lỗi khác; chưa đăng nhập hiện cũng thành `500`, **sai: cần 401**). | Có — `app/(admin)/admin/users/_lib/api.ts` |
 | `PUT /api/admin/users/status` | Admin | JSON `{ userId, status }`; status chỉ nhận `0` (inactive) hoặc `1` (active). | `200 { message }` | `200`, `400` (body/ID/status sai), `403` (sai role), `404` (không có user thường tương ứng), `500` (lỗi khác; chưa đăng nhập hiện thành `500`, **sai: cần 401**). | Không — UI dùng Server Action |
 | `PUT /api/admin/users/profile` | Admin | JSON `{ userId, HoTen, Email, SDT? }`; họ tên và email chỉ cần là chuỗi không rỗng; SDT nếu truyền phải là chuỗi. | `200 { message }` | `200`, `400` (body/ID/field không hợp lệ), `403`, `404`, `500` (gồm email trùng do constraint; **sai: email trùng cần 409**; chưa đăng nhập hiện thành `500`, **sai: cần 401**). | Không — UI dùng Server Action |
-| `GET /api/admin/stat` | Admin | Không có body. | `200 { totalUsers, totalTasks, taskStats: [{ status, name, total, percent }] }` | `200`, `500` (catch mọi lỗi, bao gồm chưa đăng nhập và sai role; **sai: cần phân biệt 401/403**). | Không — không tìm thấy UI caller |
+| ~~`GET /api/admin/stat`~~ | ~~Admin~~ | Không có body. | ~~`200 { totalUsers, totalTasks, taskStats: [...] }`~~ | ~~`200`, `500` (catch mọi lỗi, bao gồm chưa đăng nhập và sai role; **sai: cần phân biệt 401/403**).~~ | Không — không tìm thấy UI caller |
 | `POST /api/login` | Công khai | JSON `{ email, password }` | `200 { message }` và đặt cookie `token` HttpOnly. | `200`, `400` (body/thiếu thông tin), `401` (credential sai hoặc tài khoản bị khóa; **sai: tài khoản đã xác thực nhưng bị khóa nên cần 403**), `500` (mọi lỗi trong handler hiện đều trả thông báo “Lỗi kết nối database”, **sai: không phải lỗi nào cũng là DB**). | Có — `app/(public)/login/page.tsx` |
 | `POST /api/register` | Công khai | JSON `{ HoTen, Email, SDT?, password }`; tên tối thiểu 2 ký tự, email theo regex, mật khẩu tối thiểu 6 ký tự; SDT không phải chuỗi được đổi thành rỗng. | `201 { message, user: { ID, HoTen, Email } }` | `201`, `400` (body/validation), `409` (email đã dùng), `500` (lỗi khác). | Có — `app/(public)/register/page.tsx` |
 | `POST /api/logout` | Công khai | Không có body. | `200 { message }`; xóa cookie `token`. | `200` | Có — `components/Logout.tsx` |
@@ -50,6 +50,26 @@ Action chuẩn hóa email về chữ thường, kiểm tra định dạng email,
 định dạng SDT; endpoint profile hiện chỉ kiểm tra kiểu và chuỗi rỗng, không có
 kiểm tra email trùng. UI hiện dùng Server Action cho cập nhật profile/trạng thái,
 nên các endpoint `PUT` này không phải đường đi đang được giao diện sử dụng.
+
+## Sau các bản sửa BT13 — hiện trạng sau khi sửa
+
+> Bảng “Đối chiếu các vấn đề cần xử lý” trên ghi **trạng thái trước khi sửa**. Sau các
+> bản sửa BT13.x (từ `fix(api): include field details in validation errors` (#75) đến
+> `fix(mock): align admin users mock with real API` (#93), gồm các ticket BT13.1–BT13.14),
+> các vấn đề đã được khắc phục. Dòng dưới ghi **hiện trạng sau khi sửa**.
+
+| Vấn đề | Trạng thái sau khi sửa |
+|---|---|
+| Chưa đăng nhập gọi route cần auth (`GET /api/admin/users`, `GET /api/tasks`, `GET /api/admin/stat`) | `401 UNAUTHENTICATED`; `GET /api/admin/stat` đã **xoá** (BT13.9) |
+| Tài khoản bị khóa | `403 ACCOUNT_LOCKED` (đã map `POST /api/login`, page guard) |
+| `sortBy` prototype chain / giá trị lạ | `400 VALIDATION_ERROR` qua `parseSort` + `Object.hasOwn` (BT13.8) |
+| `GET /api/admin/users?pageSize=1000000` | `400 VALIDATION_ERROR` (parse `pageSize` trong `1..100`) (BT13.8) |
+| `POST /api/tasks` với `HetHan: "abc"` / tên vượt giới hạn | `400 VALIDATION_ERROR` trước khi ghi DB |
+| `POST /api/login` message chung “Lỗi kết nối database” | `500 INTERNAL_ERROR` với message chung phù hợp |
+| Cập nhật profile email trùng | `409 CONFLICT` (pre-check + map lỗi unique 2627/2601) |
+| Cập nhật user admin tự đổi trạng thái | `400 VALIDATION_ERROR` kèm `details` field `TrangThai` (BT13.10) |
+| `PATCH /api/admin/users/[id]` trả `{ message }` sau update | `200` trả bản ghi đã update qua `OUTPUT INSERTED.*` (BT13.11) |
+| Mock `GET /api/admin/users` lệch API thật | Mock dùng `parseSort`, `totalPages = Math.ceil`, `jsonError(code: ErrorCode)` (BT13.13) |
 
 ## Route không được UI gọi và các bản tổng quan
 
