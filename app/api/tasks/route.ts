@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { taskStatus } from "@/constants/statuses";
 import { parsePage, parsePageSize, parseSort } from "@/lib/api/pagination";
 import { readJson, badRequest, list, created, handleApiError } from "@/lib/api";
+import { validateTaskFields } from "@/lib/validation/task";
 
 const sortableColumn = { id: "ID", hetHan: "HetHan", ten: "Ten" } as const;
 
@@ -55,43 +56,11 @@ export async function POST(req: NextRequest) {
     try {
         const { userId } = await requireAuth(req);
         const body = await readJson(req);
-
-        // ── Ten: required, phải là string ────────────────────────────────
-        if (typeof body.Ten !== "string") {
-            throw badRequest("Tên công việc không hợp lệ", [
-                { field: "Ten", message: "Tên công việc không hợp lệ" },
-            ]);
+        const validation = validateTaskFields(body);
+        if (!validation.ok) {
+            throw badRequest(validation.details[0].message, validation.details);
         }
-        const Ten = body.Ten.trim();
-        if (!Ten) {
-            throw badRequest("Vui lòng nhập tên công việc", [
-                { field: "Ten", message: "Vui lòng nhập tên công việc" },
-            ]);
-        }
-        if (Ten.length > 255) {
-            throw badRequest("Tên công việc không được vượt quá 255 ký tự", [
-                {
-                    field: "Ten",
-                    message: "Tên công việc không được vượt quá 255 ký tự",
-                },
-            ]);
-        }
-
-        // ── Mota: optional, nếu có thì phải là string ────────────────────
-        if (body.Mota != null && typeof body.Mota !== "string") {
-            throw badRequest("Mô tả không hợp lệ", [
-                { field: "Mota", message: "Mô tả không hợp lệ" },
-            ]);
-        }
-        const Mota = (body.Mota ?? "").trim();
-
-        // ── HetHan: required, phải là string parse được thành date ───────
-        const HetHan = body.HetHan;
-        if (typeof HetHan !== "string" || isNaN(Date.parse(HetHan))) {
-            throw badRequest("Ngày hết hạn không hợp lệ", [
-                { field: "HetHan", message: "Ngày hết hạn không hợp lệ" },
-            ]);
-        }
+        const { Ten, Mota, HetHan } = validation.data;
 
         const pool = await getDb();
         const result = await pool

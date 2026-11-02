@@ -157,6 +157,19 @@ describe("POST /api/tasks", () => {
         });
     });
 
+    it("trả details cho tất cả trường sai", async () => {
+        const res = await POST(jsonReq({ Ten: "", HetHan: "abc" }));
+        expect(res.status).toBe(400);
+        const body = await res.json();
+        expect(body.error.details).toHaveLength(2);
+        expect(body.error.details.map((detail: { field: string }) => detail.field)).toEqual([
+            "Ten",
+            "HetHan",
+        ]);
+        expect(body.error.message).toBe(body.error.details[0].message);
+        expect(getDb).not.toHaveBeenCalled();
+    });
+
     it("trả details[0].field = Ten khi thiếu Ten", async () => {
         const res = await POST(jsonReq({ HetHan: "2026-01-01" }));
         expect(res.status).toBe(400);
