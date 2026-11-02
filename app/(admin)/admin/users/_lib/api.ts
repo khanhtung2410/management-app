@@ -90,7 +90,7 @@ export async function fetchUsers(
             page,
             pageSize,
             total: 0,
-            totalPages: 1,
+            totalPages: 0,
         },
     };
 }

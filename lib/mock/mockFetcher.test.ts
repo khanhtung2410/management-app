@@ -88,8 +88,26 @@ describe("mockFetcher — GET /api/admin/users", () => {
         const response = await mockFetcher("/api/admin/users?sortBy=foobar");
         expect(response.status).toBe(400);
         await expect(response.json()).resolves.toEqual({
-            error: { code: "VALIDATION_ERROR", message: "sortBy không hợp lệ" },
+            error: {
+                code: "VALIDATION_ERROR",
+                message: "sortBy không hợp lệ",
+                details: [{ field: "sortBy", message: "sortBy không hợp lệ" }],
+            },
         });
+    });
+
+    it("trả meta.totalPages = 0 khi danh sách rỗng", async () => {
+        const response = await mockFetcher("/api/admin/users?search=zzz-no-match-zzz");
+        const result = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(result.meta).toEqual({
+            page: 1,
+            pageSize: 10,
+            total: 0,
+            totalPages: 0,
+        });
+        expect(result.data).toEqual([]);
     });
 
     it("lọc theo search", async () => {

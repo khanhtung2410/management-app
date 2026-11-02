@@ -2,8 +2,8 @@ import { userRole } from "@/constants/roles";
 import type { User as AdminUser } from "@/app/(admin)/admin/users/_lib/api";
 import { mockUser } from "./data";
 import { mockDelay } from "./config";
-import { ApiError } from "../api/errors";
-import { parsePage, parsePageSize } from "../api/pagination";
+import { ApiError, type ErrorCode } from "../api/errors";
+import { parsePage, parsePageSize, parseSort } from "../api/pagination";
 
 // ─────────────────────────── Types ───────────────────────────
 type MockUser = Pick<AdminUser, "ID" | "HoTen" | "Email" | "SDT" | "TrangThai">;
@@ -33,7 +33,7 @@ function jsonResponse(body: unknown, status = 200): Response {
     });
 }
 
-function jsonError(code: string, message: string, status = 400): Response {
+function jsonError(code: ErrorCode, message: string, status = 400): Response {
     return jsonResponse({ error: { code, message } }, status);
 }
 
@@ -78,9 +78,23 @@ export const mockFetcher: typeof fetch = async (input, init) => {
     if (requestUrl.pathname === "/api/admin/users" && method === "GET") {
         const searchParams = requestUrl.searchParams;
 
-        const sortByKey = (searchParams.get("sortBy") ?? "id") as SortKey;
-        if (!(sortByKey in sortableColumn)) {
-            return jsonError("VALIDATION_ERROR", "sortBy không hợp lệ", 400);
+        let sortBy: string;
+        try {
+            sortBy = parseSort(searchParams.get("sortBy"), sortableColumn);
+        } catch (error) {
+            if (error instanceof ApiError) {
+                return jsonResponse(
+                    {
+                        error: {
+                            code: error.code,
+                            message: error.message,
+                            details: error.details,
+                        },
+                    },
+                    error.status,
+                );
+            }
+            throw error;
         }
 
         let page: number;
@@ -116,7 +130,7 @@ export const mockFetcher: typeof fetch = async (input, init) => {
             );
         }
 
-        const key = sortableColumn[sortByKey] as keyof MockUser;
+        const key = sortableColumn[sortBy as SortKey] as keyof MockUser;
         users.sort((a, b) => {
             const va = a[key];
             const vb = b[key];
@@ -128,7 +142,7 @@ export const mockFetcher: typeof fetch = async (input, init) => {
         });
 
         const total = users.length;
-        const totalPages = Math.max(Math.ceil(total / pageSize), 1);
+        const totalPages = Math.ceil(total / pageSize);
         const offset = (page - 1) * pageSize;
 
         return jsonResponse({
