@@ -1,6 +1,6 @@
 # docs/api-conventions.md
 
-> Tài liệu này là **hợp đồng API** bắt buộc cho toàn bộ Route Handler trong `app/api`. Mọi PR thêm/sửa endpoint phải tuân theo đây; reviewer dùng mục 10 làm checklist. Đọc kèm `# API audit.txt` để biết hiện trạng từng route.
+> Tài liệu này là **hợp đồng API** bắt buộc cho toàn bộ Route Handler trong `app/api`. Mọi PR thêm/sửa endpoint phải tuân theo đây; reviewer dùng mục 10 làm checklist. Đọc kèm `docs/api-audit.md` để biết hiện trạng từng route.
 
 ---
 
@@ -172,12 +172,12 @@ INTERNAL_ERROR
 | `403` | `ACCOUNT_LOCKED` | Credential đúng nhưng tài khoản bị khoá, **không được phép đăng nhập / dùng phiên** | `POST /api/login` với tài khoản `TrangThai = 0` (hiện trả 401 — phải sửa); `GET /api/tasks` với token hợp lệ nhưng tài khoản bị khoá giữa phiên |
 | `404` | `NOT_FOUND` | Không tìm thấy tài nguyên **trong phạm vi người gọi được phép thấy** | `GET /api/tasks/999999` (không tồn tại); `GET /api/tasks/42` khi task 42 thuộc user khác (xem 6.1); `PATCH /api/admin/users/[id]` với `id` không tồn tại |
 | `409` | `CONFLICT` | Vi phạm ràng buộc duy nhất / trạng thái xung đột | `POST /api/register` với email đã tồn tại; `PATCH /api/admin/users/[id]` đổi sang email đã có user khác dùng (hiện trả 500 — phải sửa) |
-| `500` | `INTERNAL_ERROR` | Lỗi không lường trước ở server (DB, driver, bug) | `POST /api/tasks` khi driver báo lỗi cột `Ten` vượt độ dài (sau khi đã thêm validate thì không còn rơi vào đây); `GET /api/admin/stat` khi truy vấn DB ném lỗi |
+| `500` | `INTERNAL_ERROR` | Lỗi không lường trước ở server (DB, driver, bug) | `POST /api/tasks` khi driver báo lỗi cột `Ten` vượt độ dài (sau khi đã thêm validate thì không còn rơi vào đây) |
 
 Quy tắc bổ sung:
 
 - `500` **luôn** dùng `message` chung, ví dụ `"Đã có lỗi xảy ra, vui lòng thử lại sau"`. Không dùng `"Lỗi kết nối database"` cho mọi lỗi (khắc phục lỗi audit ở `POST /api/login`). Chi tiết gốc ghi bằng `console.error(err)`.
-- Không trả `200` cho trường hợp lỗi; không trả `500` cho lỗi xác thực (`401`) hay phân quyền (`403`) — đây là hai lỗi audit phải sửa ở `GET /api/admin/users`, `PUT /api/admin/users/*` và `GET /api/admin/stat`.
+- Không trả `200` cho trường hợp lỗi; không trả `500` cho lỗi xác thực (`401`) hay phân quyền (`403`) — đây là hai lỗi audit phải sửa ở `GET /api/admin/users` và `PUT /api/admin/users/*`.
 - Các cặp `(status, code)` trong bảng là **duy nhất**: không dùng `400` với `code = "UNAUTHENTICATED"`, không dùng `401` với `code = "ACCOUNT_LOCKED"`.
 
 ---
@@ -232,9 +232,9 @@ Lý do:
 | `password` | chuỗi, ≥ 6 ký tự | `"Mật khẩu phải có ít nhất 6 ký tự"` |
 | `Ten` (task) | chuỗi (typeof string bắt buộc, **không** ép từ `String()`), không rỗng, ≤ 255 ký tự (khớp cột `NVarChar(255)`) | `"Tên công việc không hợp lệ"` / `"Tên công việc không được để trống"` / `"Tên công việc không được vượt quá 255 ký tự"` |
 | `Mota` (task) | tuỳ chọn; nếu có phải là chuỗi (typeof string). `null`/`undefined` = coi như không truyền | `"Mô tả không hợp lệ"` |
-| `HetHan` | chuỗi parse được thành ngày hợp lệ | `"Hạn hoàn thành không hợp lệ"` |
+| `HetHan` | chuỗi parse được thành ngày hợp lệ | `"Ngày hết hạn không hợp lệ"` |
 | `TrangThai` (task) | **number nguyên** `0` hoặc `1`. **Không chấp nhận** `"0"`/`"1"` (string) hay `true`/`false` (boolean) — route phải reject, không ép kiểu. | `"Trạng thái không hợp lệ"` |
-| `status` (user admin) | `0` hoặc `1` | `"Trạng thái không hợp lệ"` |
+| `TrangThai` (user admin) | `0` hoặc `1` | `"Trạng thái không hợp lệ"` |
 | `id` (path) | số nguyên dương | `"ID không hợp lệ"` |
 | `page` | số nguyên ≥ 1 | `"page phải là số nguyên dương"` |
 | `pageSize` | số nguyên `1..100` | `"pageSize phải nằm trong khoảng 1..100"` |
@@ -271,7 +271,7 @@ Lý do:
 | Hiện tại | Chuẩn mới | Việc cần làm |
 |---|---|---|
 | `GET /api/admin/users` | Giữ | Thêm chặn `pageSize > 100`; map `UnauthorizedError` → `401` |
-| `PUT /api/admin/users/status` | `PATCH /api/admin/users/[id]` body `{ "status": 0\|1 }` | Đổi route/method, ID lên path; map `401` |
+| `PUT /api/admin/users/status` | `PATCH /api/admin/users/[id]` body `{ "TrangThai": 0\|1 }` | Đổi route/method, ID lên path; map `401` |
 | `PUT /api/admin/users/profile` | `PATCH /api/admin/users/[id]` body `{ HoTen?, Email?, SDT? }` | Đổi route/method; thêm validate email/SDT/tên; trùng email → `409` |
 | `GET /api/admin/stat` | **Xoá** (không có UI caller; `/admin/stat` page dùng `getDashboardSummary()` trực tiếp) | Đã xoá trong PR `refactor(api): remove unused admin stat endpoint`; `docs/api-audit.md` ghi nhận không còn route này |
 | `POST /api/login` | Giữ (ngoại lệ) | Tài khoản khoá → `403 ACCOUNT_LOCKED`; bỏ message "Lỗi kết nối database" chung |
