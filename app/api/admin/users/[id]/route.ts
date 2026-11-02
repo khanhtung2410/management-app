@@ -6,13 +6,12 @@ import { userRole } from "@/constants/roles";
 import { userStatus } from "@/constants/statuses";
 import { revalidatePath, revalidateTag } from "next/cache";
 import {
-  readJson,
-  badRequest,
-  notFound,
-  forbidden,
-  ok,
-  handleApiError,
-  conflict,
+    readJson,
+    badRequest,
+    notFound,
+    ok,
+    handleApiError,
+    conflict,
 } from "@/lib/api";
 import { validateUserFields } from "@/lib/validation/user";
 
@@ -21,120 +20,124 @@ import { validateUserFields } from "@/lib/validation/user";
 //   - 2601: UNIQUE index (dự phòng nếu constraint được tạo bằng CREATE INDEX)
 // Phải bắt vì giữa SELECT kiểm tra trùng và UPDATE vẫn có race condition (P2.3c).
 function isUniqueViolation(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const n = (error as { number?: unknown }).number;
-  return n === 2627 || n === 2601;
+    if (typeof error !== "object" || error === null) return false;
+    const n = (error as { number?: unknown }).number;
+    return n === 2627 || n === 2601;
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> },
 ) {
-  try {
-    const { userId: currentUserId } = await requireRole(request, userRole.ADMIN);
+    try {
+        const { userId: currentUserId } = await requireRole(request, userRole.ADMIN);
 
-    const { id } = await params;
-    const targetId = Number(id);
-    if (!Number.isInteger(targetId) || targetId <= 0) {
-      throw badRequest("ID người dùng không hợp lệ", [
-        { field: "id", message: "ID người dùng không hợp lệ" },
-      ]);
-    }
+        const { id } = await params;
+        const targetId = Number(id);
+        if (!Number.isInteger(targetId) || targetId <= 0) {
+            throw badRequest("ID người dùng không hợp lệ", [
+                { field: "id", message: "ID người dùng không hợp lệ" },
+            ]);
+        }
 
-    const body = await readJson(request);
-    const { TrangThai, HoTen, Email, SDT } = body;
+        const body = await readJson(request);
+        const { TrangThai, HoTen, Email, SDT } = body;
 
-    const hasStatus = TrangThai !== undefined;
-    const hasProfile = HoTen !== undefined || Email !== undefined || SDT !== undefined;
+        const hasStatus = TrangThai !== undefined;
+        const hasProfile = HoTen !== undefined || Email !== undefined || SDT !== undefined;
 
-    if (!hasStatus && !hasProfile) {
-      throw badRequest("Không có trường nào để cập nhật");
-    }
+        if (!hasStatus && !hasProfile) {
+            throw badRequest("Không có trường nào để cập nhật");
+        }
 
-    // ─── Validate status ───
-    if (hasStatus) {
-      if (TrangThai !== userStatus.Active && TrangThai !== userStatus.Inactive) {
-        throw badRequest("Trạng thái không hợp lệ", [
-          { field: "TrangThai", message: "Trạng thái không hợp lệ" },
-        ]);
-      }
-      if (targetId === currentUserId) {
-        throw forbidden("Không thể đổi trạng thái của chính mình");
-      }
-    }
+        // ─── Validate status ───
+        if (hasStatus) {
+            if (TrangThai !== userStatus.Active && TrangThai !== userStatus.Inactive) {
+                throw badRequest("Trạng thái không hợp lệ", [
+                    { field: "TrangThai", message: "Trạng thái không hợp lệ" },
+                ]);
+            }
+            if (targetId === currentUserId) {
+                // Không phải lỗi phân quyền (403 chỉ dùng cho vai trò) — đây là
+                // quy tắc nghiệp vụ: admin không tự đổi trạng thái tài khoản của mình.
+                throw badRequest("Không thể đổi trạng thái của chính mình", [
+                    { field: "TrangThai", message: "Không thể đổi trạng thái của chính mình" },
+                ]);
+            }
+        }
 
-    // ─── Validate profile (chỉ khi có ít nhất 1 trường profile) ───
-    let hoTen: string | undefined;
-    let email: string | undefined;
-    let sdt: string | null | undefined;
+        // ─── Validate profile (chỉ khi có ít nhất 1 trường profile) ───
+        let hoTen: string | undefined;
+        let email: string | undefined;
+        let sdt: string | null | undefined;
 
-    if (hasProfile) {
-      const v = validateUserFields({ HoTen, Email, SDT }, { partial: true });
-      if (!v.ok) {
-        throw badRequest(v.details[0]?.message ?? "Dữ liệu không hợp lệ", v.details);
-      }
-      hoTen = v.data.HoTen;
-      email = v.data.Email;
-      sdt = v.data.SDT;
-    }
+        if (hasProfile) {
+            const v = validateUserFields({ HoTen, Email, SDT }, { partial: true });
+            if (!v.ok) {
+                throw badRequest(v.details[0]?.message ?? "Dữ liệu không hợp lệ", v.details);
+            }
+            hoTen = v.data.HoTen;
+            email = v.data.Email;
+            sdt = v.data.SDT;
+        }
 
-    const db = await getDb();
+        const db = await getDb();
 
-    // ─── Pre-check email trùng ───
-    if (email !== undefined) {
-      const dup = await db
-        .request()
-        .input("Email", sql.VarChar(255), email)
-        .input("ID", sql.Int, targetId)
-        .query("SELECT 1 FROM [User] WHERE Email = @Email AND ID <> @ID");
-      if (dup.recordset.length > 0) {
-        throw conflict("Email đã được sử dụng");
-      }
-    }
+        // ─── Pre-check email trùng ───
+        if (email !== undefined) {
+            const dup = await db
+                .request()
+                .input("Email", sql.VarChar(255), email)
+                .input("ID", sql.Int, targetId)
+                .query("SELECT 1 FROM [User] WHERE Email = @Email AND ID <> @ID");
+            if (dup.recordset.length > 0) {
+                throw conflict("Email đã được sử dụng");
+            }
+        }
 
-    // ─── Build SET động ───
-    const sets: string[] = [];
-    const req = db
-      .request()
-      .input("userId", sql.Int, targetId)
-      .input("userRole", sql.Int, userRole.USER);
+        // ─── Build SET động ───
+        const sets: string[] = [];
+        const req = db
+            .request()
+            .input("userId", sql.Int, targetId)
+            .input("userRole", sql.Int, userRole.USER);
 
-    if (hasStatus) {
-      sets.push("TrangThai = @TrangThai");
-      req.input("TrangThai", sql.Int, TrangThai as number);
-    }
-    if (hoTen !== undefined) { sets.push("HoTen = @HoTen"); req.input("HoTen", sql.NVarChar(255), hoTen); }
-    if (email !== undefined) { sets.push("Email = @Email"); req.input("Email", sql.VarChar(255), email); }
-    if (sdt  !== undefined) { sets.push("SDT = @SDT");   req.input("SDT",  sql.VarChar(10),  sdt);   }
+        if (hasStatus) {
+            sets.push("TrangThai = @TrangThai");
+            req.input("TrangThai", sql.Int, TrangThai as number);
+        }
+        if (hoTen !== undefined) { sets.push("HoTen = @HoTen"); req.input("HoTen", sql.NVarChar(255), hoTen); }
+        if (email !== undefined) { sets.push("Email = @Email"); req.input("Email", sql.VarChar(255), email); }
+        if (sdt  !== undefined) { sets.push("SDT = @SDT");   req.input("SDT",  sql.NVarChar(10), sdt);   }
 
-    const updateQuery = `
+        const updateQuery = `
       UPDATE [User]
       SET ${sets.join(", ")}
       WHERE ID = @userId
         AND RoleId = @userRole
     `;
 
-    // ─── UPDATE + bắt race condition 2627/2601 ───
-    let result: sql.IResult<unknown>;
-    try {
-      result = await req.query(updateQuery);
+        // ─── UPDATE + bắt race condition 2627/2601 ───
+        let result: sql.IResult<unknown>;
+        try {
+            result = await req.query(updateQuery);
+        } catch (error) {
+            if (isUniqueViolation(error)) {
+                throw conflict("Email đã được sử dụng");
+            }
+            throw error;
+        }
+
+        if (result.rowsAffected[0] === 0) {
+            throw notFound("Không tìm thấy người dùng");
+        }
+
+        revalidatePath("/admin/users");
+        revalidatePath("/admin/stat");
+        revalidateTag("dashboard-summary", "max");
+
+        return ok({ message: "Cập nhật người dùng thành công" });
     } catch (error) {
-      if (isUniqueViolation(error)) {
-        throw conflict("Email đã được sử dụng");
-      }
-      throw error;
+        return handleApiError(error);
     }
-
-    if (result.rowsAffected[0] === 0) {
-      throw notFound("Không tìm thấy người dùng");
-    }
-
-    revalidatePath("/admin/users");
-    revalidatePath("/admin/stat");
-    revalidateTag("dashboard-summary", "max");
-
-    return ok({ message: "Cập nhật người dùng thành công" });
-  } catch (error) {
-    return handleApiError(error);
-  }
 }
