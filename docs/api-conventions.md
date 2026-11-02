@@ -205,7 +205,7 @@ Hệ quả cần ghi rõ trong code và test:
 **Quyết định: cùng `400`, khác `error.code`.**
 
 - Sai cú pháp JSON → `400` + `code = "INVALID_JSON"`, `message = "Dữ liệu gửi lên không phải JSON hợp lệ"`, **không** có `details` (không có field nào để chỉ).
-- JSON hợp lệ nhưng thiếu/sai trường → `400` + `code = "VALIDATION_ERROR"`, `message` câu tiếng Việt mô tả lỗi đầu tiên hoặc lỗi tổng quát, `details` liệt kê **tất cả** field lỗi.
+- JSON hợp lệ nhưng thiếu/sai trường → `400` + `code = "VALIDATION_ERROR"`, `message = details[0].message`, `details` liệt kê **tất cả** field lỗi.
 
 Lý do:
 

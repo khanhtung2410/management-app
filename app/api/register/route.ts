@@ -4,12 +4,13 @@ import { getDb } from "@/lib/db";
 import { userStatus } from "@/constants/statuses";
 import { userRole } from "@/constants/roles";
 import { validateUserFields } from "@/lib/validation/user";
+import type { ErrorDetail } from "@/lib/api/errors";
 import {
-  readJson,
-  badRequest,
-  conflict,
-  created,
-  handleApiError,
+    readJson,
+    badRequest,
+    conflict,
+    created,
+    handleApiError,
 } from "@/lib/api";
 
 const SALT_ROUNDS = 10;
@@ -17,70 +18,69 @@ const SALT_ROUNDS = 10;
 // Vi phạm UNIQUE constraint / index (UQ_User_Email) — phải bắt vì giữa
 // SELECT exists và INSERT vẫn có race condition (hai request cùng email).
 function isUniqueViolation(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const n = (error as { number?: unknown }).number;
-  return n === 2627 || n === 2601;
+    if (typeof error !== "object" || error === null) return false;
+    const n = (error as { number?: unknown }).number;
+    return n === 2627 || n === 2601;
 }
 
 export async function POST(req: Request) {
-  try {
-    const body = await readJson(req);
-    const { HoTen, Email, SDT, password } = body;
-
-    // Validator dùng chung (BT13.2). Full mode: cả 3 trường đều bắt buộc.
-    const v = validateUserFields({ HoTen, Email, SDT }, { partial: false });
-    if (!v.ok) {
-      throw badRequest("Dữ liệu không hợp lệ", v.details);
-    }
-    const { HoTen: hoTen, Email: email, SDT: sdt } = v.data;
-
-    // Password không thuộc validateUserFields — validate riêng.
-    if (typeof password !== "string" || password.length < 6) {
-      throw badRequest("Mật khẩu phải có ít nhất 6 ký tự", [
-        { field: "password", message: "Mật khẩu phải có ít nhất 6 ký tự" },
-      ]);
-    }
-
-    const pool = await getDb();
-
-    const exists = await pool
-      .request()
-      .input("Email", sql.VarChar(255), email)
-      .query(`SELECT 1 AS found FROM [User] WHERE Email = @Email`);
-
-    if (exists.recordset.length > 0) {
-      throw conflict("Email đã được sử dụng");
-    }
-
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-    let result: sql.IResult<{ ID: number; HoTen: string; Email: string }>;
     try {
-      result = await pool
-        .request()
-        .input("HoTen", sql.NVarChar(255), hoTen)
-        .input("Email", sql.VarChar(255), email)
-        .input("SDT", sql.VarChar(10), sdt)
-        .input("PasswordHash", sql.NVarChar(255), passwordHash)
-        .input("RoleId", sql.Int, userRole.USER)
-        .input("TrangThai", sql.Int, userStatus.Active)
-        .query(`
-          INSERT INTO [User] (HoTen, Email, SDT, PasswordHash, RoleId, TrangThai)
-          OUTPUT INSERTED.ID, INSERTED.HoTen, INSERTED.Email
-          VALUES (@HoTen, @Email, @SDT, @PasswordHash, @RoleId, @TrangThai)
-        `);
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        throw conflict("Email đã được sử dụng");
-      }
-      throw error;
-    }
+        const body = await readJson(req);
+        const { HoTen, Email, SDT, password } = body;
 
-    return created({
-      message: "Đăng ký thành công",
-      user: result.recordset[0],
-    });
-  } catch (error) {
-    return handleApiError(error);
-  }
+        // Validator dùng chung (BT13.2). Full mode: cả 3 trường đều bắt buộc.
+        const v = validateUserFields({ HoTen, Email, SDT }, { partial: false });
+        const details: ErrorDetail[] = v.ok ? [] : [...v.details];
+        const validPassword =
+            typeof password === "string" && password.length >= 6 ? password : undefined;
+        if (validPassword === undefined) {
+            details.push({ field: "password", message: "Mật khẩu phải có ít nhất 6 ký tự" });
+        }
+        if (!v.ok || validPassword === undefined) {
+            throw badRequest(details[0].message, details);
+        }
+        const { HoTen: hoTen, Email: email, SDT: sdt } = v.data;
+
+        const pool = await getDb();
+
+        const exists = await pool
+            .request()
+            .input("Email", sql.VarChar(255), email)
+            .query(`SELECT 1 AS found FROM [User] WHERE Email = @Email`);
+
+        if (exists.recordset.length > 0) {
+            throw conflict("Email đã được sử dụng");
+        }
+
+        const passwordHash = await bcrypt.hash(validPassword, SALT_ROUNDS);
+
+        let result: sql.IResult<{ ID: number; HoTen: string; Email: string }>;
+        try {
+            result = await pool
+                .request()
+                .input("HoTen", sql.NVarChar(255), hoTen)
+                .input("Email", sql.VarChar(255), email)
+                .input("SDT", sql.VarChar(10), sdt)
+                .input("PasswordHash", sql.NVarChar(255), passwordHash)
+                .input("RoleId", sql.Int, userRole.USER)
+                .input("TrangThai", sql.Int, userStatus.Active)
+                .query(`
+                    INSERT INTO [User] (HoTen, Email, SDT, PasswordHash, RoleId, TrangThai)
+                    OUTPUT INSERTED.ID, INSERTED.HoTen, INSERTED.Email
+                    VALUES (@HoTen, @Email, @SDT, @PasswordHash, @RoleId, @TrangThai)
+                `);
+        } catch (error) {
+            if (isUniqueViolation(error)) {
+                throw conflict("Email đã được sử dụng");
+            }
+            throw error;
+        }
+
+        return created({
+            message: "Đăng ký thành công",
+            user: result.recordset[0],
+        });
+    } catch (error) {
+        return handleApiError(error);
+    }
 }
