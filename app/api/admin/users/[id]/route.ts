@@ -104,6 +104,8 @@ export async function PATCH(
         const updateQuery = `
       UPDATE [User]
       SET ${sets.join(", ")}
+      OUTPUT
+        INSERTED.ID, INSERTED.HoTen, INSERTED.Email, INSERTED.SDT, INSERTED.TrangThai
       WHERE ID = @userId
         AND RoleId = @userRole
     `;
@@ -119,7 +121,7 @@ export async function PATCH(
             throw error;
         }
 
-        if (result.rowsAffected[0] === 0) {
+        if (result.recordset.length === 0) {
             throw notFound("Không tìm thấy người dùng");
         }
 
@@ -127,7 +129,7 @@ export async function PATCH(
         revalidatePath("/admin/stat");
         revalidateTag("dashboard-summary", "max");
 
-        return ok({ message: "Cập nhật người dùng thành công" });
+        return ok(result.recordset[0]);
     } catch (error) {
         return handleApiError(error);
     }
