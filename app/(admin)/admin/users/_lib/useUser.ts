@@ -15,6 +15,7 @@ import {
     updateUserProfileAction,
 } from "./actions";
 import { updateMockUser } from "@/lib/mock/mockFetcher";
+import { currentMockMode, mockMode } from "@/lib/mock/config";
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 500;
@@ -121,7 +122,9 @@ export function useUsers({
                         } : prev,
                 );
                 // Đồng bộ dữ liệu vào mockFetcher store để fetch lại sau này đúng
-                updateMockUser(id, { TrangThai: newStatus });
+                if (currentMockMode === mockMode.on) {
+                    updateMockUser(id, { TrangThai: newStatus });
+                }
                 setActionSuccess(
                     `Đã ${newStatus === userStatus.Active ? "kích hoạt" : "ngừng"} người dùng ${id}.`
                 );
@@ -155,6 +158,14 @@ export function useUsers({
                     ),
                 } : prev
             );
+            // Đồng bộ dữ liệu vào mockFetcher store để fetch lại sau này đúng
+            if (currentMockMode === mockMode.on) {
+                const updates: { HoTen?: string; Email?: string; SDT?: string } = {};
+                if (result.data.HoTen !== undefined) updates.HoTen = result.data.HoTen;
+                if (result.data.Email !== undefined) updates.Email = result.data.Email;
+                if (result.data.SDT !== undefined) updates.SDT = result.data.SDT;
+                updateMockUser(payload.userId, updates);
+            }
         },
         [],
     );

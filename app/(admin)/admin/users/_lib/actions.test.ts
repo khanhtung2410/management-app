@@ -108,7 +108,7 @@ beforeEach(() => {
 // =============================================================================
 describe("updateUserStatusAction – bảo vệ điều kiện RoleId", () => {
     it("câu UPDATE chứa RoleId = @userRole (và ID = @ID)", async () => {
-        const { pool, queries } = createMockPool([{ rowsAffected: [1] }]);
+        const { pool, queries } = createMockPool([{ rowsAffected: [1], recordset: [{ ID: 5, TrangThai: userStatus.Active }] }]);
         getDbMock.mockResolvedValue(pool);
 
         await updateUserStatusAction(5, userStatus.Active);
@@ -122,7 +122,7 @@ describe("updateUserStatusAction – bảo vệ điều kiện RoleId", () => {
     });
 
     it("câu UPDATE vẫn còn RoleId khi trạng thái là Inactive", async () => {
-        const { pool, queries } = createMockPool([{ rowsAffected: [1] }]);
+        const { pool, queries } = createMockPool([{ rowsAffected: [1], recordset: [{ ID: 5, TrangThai: userStatus.Inactive }] }]);
         getDbMock.mockResolvedValue(pool);
 
         await updateUserStatusAction(5, userStatus.Inactive);
