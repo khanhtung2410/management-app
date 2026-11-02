@@ -52,7 +52,9 @@ const getDbMock = vi.mocked(getDb);
 // -----------------------------------------------------------------------------
 // Helper: mock pool có GHI LẠI câu SQL để assert
 // -----------------------------------------------------------------------------
-type QueryResponse = { rowsAffected?: number[]; recordset?: unknown[] };
+type QueryResponse =
+    | { rowsAffected?: number[]; recordset?: unknown[] }
+    | { throwError: unknown };
 
 type MockChain = {
     input: ReturnType<typeof vi.fn>;
@@ -67,6 +69,9 @@ function createMockPool(responses: QueryResponse[] = []) {
     chain.query.mockImplementation((q: string) => {
         queries.push(q);
         const resp = responses[i++] ?? { rowsAffected: [0], recordset: [] };
+        if ("throwError" in resp) {
+            return Promise.reject(resp.throwError);
+        }
         return Promise.resolve({
             rowsAffected: resp.rowsAffected ?? [0],
             recordset: resp.recordset ?? [],
@@ -178,6 +183,26 @@ describe("updateUserProfileAction – email trùng", () => {
 
         expect(r).toEqual({ ok: false, error: "Email đã được sử dụng" });
         expect(chain.query).toHaveBeenCalledTimes(2);
+    });
+});
+
+// =============================================================================
+// (4') Lỗi unique constraint trong UPDATE → { ok:false }, KHÔNG ném exception
+// =============================================================================
+describe("updateUserProfileAction – race condition email trùng", () => {
+    it("map lỗi SQL 2627 thành lỗi email đã được sử dụng", async () => {
+        const { pool, chain } = createMockPool([
+            { recordset: [{ ok: 1 }] }, // exists
+            { recordset: [] },          // no dup; another request wins the race
+            { throwError: Object.assign(new Error("unique constraint"), { number: 2627 }) },
+        ]);
+        getDbMock.mockResolvedValue(pool);
+
+        await expect(updateUserProfileAction(validProfilePayload)).resolves.toEqual({
+            ok: false,
+            error: "Email đã được sử dụng",
+        });
+        expect(chain.query).toHaveBeenCalledTimes(3);
     });
 });
 

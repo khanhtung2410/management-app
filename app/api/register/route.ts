@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/db";
 import { userStatus } from "@/constants/statuses";
 import { userRole } from "@/constants/roles";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { validateUserFields } from "@/lib/validation/user";
 import type { ErrorDetail } from "@/lib/api/errors";
 import {
@@ -14,14 +15,6 @@ import {
 } from "@/lib/api";
 
 const SALT_ROUNDS = 10;
-
-// Vi phạm UNIQUE constraint / index (UQ_User_Email) — phải bắt vì giữa
-// SELECT exists và INSERT vẫn có race condition (hai request cùng email).
-function isUniqueViolation(error: unknown): boolean {
-    if (typeof error !== "object" || error === null) return false;
-    const n = (error as { number?: unknown }).number;
-    return n === 2627 || n === 2601;
-}
 
 export async function POST(req: Request) {
     try {

@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { userRole } from "@/constants/roles";
 import { userStatus } from "@/constants/statuses";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { revalidatePath, revalidateTag } from "next/cache";
 import {
     readJson,
@@ -14,16 +15,6 @@ import {
     conflict,
 } from "@/lib/api";
 import { validateUserFields } from "@/lib/validation/user";
-
-// Vi phạm UNIQUE constraint / index của SQL Server:
-//   - 2627: UNIQUE constraint (UQ_User_Email)
-//   - 2601: UNIQUE index (dự phòng nếu constraint được tạo bằng CREATE INDEX)
-// Phải bắt vì giữa SELECT kiểm tra trùng và UPDATE vẫn có race condition (P2.3c).
-function isUniqueViolation(error: unknown): boolean {
-    if (typeof error !== "object" || error === null) return false;
-    const n = (error as { number?: unknown }).number;
-    return n === 2627 || n === 2601;
-}
 
 export async function PATCH(
     request: NextRequest,
