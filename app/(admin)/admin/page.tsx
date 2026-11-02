@@ -9,13 +9,10 @@ import {
     taskStatus,
 } from "@/constants/statuses";
 import { getDb } from "@/lib/db";
-import { getDashboardSummary } from "@/lib/dashboard/get-summary";
+import { getDashboardSummary, type DashboardSummary } from "@/lib/dashboard/get-summary";
+import type { DashboardTask } from "@/lib/dashboard/types";
 import { currentMockMode, mockMode, mockDelay } from "@/lib/mock/config";
-import {
-    getMockRecentDashboardTasks,
-    type DashboardSummary,
-    type DashboardTask,
-} from "@/lib/mock/dashboard";
+import { getMockRecentDashboardTasks } from "@/lib/mock/dashboard";
 import { requireAdminPage } from "@/lib/auth/server";
 import { InlineEmptyState } from "@/components/UI/InlineEmptyState";
 import { unstable_rethrow } from "next/navigation";
@@ -113,7 +110,7 @@ async function getDashboardData(): Promise<DashboardData> {
 
 export default function AdminPage() {
     return (
-        <div className="-m-6 min-h-[calc(100vh-7rem)] space-y-8 bg-slate-100 p-6 text-slate-900">
+        <div className="min-h-[calc(100vh-7rem)] space-y-8 bg-slate-100 p-6 text-slate-900">
             <header>
                 <h1 className="text-2xl font-bold">Tổng quan</h1>
                 <p className="mt-1 text-sm text-slate-600">

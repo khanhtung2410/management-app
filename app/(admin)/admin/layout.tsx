@@ -3,6 +3,7 @@ import Sidebar from "./_components/Sidebar";
 import { LayoutProvider } from "./_components/LayoutProvider";
 import AdminHeader from "./_components/AdminHeader"
 import Navbar from "@/components/Navbar";
+import { NavbarSkeleton } from "@/components/NavbarSkeleton";
 import { Suspense } from "react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -14,16 +15,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex min-h-[calc(100vh-4rem)]">
                 <Sidebar />
                 <div className='flex-1 min-w-0'>
-                    <AdminHeader />
-                    <div className='p-6'>{children}</div>
+                <AdminHeader />
+                <div>{children}</div>
                 </div>
             </div>
         </LayoutProvider>
-    );
-}
-
-function NavbarSkeleton() {
-    return (
-        <div className="h-16 bg-gray-100 animate-pulse" />
     );
 }

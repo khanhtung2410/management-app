@@ -2,21 +2,9 @@ import { userRole } from "@/constants/roles";
 import {
     taskStatus,
     userStatus,
-    type TaskStatusType,
 } from "@/constants/statuses";
 import { mockTasks, mockUser } from "./data";
-import type { DashboardSummary } from "@/lib/dashboard/types";
-
-export type { DashboardSummary };
-
-
-export interface DashboardTask {
-    ID: number;
-    Ten: string;
-    HoTen: string | null;
-    HetHan: string;
-    TrangThai: TaskStatusType;
-}
+import type { DashboardSummary, DashboardTask } from "@/lib/dashboard/types";
 
 export function getMockDashboardSummary(): DashboardSummary {
     const regularUsers = mockUser.filter(

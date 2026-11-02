@@ -20,6 +20,7 @@ describe("AdminError (P1.5)", () => {
     it("hiển thị thông báo lỗi và nút thử lại", () => {
         render(<AdminError error={mockError} retry={retry} />);
 
+        expect(screen.getByRole("alert")).toBeTruthy();
         expect(
             screen.getByText("Có lỗi xảy ra khi tải dữ liệu trang quản trị."),
         ).toBeTruthy();
@@ -73,11 +74,11 @@ describe("AdminError (P1.5)", () => {
         expect(screen.getByText("abc123")).toBeTruthy();
     });
 
-    it("hiển thị link về trang quản trị, trỏ đúng /admin/users", () => {
+    it("hiển thị link về trang tổng quan admin", () => {
         render(<AdminError error={mockError} retry={retry} />);
 
-        const link = screen.getByRole("link", { name: "Về trang quản trị" });
-        expect(link.getAttribute("href")).toBe("/admin/users");
+        const link = screen.getByRole("link", { name: "Về trang tổng quan" });
+        expect(link.getAttribute("href")).toBe("/admin");
     });
 
     it("accessibility: nút là <button>, link là <a>", () => {
@@ -87,7 +88,15 @@ describe("AdminError (P1.5)", () => {
             screen.getByRole("button", { name: "Thử lại" }).tagName,
         ).toBe("BUTTON");
         expect(
-            screen.getByRole("link", { name: "Về trang quản trị" }).tagName,
+            screen.getByRole("link", { name: "Về trang tổng quan" }).tagName,
         ).toBe("A");
+    });
+
+    it("dùng focus ring thay cho outline kích thước 2px", () => {
+        render(<AdminError error={mockError} retry={retry} />);
+
+        const button = screen.getByRole("button", { name: "Thử lại" });
+        expect(button.className).toContain("focus-visible:ring-2");
+        expect(button.className).not.toContain("focus-visible:outline-2");
     });
 });

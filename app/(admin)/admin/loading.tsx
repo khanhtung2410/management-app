@@ -5,7 +5,7 @@ export default function AdminDashboardLoading() {
         <div
             role="status"
             aria-label="Đang tải dashboard"
-            className="-m-6 min-h-[calc(100vh-7rem)] animate-pulse space-y-8 bg-slate-100 p-6"
+            className="min-h-[calc(100vh-7rem)] animate-pulse space-y-8 bg-slate-100 p-6"
         >
             <header className="space-y-2">
                 <div className="h-7 w-40 rounded bg-slate-300" />
