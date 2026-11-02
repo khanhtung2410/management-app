@@ -4,6 +4,7 @@ import { userRole } from "@/constants/roles";
 import { userStatus, UserStatusType } from "@/constants/statuses";
 import { requireAdminPage } from "@/lib/auth/server";
 import { getDb } from "@/lib/db";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { currentMockMode, mockMode, mockDelay } from "@/lib/mock/config";
 import { validateUserFields } from "@/lib/validation/user";
 import sql from "mssql";
@@ -128,17 +129,25 @@ export async function updateUserProfileAction(
         return { ok: false, error: "Email đã được sử dụng" };
     }
 
-    const result = await pool.request()
-        .input("ID", sql.Int, userId)
-        .input("userRole", sql.Int, userRole.USER)
-        .input("HoTen", sql.NVarChar(255), name)
-        .input("Email", sql.VarChar(255), email)
-        .input("SDT", sql.VarChar(10), sdt) // string | null — mssql ghi NULL
-        .query(`
-            UPDATE [dbo].[User]
-            SET HoTen = @HoTen, Email = @Email, SDT = @SDT
-            WHERE ID = @ID AND RoleId = @userRole
-        `);
+    let result: sql.IResult<unknown>;
+    try {
+        result = await pool.request()
+            .input("ID", sql.Int, userId)
+            .input("userRole", sql.Int, userRole.USER)
+            .input("HoTen", sql.NVarChar(255), name)
+            .input("Email", sql.VarChar(255), email)
+            .input("SDT", sql.VarChar(10), sdt) // string | null — mssql ghi NULL
+            .query(`
+                UPDATE [dbo].[User]
+                SET HoTen = @HoTen, Email = @Email, SDT = @SDT
+                WHERE ID = @ID AND RoleId = @userRole
+            `);
+    } catch (error) {
+        if (isUniqueViolation(error)) {
+            return { ok: false, error: "Email đã được sử dụng" };
+        }
+        throw error;
+    }
 
     if (result.rowsAffected[0] === 0) {
         return { ok: false, error: "Không thể cập nhật — người dùng có thể đã bị xóa" };
