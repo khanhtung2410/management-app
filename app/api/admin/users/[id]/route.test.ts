@@ -134,15 +134,24 @@ describe("PATCH /api/admin/users/[id] — TrangThai", () => {
     });
   });
 
-  it("trả 403 khi tự đổi trạng thái chính mình", async () => {
+  // BT13.10: 403 FORBIDDEN chỉ dùng cho lỗi phân quyền theo vai trò.
+  // Tự đổi trạng thái tài khoản của chính mình là quy tắc nghiệp vụ →
+  // trả 400 VALIDATION_ERROR với details gắn field "TrangThai".
+  it("trả 400 VALIDATION_ERROR khi tự đổi trạng thái chính mình", async () => {
     const res = await PATCH(
       jsonReq({ TrangThai: userStatus.Inactive }, "PATCH", URL_1),
       params("1"),
     );
-    expect(res.status).toBe(403);
-    expect(await res.json()).toEqual({
-      error: { code: "FORBIDDEN", message: expect.any(String) },
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatchObject({
+      code: "VALIDATION_ERROR",
+      message: "Không thể đổi trạng thái của chính mình",
     });
+    expect(body.error.details).toEqual([
+      { field: "TrangThai", message: "Không thể đổi trạng thái của chính mình" },
+    ]);
+    expect(getDb).not.toHaveBeenCalled();
   });
 
   it("trả 200 khi cập nhật status (target khác admin)", async () => {
