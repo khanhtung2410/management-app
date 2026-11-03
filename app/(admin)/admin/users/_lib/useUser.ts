@@ -115,18 +115,20 @@ export function useUsers({
                     setActionError(result.error);
                     return;
                 }
+                // Dùng giá trị server trả về, không dùng newStatus tính phía client.
+                const serverStatus = result.data.TrangThai;
                 setState((prev) =>
                     prev.status === "success"
                         ? {
-                            ...prev, data: prev.data.map((u) => (u.ID === id ? { ...u, TrangThai: newStatus } : u))
+                            ...prev, data: prev.data.map((u) => (u.ID === id ? { ...u, TrangThai: serverStatus } : u))
                         } : prev,
                 );
                 // Đồng bộ dữ liệu vào mockFetcher store để fetch lại sau này đúng
                 if (currentMockMode === mockMode.on) {
-                    updateMockUser(id, { TrangThai: newStatus });
+                    updateMockUser(id, { TrangThai: serverStatus });
                 }
                 setActionSuccess(
-                    `Đã ${newStatus === userStatus.Active ? "kích hoạt" : "ngừng"} người dùng ${id}.`
+                    `Đã ${serverStatus === userStatus.Active ? "kích hoạt" : "ngừng"} người dùng ${id}.`
                 );
             } catch (err) {
                 console.error(err);
@@ -149,22 +151,23 @@ export function useUsers({
             if (!result.ok) {
                 throw new Error(result.error);
             }
+            const d = result.data;
             setState((prev) =>
                 prev.status === "success" ? {
                     ...prev, data: prev.data.map((u) =>
                         u.ID === payload.userId
-                            ? { ...u, ...result.data }
+                            ? { ...u, HoTen: d.HoTen, Email: d.Email, SDT: d.SDT }
                             : u,
                     ),
                 } : prev
             );
             // Đồng bộ dữ liệu vào mockFetcher store để fetch lại sau này đúng
             if (currentMockMode === mockMode.on) {
-                const updates: { HoTen?: string; Email?: string; SDT?: string } = {};
-                if (result.data.HoTen !== undefined) updates.HoTen = result.data.HoTen;
-                if (result.data.Email !== undefined) updates.Email = result.data.Email;
-                if (result.data.SDT !== undefined) updates.SDT = result.data.SDT;
-                updateMockUser(payload.userId, updates);
+                updateMockUser(d.userId, {
+                    HoTen: d.HoTen,
+                    Email: d.Email,
+                    SDT: d.SDT,
+                });
             }
         },
         [],
