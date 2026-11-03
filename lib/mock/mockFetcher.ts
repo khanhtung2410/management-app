@@ -3,7 +3,7 @@ import type { User as AdminUser } from "@/app/(admin)/admin/users/_lib/api";
 import { mockUser } from "./data";
 import { mockDelay } from "./config";
 import { ApiError, type ErrorCode } from "../api/errors";
-import { parsePage, parsePageSize, parseSort } from "../api/pagination";
+import { parseListQuery } from "../api/pagination";
 
 // ─────────────────────────── Types ───────────────────────────
 type MockUser = Pick<AdminUser, "ID" | "HoTen" | "Email" | "SDT" | "TrangThai">;
@@ -77,29 +77,13 @@ export const mockFetcher: typeof fetch = async (input, init) => {
         const searchParams = requestUrl.searchParams;
 
         let sortBy: string;
-        try {
-            sortBy = parseSort(searchParams.get("sortBy"), sortableColumn);
-        } catch (error) {
-            if (error instanceof ApiError) {
-                return jsonResponse(
-                    {
-                        error: {
-                            code: error.code,
-                            message: error.message,
-                            details: error.details,
-                        },
-                    },
-                    error.status,
-                );
-            }
-            throw error;
-        }
-
         let page: number;
         let pageSize: number;
         try {
-            page = parsePage(searchParams.get("page"));
-            pageSize = parsePageSize(searchParams.get("pageSize"));
+            const query = parseListQuery(searchParams, sortableColumn);
+            sortBy = query.sortBy;
+            page = query.page;
+            pageSize = query.pageSize;
         } catch (error) {
             if (error instanceof ApiError) {
                 return jsonResponse(

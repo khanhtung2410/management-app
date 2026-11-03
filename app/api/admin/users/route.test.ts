@@ -89,6 +89,22 @@ describe("GET /api/admin/users", () => {
         });
     });
 
+    it("gom lỗi sortBy và page vào cùng một details", async () => {
+        const res = await GET(
+            req("GET", "/api/admin/users?sortBy=foobar&page=0"),
+        );
+        expect(res.status).toBe(400);
+
+        const body = await res.json();
+        expect(body.error.code).toBe("VALIDATION_ERROR");
+        expect(body.error.details).toHaveLength(2);
+        expect(
+            body.error.details.map((detail: { field: string }) => detail.field),
+        ).toEqual(["sortBy", "page"]);
+        expect(body.error.message).toBe(body.error.details[0].message);
+        expect(getDb).not.toHaveBeenCalled();
+    });
+
     // ─── sortBy validation ────────────────────────────────────────────────
     describe("sortBy", () => {
         it("trả 200 khi không truyền sortBy (mặc định id)", async () => {

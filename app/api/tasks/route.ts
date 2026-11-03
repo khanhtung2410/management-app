@@ -3,7 +3,7 @@ import sql from "mssql";
 import { getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { taskStatus } from "@/constants/statuses";
-import { parsePage, parsePageSize, parseSort } from "@/lib/api/pagination";
+import { parseListQuery } from "@/lib/api/pagination";
 import { readJson, badRequest, list, created, handleApiError } from "@/lib/api";
 import { validateTaskFields } from "@/lib/validation/task";
 
@@ -14,11 +14,9 @@ export async function GET(req: NextRequest) {
         const { userId } = await requireAuth(req);
         const { searchParams } = new URL(req.url);
 
-        const sortBy = parseSort(searchParams.get("sortBy"), sortableColumn);
+        const { sortBy, page, pageSize } = parseListQuery(searchParams, sortableColumn);
         const sortDir = searchParams.get("order") === "desc" ? "DESC" : "ASC";
 
-        const page = parsePage(searchParams.get("page"));
-        const pageSize = parsePageSize(searchParams.get("pageSize"));
         const offset = (page - 1) * pageSize;
 
         const pool = await getDb();
