@@ -1,7 +1,7 @@
 # API audit
 
-Khảo sát các Route Handler hiện có trong `app/api`. Có 10 route file với tổng
-cộng 12 tổ hợp method/URL được hỗ trợ. Các status dưới đây mô tả response do
+Khảo sát các Route Handler hiện có trong `app/api`. Có 8 route file với tổng
+cộng 10 tổ hợp method/URL được hỗ trợ. Các status dưới đây mô tả response do
 handler hiện tại tạo ra cho method được liệt kê; lỗi hạ tầng/framework ngoài
 handler không được tính.
 
@@ -10,8 +10,8 @@ handler không được tính.
 | Method + URL | Ai được gọi | Input | Response thành công | Status hiện tại có thể trả | UI caller |
 |---|---|---|---|---|---|
 | `GET /api/admin/users` | Admin | Query: `page` (mặc định 1), `pageSize` (mặc định 10), `sortBy` (chỉ ánh xạ `id`), `order` (`desc` hoặc mặc định `asc`), `search` (mặc định rỗng). Không có body. | `200 { data: User[], total, page, pageSize, totalPages }`; chỉ liệt kê user thường. | `200`, `403` (không phải admin), `500` (lỗi khác; chưa đăng nhập hiện cũng thành `500`, **sai: cần 401**). | Có — `app/(admin)/admin/users/_lib/api.ts` |
-| `PUT /api/admin/users/status` | Admin | JSON `{ userId, status }`; status chỉ nhận `0` (inactive) hoặc `1` (active). | `200 { message }` | `200`, `400` (body/ID/status sai), `403` (sai role), `404` (không có user thường tương ứng), `500` (lỗi khác; chưa đăng nhập hiện thành `500`, **sai: cần 401**). | Không — UI dùng Server Action |
-| `PUT /api/admin/users/profile` | Admin | JSON `{ userId, HoTen, Email, SDT? }`; họ tên và email chỉ cần là chuỗi không rỗng; SDT nếu truyền phải là chuỗi. | `200 { message }` | `200`, `400` (body/ID/field không hợp lệ), `403`, `404`, `500` (gồm email trùng do constraint; **sai: email trùng cần 409**; chưa đăng nhập hiện thành `500`, **sai: cần 401**). | Không — UI dùng Server Action |
+| ~~`PUT /api/admin/users/status`~~ | ~~Admin~~ | ~~JSON `{ userId, status }`; status chỉ nhận `0` (inactive) hoặc `1` (active).~~ | ~~`200 { message }`~~ | ~~`200`, `400` (body/ID/status sai), `403` (sai role), `404` (không có user thường tương ứng), `500` (lỗi khác; chưa đăng nhập hiện thành `500`, **sai: cần 401**).~~ | Đã thay bằng `PATCH /api/admin/users/[id]` body `{ "TrangThai": 0\|1 }`; route `PUT` không còn trong build. |
+| ~~`PUT /api/admin/users/profile`~~ | ~~Admin~~ | ~~JSON `{ userId, HoTen, Email, SDT? }`; họ tên và email chỉ cần là chuỗi không rỗng; SDT nếu truyền phải là chuỗi.~~ | ~~`200 { message }`~~ | ~~`200`, `400` (body/ID/field không hợp lệ), `403`, `404`, `500` (gồm email trùng do constraint; **sai: email trùng cần 409**; chưa đăng nhập hiện thành `500`, **sai: cần 401**).~~ | Đã thay bằng `PATCH /api/admin/users/[id]` body `{ HoTen?, Email?, SDT? }`; route `PUT` không còn trong build. |
 | ~~`GET /api/admin/stat`~~ | ~~Admin~~ | Không có body. | ~~`200 { totalUsers, totalTasks, taskStats: [...] }`~~ | ~~`200`, `500` (catch mọi lỗi, bao gồm chưa đăng nhập và sai role; **sai: cần phân biệt 401/403**).~~ | Không — không tìm thấy UI caller |
 | `POST /api/login` | Công khai | JSON `{ email, password }` | `200 { message }` và đặt cookie `token` HttpOnly. | `200`, `400` (body/thiếu thông tin), `401` (credential sai hoặc tài khoản bị khóa; **sai: tài khoản đã xác thực nhưng bị khóa nên cần 403**), `500` (mọi lỗi trong handler hiện đều trả thông báo “Lỗi kết nối database”, **sai: không phải lỗi nào cũng là DB**). | Có — `app/(public)/login/page.tsx` |
 | `POST /api/register` | Công khai | JSON `{ HoTen, Email, SDT?, password }`; tên tối thiểu 2 ký tự, email theo regex, mật khẩu tối thiểu 6 ký tự; SDT không phải chuỗi được đổi thành rỗng. | `201 { message, user: { ID, HoTen, Email } }` | `201`, `400` (body/validation), `409` (email đã dùng), `500` (lỗi khác). | Có — `app/(public)/register/page.tsx` |
@@ -32,7 +32,7 @@ Route Handler phải tự ánh xạ lỗi xác thực sang status HTTP đúng.
 | Tình huống | Hiện tại | Kết quả đúng | Đánh giá |
 |---|---:|---:|---|
 | Chưa đăng nhập gọi `GET /api/admin/users` | `500` | `401` | Catch chỉ xử lý `ForbiddenError`, không xử lý `UnauthorizedError`. |
-| Chưa đăng nhập gọi `PUT /api/admin/users/status` hoặc `PUT /api/admin/users/profile` | `500` | `401` | Cùng lỗi catch như trên. |
+| ~~Chưa đăng nhập gọi `PUT /api/admin/users/status` hoặc `PUT /api/admin/users/profile`~~ | ~~`500`~~ | `401` | Hai route `PUT` đã được thay bằng `PATCH /api/admin/users/[id]`; route mới map lỗi xác thực qua `handleApiError`. |
 | Chưa đăng nhập gọi `GET /api/admin/stat` | `500` | `401` | Catch không phân loại lỗi xác thực. |
 | User thường gọi API admin | Tùy endpoint: `403` ở users/status/profile; `500` ở stat | `403` | Route stat biến `ForbiddenError` thành `500`. |
 | Cập nhật profile bằng email đã có | `500` khi DB constraint bị vi phạm | `409` | Route chưa kiểm tra email trùng trước khi update. |
@@ -55,14 +55,15 @@ nên các endpoint `PUT` này không phải đường đi đang được giao di
 
 > Bảng “Đối chiếu các vấn đề cần xử lý” trên ghi **trạng thái trước khi sửa**. Sau các
 > bản sửa BT13.x (từ `fix(api): include field details in validation errors` (#75) đến
-> `fix(mock): align admin users mock with real API` (#93), gồm các ticket BT13.1–BT13.14),
+> `fix(mock): align admin users mock with real API` (#93), gồm các ticket BT13.1–BT13.13;
+> BT13.14 là chính PR tài liệu này, #94),
 > các vấn đề đã được khắc phục. Dòng dưới ghi **hiện trạng sau khi sửa**.
 
 | Vấn đề | Trạng thái sau khi sửa |
 |---|---|
-| Chưa đăng nhập gọi route cần auth (`GET /api/admin/users`, `GET /api/tasks`, `GET /api/admin/stat`) | `401 UNAUTHENTICATED`; `GET /api/admin/stat` đã **xoá** (BT13.9) |
+| Chưa đăng nhập gọi route cần auth (`GET /api/admin/users`, `GET /api/tasks`, `GET /api/admin/stat`) | `401 UNAUTHENTICATED`; `GET /api/admin/stat` đã **xoá** (BT13.6, PR #79) |
 | Tài khoản bị khóa | `403 ACCOUNT_LOCKED` (đã map `POST /api/login`, page guard) |
-| `sortBy` prototype chain / giá trị lạ | `400 VALIDATION_ERROR` qua `parseSort` + `Object.hasOwn` (BT13.8) |
+| `sortBy` prototype chain / giá trị lạ | `400 VALIDATION_ERROR` qua `parseSort` + `Object.hasOwn` (BT13.5, PR #78) |
 | `GET /api/admin/users?pageSize=1000000` | `400 VALIDATION_ERROR` (parse `pageSize` trong `1..100`) (BT13.8) |
 | `POST /api/tasks` với `HetHan: "abc"` / tên vượt giới hạn | `400 VALIDATION_ERROR` trước khi ghi DB |
 | `POST /api/login` message chung “Lỗi kết nối database” | `500 INTERNAL_ERROR` với message chung phù hợp |
@@ -73,8 +74,9 @@ nên các endpoint `PUT` này không phải đường đi đang được giao di
 
 ## Route không được UI gọi và các bản tổng quan
 
-Không tìm thấy UI caller cho `GET /api/admin/stat`, `PUT /api/admin/users/status`,
-`PUT /api/admin/users/profile`, `GET /api/tasks`, hoặc `GET /api/tasks/[id]`.
+Không tìm thấy UI caller cho `GET /api/tasks` hoặc `GET /api/tasks/[id]`.
+`GET /api/admin/stat` đã bị xoá; `PUT /api/admin/users/status` và
+`PUT /api/admin/users/profile` đã được thay bằng `PATCH /api/admin/users/[id]`.
 API admin stat là route không được sử dụng: trang `/admin/stat` lấy số liệu qua
 `getDashboardSummary()`, còn trang `/admin` chạy một truy vấn tổng quan trực tiếp.
 Như vậy `/api/admin/stat` là một đường triển khai tổng quan thứ ba, song song với
