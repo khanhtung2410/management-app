@@ -96,6 +96,15 @@ describe("mockFetcher — GET /api/admin/users", () => {
         });
     });
 
+    it("trả 400 với sortBy=hoTen giống API thật", async () => {
+        const response = await mockFetcher("/api/admin/users?sortBy=hoTen");
+        expect(response.status).toBe(400);
+
+        const result = await response.json();
+        expect(result.error).toMatchObject({ code: "VALIDATION_ERROR" });
+        expect(result.error.details?.[0]?.field).toBe("sortBy");
+    });
+
     it("gom lỗi sortBy và page vào cùng một details", async () => {
         const response = await mockFetcher(
             "/api/admin/users?sortBy=foobar&page=0",
@@ -142,6 +151,22 @@ describe("mockFetcher — GET /api/admin/users", () => {
                     u.HoTen.includes(search) || u.Email.includes(search),
             ),
         ).toBe(true);
+    });
+
+    it("trim search giống API thật", async () => {
+        const all = await (await mockFetcher("/api/admin/users?pageSize=100")).json();
+        const search = all.data[0].HoTen.split(" ")[0];
+
+        const unPadded = await (
+            await mockFetcher(`/api/admin/users?search=${encodeURIComponent(search)}`)
+        ).json();
+        const padded = await (
+            await mockFetcher(
+                `/api/admin/users?search=${encodeURIComponent(`  ${search}  `)}`,
+            )
+        ).json();
+
+        expect(padded.data).toEqual(unPadded.data);
     });
 });
 
