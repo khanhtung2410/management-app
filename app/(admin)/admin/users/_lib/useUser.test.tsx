@@ -203,6 +203,46 @@ describe("useUsers — saveUser state update (P1.2)", () => {
         expect(updated?.TrangThai).toBe(1);
     });
 
+    it("không thêm khoá lạ từ result.data vào state", async () => {
+        const result = await setupLoaded();
+        if (result.current.state.status !== "success") {
+            throw new Error("Expected state to be success");
+        }
+
+        updateUserProfileActionMock.mockResolvedValue({
+            ok: true,
+            data: {
+                userId: 1,
+                HoTen: "A",
+                Email: "a@b.com",
+                SDT: "0901234567",
+            },
+        });
+
+        await act(async () => {
+            await result.current.saveUser({
+                userId: 1,
+                HoTen: "A",
+                Email: "a@b.com",
+                SDT: "0901234567",
+            });
+        });
+
+        if (result.current.state.status !== "success") {
+            throw new Error("Expected state to remain success");
+        }
+        const updated = findUser(result.current.state.data, 1);
+
+        // toEqual bắt cả khoá thừa: nếu state có `userId`, test này fail.
+        expect(updated).toEqual({
+            ID: 1,
+            HoTen: "A",
+            Email: "a@b.com",
+            SDT: "0901234567",
+            TrangThai: 1,
+        });
+    });
+
     it("throw Error khi action trả lỗi, không đổi state", async () => {
         const result = await setupLoaded();
         if (result.current.state.status !== "success") {
@@ -269,6 +309,29 @@ describe("useUsers — toggleStatus mock sync (P1.1)", () => {
         });
 
         expect(updateMockUserMock).toHaveBeenCalledWith(1, { TrangThai: 0 });
+    });
+
+    it("dùng TrangThai mà server trả về, kể cả khi khác newStatus", async () => {
+        mockConfig.currentMockMode = "on";
+        const result = await setupLoaded();
+        // payload gửi newStatus = 0 (Inactive), nhưng server trả lại 1 (Active).
+        updateUserStatusActionMock.mockResolvedValue({
+            ok: true,
+            data: { ID: 1, TrangThai: 1 },
+        });
+
+        await act(async () => {
+            await result.current.toggleStatus(1, 1);
+        });
+
+        if (result.current.state.status !== "success") {
+            throw new Error("Expected state to remain success");
+        }
+        const updated = result.current.state.data.find((u) => u.ID === 1);
+
+        // State hiển thị giá trị server trả về, không phải newStatus client tính.
+        expect(updated?.TrangThai).toBe(1);
+        expect(updateMockUserMock).toHaveBeenCalledWith(1, { TrangThai: 1 });
     });
 
     it("real mode: không gọi updateMockUser khi đổi trạng thái", async () => {
