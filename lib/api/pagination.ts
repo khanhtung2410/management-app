@@ -1,4 +1,4 @@
-import { badRequest } from "./errors";
+import { ApiError, badRequest, type ErrorDetail } from "./errors";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 10;
@@ -13,6 +13,31 @@ function parseInteger(raw: string): number | null {
 
     const n = Number(raw);
     return Number.isSafeInteger(n) ? n : null;
+}
+
+/**
+ * Chạy parser và gom lỗi `ApiError.details` vào mảng chung.
+ * Lỗi không phải `ApiError` được ném lại ngay — đó là bug lập trình, không phải
+ * lỗi validation.
+ */
+function parseOrCollect<T>(
+    parse: () => T,
+    field: string,
+    details: ErrorDetail[],
+): T | undefined {
+    try {
+        return parse();
+    } catch (error) {
+        if (!(error instanceof ApiError)) throw error;
+
+        if (error.details && error.details.length > 0) {
+            details.push(...error.details);
+        } else {
+            details.push({ field, message: error.message });
+        }
+
+        return undefined;
+    }
 }
 
 /**
@@ -64,7 +89,7 @@ export function parsePageSize(
  */
 export function parseSort<T extends Record<string, string>>(
     raw: string | null | undefined,
-    allowed: T
+    allowed: T,
 ): T[keyof T] {
     const key = raw ?? "id";
 
@@ -75,4 +100,50 @@ export function parseSort<T extends Record<string, string>>(
     }
 
     return allowed[key as keyof T];
+}
+
+export type ListQuery<T extends Record<string, string>> = {
+    sortBy: T[keyof T];
+    page: number;
+    pageSize: number;
+};
+
+/**
+ * Parse toàn bộ query param của endpoint danh sách (`sortBy`, `page`,
+ * `pageSize`) và gom lỗi của cả ba parser vào một mảng `details` duy nhất.
+ *
+ * Hợp đồng API mục 4.1/6.2: khi nhiều query param cùng sai, response phải
+ * liệt kê đủ mọi lỗi thay vì dừng ở lỗi đầu tiên.
+ */
+export function parseListQuery<T extends Record<string, string>>(
+    searchParams: URLSearchParams,
+    allowed: T,
+): ListQuery<T> {
+    const details: ErrorDetail[] = [];
+
+    const sortBy = parseOrCollect(
+        () => parseSort(searchParams.get("sortBy"), allowed),
+        "sortBy",
+        details,
+    );
+    const page = parseOrCollect(
+        () => parsePage(searchParams.get("page")),
+        "page",
+        details,
+    );
+    const pageSize = parseOrCollect(
+        () => parsePageSize(searchParams.get("pageSize")),
+        "pageSize",
+        details,
+    );
+
+    if (details.length > 0) {
+        throw badRequest(details[0].message, details);
+    }
+
+    return {
+        sortBy: sortBy as T[keyof T],
+        page: page as number,
+        pageSize: pageSize as number,
+    };
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ApiError } from "./errors";
-import { parsePage, parsePageSize, parseSort } from "./pagination";
+import { parseListQuery, parsePage, parsePageSize, parseSort } from "./pagination";
 
 const allowed = { id: "ID", hetHan: "HetHan", ten: "Ten" } as const;
 
@@ -131,6 +131,44 @@ describe("parseSort", () => {
         it("throws for whitespace", () => {
             expect(() => parseSort(" ", allowed)).toThrow();
             expect(() => parseSort(" id", allowed)).toThrow();
+        });
+    });
+});
+
+describe("parseListQuery", () => {
+    const toParams = (query: string) => new URLSearchParams(query);
+
+    it("trả đủ sortBy/page/pageSize khi tất cả hợp lệ", () => {
+        expect(
+            parseListQuery(toParams("sortBy=ten&page=2&pageSize=20"), allowed),
+        ).toEqual({
+            sortBy: "Ten",
+            page: 2,
+            pageSize: 20,
+        });
+    });
+
+    it("gom lỗi của cả ba parser vào một mảng details", () => {
+        const error = captureError(() =>
+            parseListQuery(
+                toParams("sortBy=foo&page=0&pageSize=999"),
+                allowed,
+            ),
+        );
+
+        expect(error).toBeInstanceOf(ApiError);
+        expect(error).toMatchObject({
+            status: 400,
+            code: "VALIDATION_ERROR",
+            message: "sortBy không hợp lệ",
+            details: [
+                { field: "sortBy", message: "sortBy không hợp lệ" },
+                { field: "page", message: "page phải là số nguyên dương" },
+                {
+                    field: "pageSize",
+                    message: "pageSize phải nằm trong khoảng 1..100",
+                },
+            ],
         });
     });
 });

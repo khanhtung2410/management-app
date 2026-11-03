@@ -13,6 +13,7 @@ import {
     ok,
     handleApiError,
     conflict,
+    type ErrorDetail,
 } from "@/lib/api";
 import { validateUserFields } from "@/lib/validation/user";
 
@@ -41,19 +42,22 @@ export async function PATCH(
             throw badRequest("Không có trường nào để cập nhật");
         }
 
+        // ─── Gom lỗi TrangThai và profile vào cùng một mảng ───
+        // Hợp đồng API mục 4.1/6.2: details phải liệt kê mọi trường sai,
+        // không dừng ở lỗi đầu tiên.
+        const details: ErrorDetail[] = [];
+
         // ─── Validate status ───
         if (hasStatus) {
             if (TrangThai !== userStatus.Active && TrangThai !== userStatus.Inactive) {
-                throw badRequest("Trạng thái không hợp lệ", [
-                    { field: "TrangThai", message: "Trạng thái không hợp lệ" },
-                ]);
-            }
-            if (targetId === currentUserId) {
+                details.push({ field: "TrangThai", message: "Trạng thái không hợp lệ" });
+            } else if (targetId === currentUserId) {
                 // Không phải lỗi phân quyền (403 chỉ dùng cho vai trò) — đây là
                 // quy tắc nghiệp vụ: admin không tự đổi trạng thái tài khoản của mình.
-                throw badRequest("Không thể đổi trạng thái của chính mình", [
-                    { field: "TrangThai", message: "Không thể đổi trạng thái của chính mình" },
-                ]);
+                details.push({
+                    field: "TrangThai",
+                    message: "Không thể đổi trạng thái của chính mình",
+                });
             }
         }
 
@@ -65,11 +69,16 @@ export async function PATCH(
         if (hasProfile) {
             const v = validateUserFields({ HoTen, Email, SDT }, { partial: true });
             if (!v.ok) {
-                throw badRequest(v.details[0]?.message ?? "Dữ liệu không hợp lệ", v.details);
+                details.push(...v.details);
+            } else {
+                hoTen = v.data.HoTen;
+                email = v.data.Email;
+                sdt = v.data.SDT;
             }
-            hoTen = v.data.HoTen;
-            email = v.data.Email;
-            sdt = v.data.SDT;
+        }
+
+        if (details.length > 0) {
+            throw badRequest(details[0].message, details);
         }
 
         const db = await getDb();

@@ -96,6 +96,21 @@ describe("mockFetcher — GET /api/admin/users", () => {
         });
     });
 
+    it("gom lỗi sortBy và page vào cùng một details", async () => {
+        const response = await mockFetcher(
+            "/api/admin/users?sortBy=foobar&page=0",
+        );
+        expect(response.status).toBe(400);
+
+        const result = await response.json();
+        expect(result.error.code).toBe("VALIDATION_ERROR");
+        expect(result.error.details).toHaveLength(2);
+        expect(
+            result.error.details.map((detail: { field: string }) => detail.field),
+        ).toEqual(["sortBy", "page"]);
+        expect(result.error.message).toBe(result.error.details[0].message);
+    });
+
     it("trả meta.totalPages = 0 khi danh sách rỗng", async () => {
         const response = await mockFetcher("/api/admin/users?search=zzz-no-match-zzz");
         const result = await response.json();

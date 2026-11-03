@@ -717,6 +717,23 @@ describe("PATCH /api/admin/users/[id] — error.details", () => {
         ]);
     });
 
+    it("gom lỗi TrangThai và profile vào cùng một details", async () => {
+        const res = await PATCH(
+            jsonReq({ TrangThai: 5, Email: "abc" }, "PATCH", URL_1),
+            params("1"),
+        );
+        expect(res.status).toBe(400);
+
+        const body = await res.json();
+        expect(body.error.code).toBe("VALIDATION_ERROR");
+        expect(body.error.details).toHaveLength(2);
+        expect(
+            body.error.details.map((detail: { field: string }) => detail.field),
+        ).toEqual(["TrangThai", "Email"]);
+        expect(body.error.message).toBe(body.error.details[0].message);
+        expect(getDb).not.toHaveBeenCalled();
+    });
+
     it("trả details[0].field = TrangThai khi status sai", async () => {
         const res = await PATCH(
             jsonReq({ TrangThai: 99 }, "PATCH", URL_1),
