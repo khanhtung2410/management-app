@@ -48,6 +48,36 @@ describe("GET /api/admin/users", () => {
         expect(body.meta).toEqual({ page: 1, pageSize: 10, total: 1, totalPages: 1 });
     });
 
+    it("trim search trước khi truyền vào database", async () => {
+        const capturedSearch: unknown[] = [];
+        const chain = {
+            input: vi.fn(),
+            query: vi.fn(),
+        };
+        chain.input.mockImplementation(
+            (name: string, _type: unknown, value: unknown) => {
+                if (name === "search") capturedSearch.push(value);
+                return chain;
+            },
+        );
+        chain.query
+            .mockResolvedValueOnce({ recordset: [] })
+            .mockResolvedValueOnce({ recordset: [{ total: 0 }] });
+
+        vi.mocked(getDb).mockResolvedValue(
+            asDb(
+                { request: () => chain } as unknown as Parameters<typeof asDb>[0],
+            ),
+        );
+
+        const res = await GET(
+            req("GET", "/api/admin/users?search=%20%20A%20%20"),
+        );
+
+        expect(res.status).toBe(200);
+        expect(capturedSearch).toEqual(["A", "A"]);
+    });
+
     // ─── page/pageSize validation ────────────────────────────────────────
     // Hợp đồng API mục 3.2/7: ngoài khoảng 1..100 (pageSize) và page < 1
     // phải trả 400 VALIDATION_ERROR, không được kẹp im lặng.
@@ -127,6 +157,17 @@ describe("GET /api/admin/users", () => {
             );
             const res = await GET(req("GET", "/api/admin/users?sortBy=id"));
             expect(res.status).toBe(200);
+        });
+
+        it("trả 400 với sortBy=hoTen để khớp mock API", async () => {
+            const res = await GET(
+                req("GET", "/api/admin/users?sortBy=hoTen"),
+            );
+            expect(res.status).toBe(400);
+            expect(await res.json()).toMatchObject({
+                error: { code: "VALIDATION_ERROR" },
+            });
+            expect(getDb).not.toHaveBeenCalled();
         });
 
         // Regression: trước đây sortableColumn["constructor"] trả Function (truthy)

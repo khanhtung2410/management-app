@@ -2,14 +2,12 @@ import { userRole } from "@/constants/roles";
 import type { User as AdminUser } from "@/app/(admin)/admin/users/_lib/api";
 import { mockUser } from "./data";
 import { mockDelay } from "./config";
-import { ApiError, type ErrorCode } from "../api/errors";
+import { ApiError, apiErrorResponse, type ErrorCode } from "../api/errors";
+import { adminUserSortColumns, normalizeAdminUserSearch } from "../api/admin-users";
 import { parseListQuery } from "../api/pagination";
 
 // ─────────────────────────── Types ───────────────────────────
 type MockUser = Pick<AdminUser, "ID" | "HoTen" | "Email" | "SDT" | "TrangThai">;
-
-const sortableColumn = { id: "ID", hoTen: "HoTen", email: "Email" } as const;
-type SortKey = keyof typeof sortableColumn;
 
 // ─────────────────────────── Mutable store ───────────────────────────
 
@@ -80,28 +78,21 @@ export const mockFetcher: typeof fetch = async (input, init) => {
         let page: number;
         let pageSize: number;
         try {
-            const query = parseListQuery(searchParams, sortableColumn);
+            const query = parseListQuery(searchParams, adminUserSortColumns);
             sortBy = query.sortBy;
             page = query.page;
             pageSize = query.pageSize;
         } catch (error) {
             if (error instanceof ApiError) {
-                return jsonResponse(
-                    {
-                        error: {
-                            code: error.code,
-                            message: error.message,
-                            details: error.details,
-                        },
-                    },
-                    error.status,
-                );
+                return apiErrorResponse(error);
             }
             throw error;
         }
 
         const order = searchParams.get("order") === "desc" ? "desc" : "asc";
-        const search = (searchParams.get("search") ?? "").trim().toLowerCase();
+        const search = normalizeAdminUserSearch(
+            searchParams.get("search"),
+        ).toLowerCase();
 
         let users = [...store];
         if (search) {
@@ -112,7 +103,7 @@ export const mockFetcher: typeof fetch = async (input, init) => {
             );
         }
 
-        const key = sortableColumn[sortBy as SortKey] as keyof MockUser;
+        const key = sortBy as keyof MockUser;
         users.sort((a, b) => {
             const va = a[key];
             const vb = b[key];
