@@ -206,6 +206,7 @@ Hệ quả cần ghi rõ trong code và test:
 
 - Sai cú pháp JSON → `400` + `code = "INVALID_JSON"`, `message = "Dữ liệu gửi lên không phải JSON hợp lệ"`, **không** có `details` (không có field nào để chỉ).
 - JSON hợp lệ nhưng thiếu/sai trường → `400` + `code = "VALIDATION_ERROR"`, `message = details[0].message`, `details` liệt kê **tất cả** field lỗi.
+- Ngoại lệ: lỗi validation **không gắn với trường nào** (ví dụ `PATCH /api/admin/users/[id]` với body rỗng trả `"Không có trường nào để cập nhật"`) thì `400 VALIDATION_ERROR` **không có `details`**; `message` là thông báo lỗi. Trường hợp này tuân theo mục 4.1: `details` chỉ bắt buộc khi lỗi gắn với ít nhất một trường của body.
 
 Lý do:
 
@@ -230,12 +231,12 @@ Lý do:
 | Trường | Rule | Ví dụ lỗi |
 |---|---|---|
 | `password` | chuỗi, ≥ 6 ký tự | `"Mật khẩu phải có ít nhất 6 ký tự"` |
-| `Ten` (task) | chuỗi (typeof string bắt buộc, **không** ép từ `String()`), không rỗng, ≤ 255 ký tự (khớp cột `NVarChar(255)`) | `"Tên công việc không hợp lệ"` / `"Tên công việc không được để trống"` / `"Tên công việc không được vượt quá 255 ký tự"` |
+| `Ten` (task) | chuỗi (typeof string bắt buộc, **không** ép từ `String()`), không rỗng, ≤ 255 ký tự (khớp cột `NVarChar(255)`) | `"Tên công việc không hợp lệ"` / `"Vui lòng nhập tên công việc"` / `"Tên công việc không được vượt quá 255 ký tự"` |
 | `Mota` (task) | tuỳ chọn; nếu có phải là chuỗi (typeof string). `null`/`undefined` = coi như không truyền | `"Mô tả không hợp lệ"` |
 | `HetHan` | chuỗi parse được thành ngày hợp lệ | `"Ngày hết hạn không hợp lệ"` |
 | `TrangThai` (task) | **number nguyên** `0` hoặc `1`. **Không chấp nhận** `"0"`/`"1"` (string) hay `true`/`false` (boolean) — route phải reject, không ép kiểu. | `"Trạng thái không hợp lệ"` |
 | `TrangThai` (user admin) | `0` hoặc `1` | `"Trạng thái không hợp lệ"` |
-| `id` (path) | số nguyên dương | `"ID không hợp lệ"` |
+| `id` (path) | số nguyên dương | `"ID công việc không hợp lệ"` (task) / `"ID người dùng không hợp lệ"` (admin user) |
 | `page` | số nguyên ≥ 1 | `"page phải là số nguyên dương"` |
 | `pageSize` | số nguyên `1..100` | `"pageSize phải nằm trong khoảng 1..100"` |
 | `HoTen` | chuỗi, trim, **không rỗng**, ≤ 255 ký tự. Không yêu cầu min 2 (đồng bộ 3 nơi). | `"Họ tên không được để trống"` |
